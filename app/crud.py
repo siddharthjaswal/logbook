@@ -13,3 +13,16 @@ def create_trip(db: Session, trip: schemas.TripCreate):
     db.commit()
     db.refresh(db_trip)
     return db_trip
+
+def get_trip_day(db: Session, trip_day_id: int):
+    return db.query(models.TripDay).filter(models.TripDay.id == trip_day_id).first()
+
+def get_trip_days(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.TripDay).offset(skip).limit(limit).all()
+
+def create_trip_day(db: Session, trip_day: schemas.TripDayCreate):
+    db_trip_day = models.TripDay(**trip_day.dict())
+    db.add(db_trip_day)
+    db.commit()
+    db.refresh(db_trip_day)
+    return db_trip_day
