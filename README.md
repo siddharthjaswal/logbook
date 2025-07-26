@@ -23,7 +23,12 @@ The following API endpoints are currently available:
 *   `GET /trips/`: Get a list of all trips.
 *   `GET /trips/{trip_id}`: Get a specific trip by its ID.
 
-You can access the interactive API documentation (Swagger UI) at [/docs](http://127.0.0.1:8000/docs) when the server is running.
+## API Documentation
+
+You can access the interactive API documentation when the server is running:
+
+*   **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+*   **ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ## Getting Started
 
