@@ -209,25 +209,38 @@ CREATE TYPE trip_status AS ENUM ('planning', 'ongoing', 'completed', 'cancelled'
 
 CREATE TABLE trips (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    -- Note: created_by tracks original creator (can be NULL if user deleted)
+    -- Trip persists even if creator leaves - see trip_collaborators for active members
+    -- Public trips remain accessible even after creator deletion
 
     -- Basic Info
     name VARCHAR(200) NOT NULL,
     description TEXT,
     cover_photo_url TEXT,
 
-    -- Dates (stored as Unix timestamps for timezone independence)
+    -- Dates (stored as Unix timestamps with timezone context)
     start_date_timestamp BIGINT NOT NULL,
+    start_timezone VARCHAR(50) NOT NULL DEFAULT 'UTC', -- IANA timezone (e.g., 'America/New_York')
     end_date_timestamp BIGINT NOT NULL,
+    end_timezone VARCHAR(50) NOT NULL DEFAULT 'UTC', -- IANA timezone (e.g., 'Asia/Tokyo')
 
-    -- Location
-    destination_country VARCHAR(100),
-    destination_city VARCHAR(100),
-    destination_coordinates POINT, -- PostGIS for geospatial queries
+    -- Location (for search/filtering/display)
+    primary_destination_country VARCHAR(100), -- Main/first destination
+    primary_destination_city VARCHAR(100),    -- Main/first city
+    primary_destination_coordinates POINT,    -- Main destination coordinates
+
+    -- All destinations visited (calculated from trip_days or user-provided)
+    countries_visited TEXT[], -- ['France', 'Italy', 'Spain']
+    cities_visited TEXT[],    -- ['Paris', 'Rome', 'Barcelona']
+
+    -- Trip type classification
+    trip_type VARCHAR(20) DEFAULT 'single_destination', -- single_destination, multi_city, multi_country, regional, global
 
     -- Status & Visibility
     status trip_status DEFAULT 'planning',
-    is_private BOOLEAN DEFAULT TRUE,
+    visibility VARCHAR(20) DEFAULT 'private', -- private, unlisted, public
+    is_featured BOOLEAN DEFAULT FALSE, -- Featured in public gallery
 
     -- Budget
     budget_total NUMERIC(12, 2),
@@ -248,22 +261,772 @@ CREATE TABLE trips (
 );
 
 -- Indexes
-CREATE INDEX idx_trips_user_id ON trips(user_id);
+CREATE INDEX idx_trips_created_by ON trips(created_by);
 CREATE INDEX idx_trips_status ON trips(status);
+CREATE INDEX idx_trips_visibility ON trips(visibility);
+CREATE INDEX idx_trips_type ON trips(trip_type);
 CREATE INDEX idx_trips_dates ON trips(start_date_timestamp, end_date_timestamp);
-CREATE INDEX idx_trips_destination ON trips(destination_country, destination_city);
+CREATE INDEX idx_trips_primary_destination ON trips(primary_destination_country, primary_destination_city);
 CREATE INDEX idx_trips_tags ON trips USING GIN(tags); -- For array searches
-CREATE INDEX idx_trips_user_status ON trips(user_id, status) WHERE deleted_at IS NULL;
+
+-- GIN indexes for multi-destination searches
+CREATE INDEX idx_trips_countries_visited ON trips USING GIN(countries_visited);
+CREATE INDEX idx_trips_cities_visited ON trips USING GIN(cities_visited);
+
+-- Composite indexes for public trip queries
+CREATE INDEX idx_trips_public_featured ON trips(visibility, is_featured)
+    WHERE visibility = 'public' AND deleted_at IS NULL;
+CREATE INDEX idx_trips_public_destination ON trips(visibility, primary_destination_country, primary_destination_city)
+    WHERE visibility = 'public' AND deleted_at IS NULL;
+CREATE INDEX idx_trips_public_views ON trips(visibility, views_count DESC)
+    WHERE visibility = 'public' AND deleted_at IS NULL;
 ```
 
 **Design Decisions:**
-- Unix timestamps for date/time to avoid timezone issues
+- `created_by` tracks original creator (can be NULL if user deleted)
+- `ON DELETE SET NULL` - trip persists even if creator deleted (especially for public trips)
+- `visibility` enum: private (collaborators only), unlisted (link sharing), public (discoverable)
+- `is_featured` flag for curated public trips in gallery
+- **Multi-destination support**:
+  - `primary_destination_*` fields for main/first destination (display, search)
+  - `countries_visited`, `cities_visited` arrays for all destinations
+  - `trip_type` classification (single_destination, multi_city, multi_country, etc.)
+  - Auto-calculated from trip_days or user-provided
+  - GIN indexes for efficient "contains" queries (e.g., trips visiting France)
+- **Timezone handling**:
+  - Unix timestamps (absolute time, no ambiguity)
+  - Separate timezone fields for start/end (local interpretation)
+  - start_timezone = "where the trip starts" (usually home/departure city)
+  - end_timezone = "where the trip ends" (final destination)
+  - Each trip_day has its own timezone (handles timezone changes)
+  - IANA timezone format (e.g., 'America/New_York', 'Asia/Tokyo')
 - `ENUM` for status to enforce valid states
 - `NUMERIC(12,2)` for budget to avoid floating point errors
 - PostgreSQL `POINT` type for coordinates (can upgrade to PostGIS)
 - `TEXT[]` array for flexible tagging
 - Composite indexes for common query patterns
-- Foreign key with `CASCADE` to auto-cleanup user data
+
+---
+
+### **Multi-Destination Model**
+
+Most trips visit **multiple locations**. How do we represent "Europe Backpacking" that visits Paris, Rome, and Barcelona?
+
+#### The Approach: Primary + All Destinations
+
+```sql
+trips:
+  -- Primary destination (for display/filtering)
+  primary_destination_country: 'France'
+  primary_destination_city: 'Paris'
+
+  -- All destinations visited (for complete search)
+  countries_visited: ['France', 'Italy', 'Spain']
+  cities_visited: ['Paris', 'Rome', 'Barcelona']
+
+  -- Trip type classification
+  trip_type: 'multi_country'
+```
+
+#### Why Both Primary AND All Destinations?
+
+**1. Primary Destination = User-Facing**
+- Trip cards: "**Paris** and 2 other cities"
+- Search: "Trips to **France**"
+- Display: Easy to show main destination
+
+**2. All Destinations = Complete Search**
+- Find: "All trips visiting Italy" (even if Italy isn't primary)
+- Browse: "Multi-country trips in Europe"
+- Analytics: "Most popular country combinations"
+
+#### Real-World Examples
+
+**Example 1: Single Destination Trip**
+```sql
+Trip: "Tokyo Adventure" (7 days in Tokyo)
+
+primary_destination_country: 'Japan'
+primary_destination_city: 'Tokyo'
+countries_visited: ['Japan']
+cities_visited: ['Tokyo']
+trip_type: 'single_destination'
+```
+
+**Example 2: Multi-City Trip (Same Country)**
+```sql
+Trip: "Italian Tour" (Rome → Florence → Venice)
+
+primary_destination_country: 'Italy'
+primary_destination_city: 'Rome'  -- First/main city
+countries_visited: ['Italy']
+cities_visited: ['Rome', 'Florence', 'Venice']
+trip_type: 'multi_city'
+```
+
+**Example 3: Multi-Country Trip**
+```sql
+Trip: "Europe Backpacking" (France → Italy → Spain)
+
+primary_destination_country: 'France'  -- First country
+primary_destination_city: 'Paris'      -- First city
+countries_visited: ['France', 'Italy', 'Spain']
+cities_visited: ['Paris', 'Rome', 'Barcelona']
+trip_type: 'multi_country'
+```
+
+**Example 4: Regional Trip**
+```sql
+Trip: "Southeast Asia Adventure" (Thailand → Vietnam → Cambodia)
+
+primary_destination_country: 'Thailand'
+primary_destination_city: 'Bangkok'
+countries_visited: ['Thailand', 'Vietnam', 'Cambodia']
+cities_visited: ['Bangkok', 'Ho Chi Minh City', 'Siem Reap']
+trip_type: 'regional'
+```
+
+**Example 5: Global Trip**
+```sql
+Trip: "Around the World" (USA → Europe → Asia → Australia)
+
+primary_destination_country: 'USA'  -- Starting point
+primary_destination_city: 'New York'
+countries_visited: ['USA', 'France', 'Japan', 'Australia', ...]
+cities_visited: ['New York', 'Paris', 'Tokyo', 'Sydney', ...]
+trip_type: 'global'
+```
+
+#### Trip Type Classification
+
+```sql
+CREATE TYPE trip_type AS ENUM (
+    'single_destination',  -- One city/area
+    'multi_city',          -- Multiple cities, one country
+    'multi_country',       -- Multiple countries, one region
+    'regional',            -- Cross-regional (e.g., Southeast Asia, Western Europe)
+    'global'               -- Multiple continents
+);
+```
+
+| Type | Definition | Example |
+|------|------------|---------|
+| **single_destination** | One city/area | "Paris 5 Days" |
+| **multi_city** | 2+ cities, 1 country | "Italy: Rome, Florence, Venice" |
+| **multi_country** | 2+ countries, 1 region | "Spain & Portugal" |
+| **regional** | Multiple countries, cross-regional | "Southeast Asia: Thailand, Vietnam, Cambodia" |
+| **global** | Multiple continents | "Around the World: USA, Europe, Asia" |
+
+#### Auto-Calculation from trip_days
+
+```python
+def calculate_destinations(trip_id: int, db: Session):
+    """
+    Auto-calculate destination fields from trip_days.
+    Called after trip_days are added/updated.
+    """
+    # Get all days for trip, ordered chronologically
+    days = db.query(TripDay).filter(
+        TripDay.trip_id == trip_id
+    ).order_by(TripDay.date).all()
+
+    if not days:
+        return
+
+    # Extract unique countries and cities (preserve order)
+    countries = []
+    cities = []
+    for day in days:
+        if day.place_country and day.place_country not in countries:
+            countries.append(day.place_country)
+        if day.place_city and day.place_city not in cities:
+            cities.append(day.place_city)
+
+    # Primary = first destination
+    primary_country = countries[0] if countries else None
+    primary_city = cities[0] if cities else None
+
+    # Classify trip type
+    trip_type = classify_trip_type(countries, cities)
+
+    # Update trip
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    trip.primary_destination_country = primary_country
+    trip.primary_destination_city = primary_city
+    trip.countries_visited = countries
+    trip.cities_visited = cities
+    trip.trip_type = trip_type
+    db.commit()
+
+def classify_trip_type(countries: list, cities: list) -> str:
+    """Classify trip based on destinations."""
+    if len(countries) == 1 and len(cities) == 1:
+        return 'single_destination'
+    elif len(countries) == 1 and len(cities) > 1:
+        return 'multi_city'
+    elif len(countries) <= 3:
+        return 'multi_country'
+    elif len(countries) <= 6:
+        return 'regional'
+    else:
+        return 'global'
+```
+
+#### Search Queries Enabled
+
+**1. Find trips to specific country (primary OR visited)**
+```sql
+-- Trips where France is primary destination
+SELECT * FROM trips WHERE primary_destination_country = 'France';
+
+-- Trips that visit France (even if not primary)
+SELECT * FROM trips WHERE 'France' = ANY(countries_visited);
+
+-- Combined: Trips related to France
+SELECT * FROM trips
+WHERE primary_destination_country = 'France'
+   OR 'France' = ANY(countries_visited);
+```
+
+**2. Find multi-country trips**
+```sql
+SELECT * FROM trips
+WHERE trip_type IN ('multi_country', 'regional', 'global');
+```
+
+**3. Find trips visiting multiple specific countries**
+```sql
+-- Trips visiting both France AND Italy
+SELECT * FROM trips
+WHERE countries_visited @> ARRAY['France', 'Italy'];
+```
+
+**4. Browse by city**
+```sql
+-- All trips to Paris
+SELECT * FROM trips WHERE 'Paris' = ANY(cities_visited);
+```
+
+#### User Experience Benefits
+
+**Trip Cards/Display:**
+```
+[Trip Card]
+Europe Adventure
+📍 Paris, France + 2 more cities
+🗓️ 10 days • Multi-country
+```
+
+**Search Results:**
+```
+Search: "France"
+Results:
+✓ "Paris Weekend" (primary: France)
+✓ "Europe Tour" (visits: France, Italy, Spain)
+✓ "French Riviera" (primary: France)
+```
+
+**Filters:**
+```
+Destination Type:
+☐ Single destination
+☑ Multi-city
+☑ Multi-country
+☐ Regional
+☐ Global
+```
+
+#### Benefits of This Approach
+
+✅ **Accurate**: Captures all destinations visited
+✅ **Searchable**: Can find trips by any destination (not just primary)
+✅ **User-friendly**: Shows primary destination prominently
+✅ **Efficient**: GIN indexes make array searches fast
+✅ **Flexible**: User can override auto-calculation
+✅ **Analytics-ready**: Easy to query trip patterns
+
+#### Alternative Approaches Considered
+
+❌ **Option 1: Single destination only**
+```sql
+destination_country: 'France'  -- Loses Italy, Spain!
+```
+- Problem: Can't represent multi-destination trips
+
+❌ **Option 2: Comma-separated string**
+```sql
+destinations: 'France, Italy, Spain'
+```
+- Problem: Can't query efficiently, string parsing required
+
+❌ **Option 3: Separate destinations table**
+```sql
+trip_destinations:
+  trip_id, country, city, order
+```
+- Problem: Overkill, extra joins, slower queries
+- When to use: If destinations become complex (duration per city, etc.)
+
+✅ **Our Approach: Primary + Arrays**
+- Simple, fast, covers all use cases
+
+---
+
+### **Timezone Handling Strategy**
+
+Travel apps face a unique challenge: **trips span multiple timezones**. A flight from NYC to Tokyo crosses 13 hours of timezone difference. Here's how we handle it:
+
+#### The Approach: Hybrid Timestamp + Timezone
+
+```sql
+trips:
+  start_date_timestamp: 1735689600  -- Unix timestamp (absolute)
+  start_timezone: 'America/New_York' -- Local context
+  end_date_timestamp: 1737504000
+  end_timezone: 'Asia/Tokyo'
+
+trip_days:
+  date: '2025-01-05'                -- Calendar date
+  timezone: 'Europe/Paris'          -- That day's timezone
+  arrival_time: 1735740000          -- Absolute timestamp
+  departure_time: 1735790000
+```
+
+#### Why This Works
+
+**1. Unix Timestamps = Absolute Time**
+- No ambiguity: `1735689600` is exactly one moment in time globally
+- Easy comparison: `timestamp1 > timestamp2` always works
+- Math operations: Calculate duration, sort chronologically
+
+**2. Timezone Fields = Human Interpretation**
+- Display: "Trip starts January 1, 2025 at 9:00 AM **EST**"
+- Context: User knows which local time zone
+- Flexibility: Each day can have different timezone
+
+**3. Real-World Example**
+
+```
+Trip: NYC → Paris → Tokyo (10 days)
+
+trips table:
+  start_date_timestamp: 1735689600  (Jan 1, 2025, 00:00:00)
+  start_timezone: 'America/New_York' (EST, UTC-5)
+  end_date_timestamp: 1736553600    (Jan 11, 2025, 00:00:00)
+  end_timezone: 'Asia/Tokyo'        (JST, UTC+9)
+
+trip_days:
+  Day 1: date=2025-01-01, timezone='America/New_York'   (NYC)
+  Day 2: date=2025-01-02, timezone='America/New_York'   (Flight to Paris)
+  Day 3: date=2025-01-03, timezone='Europe/Paris'       (Arrived Paris)
+  Day 4: date=2025-01-04, timezone='Europe/Paris'       (Paris)
+  Day 5: date=2025-01-05, timezone='Europe/Paris'       (Paris)
+  Day 6: date=2025-01-06, timezone='Europe/Paris'       (Flight to Tokyo)
+  Day 7: date=2025-01-07, timezone='Asia/Tokyo'         (Arrived Tokyo)
+  Day 8: date=2025-01-08, timezone='Asia/Tokyo'         (Tokyo)
+  Day 9: date=2025-01-09, timezone='Asia/Tokyo'         (Tokyo)
+  Day 10: date=2025-01-10, timezone='Asia/Tokyo'        (Tokyo)
+```
+
+#### Handling Edge Cases
+
+**Case 1: Flight Crossing Midnight**
+```
+Depart NYC: Jan 1, 11:30 PM EST
+Arrive Paris: Jan 2, 12:45 PM CET (next day!)
+
+Day 1 (Jan 1):
+  timezone: 'America/New_York'
+  departure_time: 1735783800  (Jan 1, 23:30 EST)
+
+Day 2 (Jan 2):
+  timezone: 'Europe/Paris'
+  arrival_time: 1735825500    (Jan 2, 12:45 CET)
+```
+
+**Case 2: Flight Crossing Date Line**
+```
+Depart Los Angeles: Jan 5, 10:00 PM PST
+Arrive Sydney: Jan 7, 7:00 AM AEDT (skip Jan 6!)
+
+Day 1 (Jan 5):
+  timezone: 'America/Los_Angeles'
+  departure_time: 1736146800
+
+Day 2 (Jan 7):  // Note: Jan 6 doesn't exist for traveler!
+  timezone: 'Australia/Sydney'
+  arrival_time: 1736200800
+```
+
+**Case 3: Validation**
+```python
+# When creating/updating trip_days
+def validate_trip_day(trip_day, trip):
+    # Convert trip bounds to UTC for comparison
+    trip_start_utc = trip.start_date_timestamp
+    trip_end_utc = trip.end_date_timestamp
+
+    # Convert day's date to UTC using its timezone
+    day_start_utc = convert_to_utc(trip_day.date, trip_day.timezone)
+
+    # Validate day falls within trip
+    if not (trip_start_utc <= day_start_utc <= trip_end_utc):
+        raise ValidationException(
+            "Day must fall within trip dates",
+            f"Day {trip_day.date} ({trip_day.timezone}) outside trip range"
+        )
+```
+
+#### Display Logic
+
+**Frontend Display:**
+```python
+# Display trip start to user
+def format_trip_start(trip, user_timezone):
+    # Convert to user's preferred timezone for display
+    local_time = convert_timestamp(
+        trip.start_date_timestamp,
+        from_tz=trip.start_timezone,
+        to_tz=user_timezone
+    )
+    return f"{local_time} ({trip.start_timezone})"
+
+# Example output:
+# "January 1, 2025, 9:00 AM EST"
+# Or if user is in California:
+# "January 1, 2025, 6:00 AM PST (9:00 AM EST)"
+```
+
+#### Benefits of This Approach
+
+✅ **Accurate**: Unix timestamps are absolute, no timezone math errors
+✅ **Flexible**: Each day has its own timezone (handles timezone changes)
+✅ **User-friendly**: Display in local context
+✅ **Sortable**: Easy to query/sort trips chronologically
+✅ **Validated**: Can enforce days fall within trip bounds
+✅ **International**: IANA timezone database (handles DST automatically)
+
+#### Alternative Approaches Considered
+
+❌ **Option 1: Store everything in UTC**
+- Problem: Loses local context ("9 AM departure" vs "14:00 UTC")
+- Difficult to display meaningfully to users
+
+❌ **Option 2: Store dates as strings with timezone**
+- Problem: Can't easily compare/sort
+- Math operations require parsing
+
+❌ **Option 3: Use PostgreSQL TIMESTAMPTZ**
+- Problem: Stores in UTC, loses original timezone info
+- Can't differentiate "9 AM EST" vs "9 AM PST" if both stored as UTC
+
+✅ **Our Approach: Hybrid**
+- Unix timestamp (absolute time) + timezone (local context)
+- Best of both worlds!
+
+---
+
+### **Entity: TripCollaborators** (NEW - Many-to-Many Relationship)
+
+```sql
+CREATE TYPE collaborator_role AS ENUM ('owner', 'editor', 'viewer');
+
+CREATE TABLE trip_collaborators (
+    id BIGSERIAL PRIMARY KEY,
+    trip_id BIGINT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role collaborator_role NOT NULL DEFAULT 'viewer',
+
+    -- Invitation tracking
+    invited_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    invited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    accepted_at TIMESTAMP,
+    invitation_status VARCHAR(20) DEFAULT 'accepted', -- pending, accepted, declined
+
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Constraints
+    UNIQUE(trip_id, user_id) -- User can only be added once per trip
+);
+
+-- Function to handle user deletion and trip ownership
+CREATE OR REPLACE FUNCTION handle_user_deletion_for_trips()
+RETURNS TRIGGER AS $$
+DECLARE
+    affected_trip RECORD;
+    remaining_owners INT;
+    next_editor BIGINT;
+BEGIN
+    -- For each trip where deleted user was an owner
+    FOR affected_trip IN
+        SELECT DISTINCT tc.trip_id, t.visibility
+        FROM trip_collaborators tc
+        JOIN trips t ON tc.trip_id = t.id
+        WHERE tc.user_id = OLD.id AND tc.role = 'owner'
+    LOOP
+        -- Count remaining owners after this deletion
+        SELECT COUNT(*) INTO remaining_owners
+        FROM trip_collaborators
+        WHERE trip_id = affected_trip.trip_id
+          AND role = 'owner'
+          AND user_id != OLD.id;
+
+        -- If no owners will remain
+        IF remaining_owners = 0 THEN
+            -- If trip is public, promote first editor to owner
+            IF affected_trip.visibility = 'public' THEN
+                SELECT user_id INTO next_editor
+                FROM trip_collaborators
+                WHERE trip_id = affected_trip.trip_id
+                  AND role = 'editor'
+                  AND user_id != OLD.id
+                ORDER BY created_at ASC
+                LIMIT 1;
+
+                IF next_editor IS NOT NULL THEN
+                    UPDATE trip_collaborators
+                    SET role = 'owner'
+                    WHERE trip_id = affected_trip.trip_id
+                      AND user_id = next_editor;
+                END IF;
+            -- If trip is private and no owners remain, delete it
+            ELSIF affected_trip.visibility = 'private' THEN
+                DELETE FROM trips WHERE id = affected_trip.trip_id;
+            END IF;
+        END IF;
+    END LOOP;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER user_deletion_trip_ownership_trigger
+    BEFORE DELETE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_user_deletion_for_trips();
+
+-- Indexes
+CREATE INDEX idx_trip_collaborators_trip_id ON trip_collaborators(trip_id);
+CREATE INDEX idx_trip_collaborators_user_id ON trip_collaborators(user_id);
+CREATE INDEX idx_trip_collaborators_role ON trip_collaborators(trip_id, role);
+CREATE INDEX idx_trip_collaborators_pending ON trip_collaborators(user_id, invitation_status)
+    WHERE invitation_status = 'pending';
+```
+
+**Collaborator Roles:**
+
+| Role | Permissions |
+|------|-------------|
+| **owner** | Full control: edit trip, add/remove collaborators, delete trip |
+| **editor** | Edit trip details, add expenses/photos/notes, edit days |
+| **viewer** | View-only access, can add personal notes (future feature) |
+
+**Design Decisions:**
+- Creator automatically becomes 'owner' via trigger or application logic
+- Multiple 'owners' allowed (e.g., both partners in a couple)
+- Invitation system built-in for future feature
+- `UNIQUE(trip_id, user_id)` prevents duplicate memberships
+- User deletion handling:
+  - **Private trips**: Deleted if last owner leaves
+  - **Public trips**: First editor promoted to owner (trip persists)
+  - **Unlisted trips**: Same as public (trip persists)
+- Trip data remains accessible based on visibility setting
+
+**Trigger to Auto-Add Creator as Owner:**
+```sql
+CREATE OR REPLACE FUNCTION add_trip_creator_as_owner()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO trip_collaborators (trip_id, user_id, role, invitation_status)
+    VALUES (NEW.id, NEW.created_by, 'owner', 'accepted');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trip_creator_owner_trigger
+    AFTER INSERT ON trips
+    FOR EACH ROW
+    EXECUTE FUNCTION add_trip_creator_as_owner();
+```
+
+---
+
+### **Trip Visibility Model: Open Source Trips**
+
+Logbook supports **three visibility levels** for trips, enabling users to share their travel itineraries with the world.
+
+#### Visibility Levels
+
+```sql
+CREATE TYPE trip_visibility AS ENUM ('private', 'unlisted', 'public');
+```
+
+| Visibility | Who Can View | Discoverable | Use Case |
+|------------|-------------|--------------|----------|
+| **private** | Only collaborators | No | Personal/family trips |
+| **unlisted** | Anyone with link | No | Share with specific friends |
+| **public** | Everyone | Yes | Community contribution, inspiration |
+
+#### Public Trip Features
+
+**1. Public Trip Gallery**
+```sql
+-- Get featured public trips
+SELECT * FROM trips
+WHERE visibility = 'public'
+  AND is_featured = TRUE
+  AND deleted_at IS NULL
+ORDER BY created_at DESC;
+
+-- Browse public trips by destination
+SELECT * FROM trips
+WHERE visibility = 'public'
+  AND destination_country = 'France'
+  AND deleted_at IS NULL;
+```
+
+**2. Trip Cloning (Fork)**
+Users can "clone" public trips to create their own version:
+```sql
+-- Clone trip creates new trip with same structure
+-- but user becomes owner of cloned trip
+INSERT INTO trips (created_by, name, description, ...)
+SELECT new_user_id, CONCAT(name, ' (Copy)'), description, ...
+FROM trips WHERE id = source_trip_id;
+```
+
+**3. Trip Statistics & Analytics**
+```sql
+-- Add to trips table for public engagement
+ALTER TABLE trips ADD COLUMN views_count INTEGER DEFAULT 0;
+ALTER TABLE trips ADD COLUMN clones_count INTEGER DEFAULT 0;
+ALTER TABLE trips ADD COLUMN likes_count INTEGER DEFAULT 0;
+
+-- Track trip views
+CREATE TABLE trip_views (
+    id BIGSERIAL PRIMARY KEY,
+    trip_id BIGINT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    viewer_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    viewer_ip_address INET,
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_trip_views_trip_id ON trip_views(trip_id);
+CREATE INDEX idx_trip_views_user_id ON trip_views(viewer_user_id);
+CREATE INDEX idx_trip_views_ip ON trip_views(viewer_ip_address);
+CREATE INDEX idx_trip_views_date ON trip_views(viewed_at);
+
+-- Track trip likes
+CREATE TABLE trip_likes (
+    id BIGSERIAL PRIMARY KEY,
+    trip_id BIGINT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(trip_id, user_id)
+);
+
+CREATE INDEX idx_trip_likes_trip_id ON trip_likes(trip_id);
+CREATE INDEX idx_trip_likes_user_id ON trip_likes(user_id);
+```
+
+**4. Public Trip Comments (Optional - Future Phase)**
+```sql
+CREATE TABLE trip_comments (
+    id BIGSERIAL PRIMARY KEY,
+    trip_id BIGINT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_comment_id BIGINT REFERENCES trip_comments(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+);
+```
+
+#### Authorization for Public Trips
+
+```python
+def check_trip_view_access(trip_id: int, current_user: User | None, db: Session):
+    """
+    Check if user can view trip based on visibility.
+    Returns trip if authorized, raises 403/404 if not.
+    """
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    # Public trips - anyone can view
+    if trip.visibility == 'public':
+        # Increment view counter
+        trip.views_count += 1
+        db.commit()
+        return trip
+
+    # Unlisted trips - anyone with link can view
+    if trip.visibility == 'unlisted':
+        return trip
+
+    # Private trips - only collaborators
+    if trip.visibility == 'private':
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+
+        is_collaborator = db.query(TripCollaborator).filter(
+            TripCollaborator.trip_id == trip_id,
+            TripCollaborator.user_id == current_user.id
+        ).first()
+
+        if not is_collaborator:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        return trip
+```
+
+#### Public Trip API Endpoints
+
+```
+# Browse public trips
+GET    /trips/public
+Query: ?destination=France&tags=adventure&sort=-views_count&page=1
+Response: Paginated list of public trips
+
+# Get featured trips
+GET    /trips/featured
+Response: Curated list of featured public trips
+
+# Search public trips
+GET    /trips/search?q=europe+backpacking
+Response: Search results with relevance ranking
+
+# Clone public trip
+POST   /trips/{trip_id}/clone
+Response: New trip (copy) owned by current user
+
+# Like public trip
+POST   /trips/{trip_id}/like
+DELETE /trips/{trip_id}/like
+
+# Get trip statistics
+GET    /trips/{trip_id}/stats
+Response: { views, clones, likes, created_at, collaborators_count }
+
+# Get trending trips
+GET    /trips/trending
+Query: ?period=week&limit=10
+Response: Top trips by views/clones/likes
+```
+
+#### Benefits of Open Source Trips
+
+✅ **Community Contribution**: Users help others plan similar trips
+✅ **Travel Inspiration**: Browse real itineraries from travelers
+✅ **Trip Templates**: Clone and customize existing trips
+✅ **Reputation System**: Users gain recognition for helpful itineraries
+✅ **Social Proof**: Popular trips validated by community engagement
+✅ **Knowledge Sharing**: Learn from others' experiences and budgets
 
 ---
 
@@ -285,9 +1048,11 @@ CREATE TABLE trip_days (
     title VARCHAR(200),
 
     -- Location
-    place VARCHAR(200) NOT NULL,
-    timezone VARCHAR(50) NOT NULL,
-    coordinates POINT,
+    place VARCHAR(200) NOT NULL,        -- Display name (e.g., "Eiffel Tower, Paris")
+    place_city VARCHAR(100),            -- Structured: City name
+    place_country VARCHAR(100),         -- Structured: Country name
+    timezone VARCHAR(50) NOT NULL,      -- IANA timezone for this location
+    coordinates POINT,                  -- Lat/long coordinates
 
     -- Transit (Travel TO this location)
     transit_mode transit_mode,
@@ -328,12 +1093,17 @@ CREATE INDEX idx_trip_days_trip_id ON trip_days(trip_id);
 CREATE INDEX idx_trip_days_date ON trip_days(date);
 CREATE INDEX idx_trip_days_trip_date ON trip_days(trip_id, date);
 CREATE INDEX idx_trip_days_trip_day_number ON trip_days(trip_id, day_number);
+CREATE INDEX idx_trip_days_location ON trip_days(place_country, place_city);
 CREATE INDEX idx_trip_days_activities ON trip_days USING GIN(activities);
 ```
 
 **Design Decisions:**
 - `DATE` type for day date (simpler than timestamp for day-level)
 - `day_number` auto-calculated for easy ordering
+- **Location fields**:
+  - `place`: User-friendly display name (e.g., "Eiffel Tower, Paris")
+  - `place_city`, `place_country`: Structured fields for aggregation/search
+  - Used to auto-calculate trip-level destinations (countries_visited, cities_visited)
 - JSONB for flexible nested data (transit_details, activities)
 - Separate accommodation fields (commonly queried)
 - `UNIQUE(trip_id, date)` prevents duplicate days
@@ -778,52 +1548,89 @@ CREATE INDEX idx_tokens_expires ON verification_tokens(expires_at)
 ### 2.3 Database Relationships (Entity-Relationship Diagram)
 
 ```
-┌─────────────┐
-│    users    │
-└──────┬──────┘
-       │ 1
-       │
-       │ N
-       ↓
-┌─────────────┐        1        ┌──────────────┐
-│    trips    │◄────────────────│ packing_lists│
-└──────┬──────┘                 └──────┬───────┘
-       │                               │
-       │ 1                             │ 1
-       │                               │
-       │ N                             │ N
-       ├──────────┐                    ↓
-       │          │              ┌──────────────┐
-       │          │              │packing_items │
-       ↓          ↓              └──────────────┘
-┌──────────┐  ┌─────────┐
-│trip_days │  │ expenses│
-└────┬─────┘  └─────────┘
-     │ 1
-     │
-     │ N
-     ├──────────┬──────────┐
-     ↓          ↓          ↓
-┌─────────┐ ┌────────┐ ┌───────┐
-│ photos  │ │ notes  │ │expenses│
-└─────────┘ └────────┘ └───────┘
+┌─────────────┐                    ┌─────────────┐
+│    users    │                    │    trips    │
+└──────┬──────┘                    └──────┬──────┘
+       │                                  │
+       │ N                                │ 1
+       │         ┌──────────────────┐     │
+       └────────►│trip_collaborators│◄────┘
+                 │  (junction)      │
+                 │  - role          │
+                 │  - invitation    │
+                 └──────────────────┘
+                          │
+                          │ The trip has multiple collaborators
+                          │ (family, couple, friends)
+                          │
+                          ↓
+                    ┌─────────────┐
+                    │    trips    │
+                    └──────┬──────┘
+                           │ 1
+                           │
+                           ├──────────┬───────────┬────────────┐
+                           │          │           │            │
+                           │ N        │ N         │ N          │ N
+                           ↓          ↓           ↓            ↓
+                    ┌──────────┐ ┌─────────┐ ┌─────────┐ ┌──────────┐
+                    │trip_days │ │ expenses│ │ photos  │ │  notes   │
+                    └────┬─────┘ └─────────┘ └─────────┘ └──────────┘
+                         │ 1
+                         │
+                         │ N
+                         ├──────────┬──────────┐
+                         ↓          ↓          ↓
+                    ┌─────────┐ ┌────────┐ ┌───────┐
+                    │ photos  │ │ notes  │ │expenses│
+                    └─────────┘ └────────┘ └───────┘
+
+                    ┌─────────────┐
+                    │    trips    │
+                    └──────┬──────┘
+                           │ 1
+                           │
+                           │ N
+                           ↓
+                    ┌──────────────┐
+                    │ packing_lists│
+                    └──────┬───────┘
+                           │ 1
+                           │
+                           │ N
+                           ↓
+                    ┌──────────────┐
+                    │packing_items │
+                    └──────────────┘
 ```
 
 **Key Relationship Rules:**
 
-1. **User → Trips** (1:N, CASCADE)
-   - User deleted → All trips deleted
+1. **Users ↔ Trips** (N:N through trip_collaborators)
+   - Many-to-many relationship allows multiple users per trip
+   - Each collaborator has a role (owner, editor, viewer)
+   - User deleted → Removed from collaborators (CASCADE)
+   - **User deletion smart handling:**
+     - Private trips without remaining owners → Deleted
+     - Public/unlisted trips → First editor promoted to owner, trip persists
+   - Trip deleted → Remove all collaborators (CASCADE)
 
-2. **Trip → TripDays** (1:N, CASCADE)
+2. **Trips → Trip Creator** (N:1, SET NULL)
+   - Each trip has ONE original creator (created_by field, can be NULL)
+   - Creator deleted → created_by set to NULL, trip persists if public
+   - Creator automatically becomes 'owner' collaborator on trip creation
+
+3. **Trip → TripDays** (1:N, CASCADE)
    - Trip deleted → All trip days deleted
 
-3. **Trip → Expenses/Photos/Notes** (1:N, CASCADE)
+4. **Trip → Expenses/Photos/Notes** (1:N, CASCADE)
    - Trip deleted → All associated data deleted
+   - Each expense/photo/note tracks which user added it (user_id)
 
-4. **TripDay → Expenses/Photos/Notes** (1:N, SET NULL)
+5. **TripDay → Expenses/Photos/Notes** (1:N, SET NULL)
    - TripDay deleted → Keep data but set trip_day_id to NULL
 
-5. **Trip → PackingLists** (1:N, CASCADE)
+6. **Trip → PackingLists** (1:N, CASCADE)
    - Trip deleted → All packing lists deleted
 
 ---
@@ -1239,32 +2046,115 @@ is_valid = pwd_context.verify("user_password", hashed)
 
 ---
 
-### 4.4 Authorization Strategy: Role-Based Access Control (RBAC)
+### 4.4 Authorization Strategy: Collaborative Role-Based Access Control (RBAC)
 
-**For MVP: Simple Ownership Model**
-```python
-# User can only access their own resources
-def get_trip(trip_id: int, current_user: User):
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    if not trip:
-        raise HTTPException(status_code=404)
-    if trip.user_id != current_user.id:
-        raise HTTPException(status_code=403)
-    return trip
-```
+**Collaborative Trip Model with Roles**
 
-**Future: Role-Based (if sharing features added)**
 ```python
-class Role(str, Enum):
+from enum import Enum
+from fastapi import HTTPException, status
+
+class CollaboratorRole(str, Enum):
     OWNER = "owner"
     EDITOR = "editor"
     VIEWER = "viewer"
 
-class TripCollaborator(Base):
-    trip_id = Column(BigInteger, ForeignKey("trips.id"))
-    user_id = Column(BigInteger, ForeignKey("users.id"))
-    role = Column(Enum(Role))
+# Permission checker
+def check_trip_access(trip_id: int, user_id: int, required_role: CollaboratorRole, db: Session):
+    """
+    Check if user has access to trip with required role.
+    Returns the collaborator record if authorized, raises 403 if not.
+    """
+    collaborator = db.query(TripCollaborator).filter(
+        TripCollaborator.trip_id == trip_id,
+        TripCollaborator.user_id == user_id
+    ).first()
+
+    if not collaborator:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this trip"
+        )
+
+    # Role hierarchy: owner > editor > viewer
+    role_hierarchy = {
+        CollaboratorRole.OWNER: 3,
+        CollaboratorRole.EDITOR: 2,
+        CollaboratorRole.VIEWER: 1
+    }
+
+    if role_hierarchy[collaborator.role] < role_hierarchy[required_role]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"You need {required_role} role for this action"
+        )
+
+    return collaborator
+
+# Usage examples
+async def get_trip(trip_id: int, current_user: User, db: Session):
+    """Any collaborator can view trip"""
+    check_trip_access(trip_id, current_user.id, CollaboratorRole.VIEWER, db)
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    return trip
+
+async def update_trip(trip_id: int, data: TripUpdate, current_user: User, db: Session):
+    """Only editors and owners can update trip"""
+    check_trip_access(trip_id, current_user.id, CollaboratorRole.EDITOR, db)
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    # Update logic here
+    return trip
+
+async def delete_trip(trip_id: int, current_user: User, db: Session):
+    """Only owners can delete trip"""
+    check_trip_access(trip_id, current_user.id, CollaboratorRole.OWNER, db)
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    db.delete(trip)
+    db.commit()
+
+async def add_collaborator(
+    trip_id: int,
+    new_user_id: int,
+    role: CollaboratorRole,
+    current_user: User,
+    db: Session
+):
+    """Only owners can add/remove collaborators"""
+    check_trip_access(trip_id, current_user.id, CollaboratorRole.OWNER, db)
+
+    # Add new collaborator
+    collaborator = TripCollaborator(
+        trip_id=trip_id,
+        user_id=new_user_id,
+        role=role,
+        invited_by=current_user.id
+    )
+    db.add(collaborator)
+    db.commit()
+    return collaborator
 ```
+
+**Permission Matrix:**
+
+| Action | Owner | Editor | Viewer |
+|--------|-------|--------|--------|
+| View trip details | ✅ | ✅ | ✅ |
+| View expenses/photos | ✅ | ✅ | ✅ |
+| Add expenses/photos | ✅ | ✅ | ❌ |
+| Edit trip details | ✅ | ✅ | ❌ |
+| Edit trip days | ✅ | ✅ | ❌ |
+| Delete expenses/photos | ✅ | ✅ | ❌ |
+| Add collaborators | ✅ | ❌ | ❌ |
+| Remove collaborators | ✅ | ❌ | ❌ |
+| Change roles | ✅ | ❌ | ❌ |
+| Delete trip | ✅ | ❌ | ❌ |
+
+**Use Cases:**
+
+1. **Couple Trip**: Both partners are 'owners' - equal control
+2. **Family Trip**: Parents are 'owners', kids are 'viewers'
+3. **Group Trip**: Organizer is 'owner', friends are 'editors'
+4. **Shared Itinerary**: Trip planner is 'owner', clients are 'viewers'
 
 ---
 
@@ -2655,6 +3545,47 @@ Infrastructure:
 
 ---
 
+## Additional API Endpoints for Collaborative Trips
+
+### Trip Collaborators
+
+```
+# Get all collaborators for a trip
+GET    /trips/{trip_id}/collaborators
+Response: List of collaborators with roles
+
+# Add collaborator to trip (owner only)
+POST   /trips/{trip_id}/collaborators
+Body: { user_id, role }
+Response: Collaborator object
+
+# Update collaborator role (owner only)
+PUT    /trips/{trip_id}/collaborators/{user_id}
+Body: { role }
+Response: Updated collaborator
+
+# Remove collaborator from trip (owner only)
+DELETE /trips/{trip_id}/collaborators/{user_id}
+Response: 204 No Content
+
+# Get all trips user is collaborating on
+GET    /users/me/trips
+Query: ?role=owner&status=ongoing
+Response: Paginated list of trips with user's role
+
+# Leave trip (self-removal, except last owner)
+DELETE /trips/{trip_id}/collaborators/me
+Response: 204 No Content
+```
+
+**Business Rules:**
+- At least one 'owner' must remain on a trip
+- Cannot remove yourself if you're the last owner
+- Owners can promote editors to owners
+- Owners can demote other owners (as long as 1+ owner remains)
+
+---
+
 ## Next Steps
 
 1. **Review & Approve Design**
@@ -2670,6 +3601,7 @@ Infrastructure:
 3. **Implement Foundation (Phase 1)**
    - User model & auth
    - Trip & TripDay complete CRUD
+   - **Trip collaborator management**
    - Database migrations
    - Basic tests
 
@@ -2677,6 +3609,84 @@ Infrastructure:
    - Monitor performance
    - Gather feedback
    - Optimize bottlenecks
+
+---
+
+## Summary of Collaborative & Open Source Trip Features
+
+### What Changed:
+
+#### 1. **Multi-User Collaborative Trips**
+**Database Schema:**
+- `trips.user_id` → `trips.created_by` (original creator, can be NULL)
+- Added `trip_collaborators` junction table (N:N relationship)
+- Added `collaborator_role` enum (owner, editor, viewer)
+- Added trigger to auto-add creator as owner
+- Smart user deletion handling (preserve public trips)
+
+**Authorization Model:**
+- Role-based access control (RBAC)
+- Permission hierarchy: owner > editor > viewer
+- Permission matrix for all operations
+- Separate view/edit permissions
+
+**API Changes:**
+- Collaborator management endpoints
+- Updated trip queries to filter by collaboration
+- User can see all trips they collaborate on
+
+#### 2. **Open Source / Public Trips**
+**Database Schema:**
+- Changed `is_private` → `visibility` enum (private, unlisted, public)
+- Added `is_featured` flag for curated trips
+- Added engagement metrics: `views_count`, `clones_count`, `likes_count`
+- Added `trip_views` table (analytics)
+- Added `trip_likes` table (social engagement)
+- Optional: `trip_comments` table (community feedback)
+
+**Features:**
+- Public trip gallery/discovery
+- Trip cloning (fork) functionality
+- Trip likes and engagement tracking
+- Featured trips curation
+- Search and browse public trips
+- Trending trips
+
+**User Deletion Strategy:**
+- **Private trips**: Deleted if no owners remain
+- **Public/unlisted trips**: Persist indefinitely
+- **Public trips**: First editor promoted to owner
+- **Created_by**: Set to NULL (trip remains accessible)
+
+### Benefits:
+
+#### Collaboration Benefits:
+- ✅ Supports family trips (multiple owners)
+- ✅ Supports couple trips (shared control)
+- ✅ Supports group trips (organizer + participants)
+- ✅ Flexible permission system
+- ✅ Built-in invitation system for future
+- ✅ Tracks who added each expense/photo/note
+
+#### Open Source Benefits:
+- ✅ **Community-driven**: Users contribute travel knowledge
+- ✅ **Travel inspiration**: Browse real itineraries
+- ✅ **Trip templates**: Clone and customize
+- ✅ **Knowledge sharing**: Learn from others' experiences
+- ✅ **Social proof**: Popular trips validated by community
+- ✅ **Discovery**: Find trips by destination, tags, popularity
+- ✅ **Persistence**: Public trips survive user deletion
+- ✅ **Attribution**: Original creator tracked even after deletion
+
+### Use Cases Enabled:
+
+1. **Private Family Trip**: Parents as owners, kids as viewers, stays private
+2. **Couple's Honeymoon**: Both partners as owners, shared planning
+3. **Group Backpacking**: Organizer as owner, friends as editors
+4. **Public Travel Guide**: Solo traveler shares detailed itinerary publicly
+5. **Influencer Trip**: Travel blogger publishes trip, thousands clone it
+6. **Travel Agency**: Agency creates trips as templates, clients clone them
+7. **Open Source Planning**: Community collaboratively improves popular routes
 
 ---
 
