@@ -219,11 +219,22 @@ CREATE TABLE trips (
     description TEXT,
     cover_photo_url TEXT,
 
-    -- Dates (stored as Unix timestamps with timezone context)
-    start_date_timestamp BIGINT NOT NULL,
-    start_timezone VARCHAR(50) NOT NULL DEFAULT 'UTC', -- IANA timezone (e.g., 'America/New_York')
-    end_date_timestamp BIGINT NOT NULL,
-    end_timezone VARCHAR(50) NOT NULL DEFAULT 'UTC', -- IANA timezone (e.g., 'Asia/Tokyo')
+    -- Dates (flexible for planning stage)
+    start_date_timestamp BIGINT,           -- Exact start time (NULL if flexible)
+    start_timezone VARCHAR(50) DEFAULT 'UTC',
+    end_date_timestamp BIGINT,             -- Exact end time (NULL if flexible)
+    end_timezone VARCHAR(50) DEFAULT 'UTC',
+
+    -- Flexible/tentative dates (for planning stage)
+    dates_confirmed BOOLEAN DEFAULT FALSE, -- Are dates locked in?
+    planned_start_year INTEGER,            -- e.g., 2025
+    planned_start_month INTEGER,           -- 1-12 (e.g., January = 1)
+    planned_start_week VARCHAR(10),        -- 'first', 'second', 'third', 'fourth', 'last'
+    planned_duration_days INTEGER,         -- e.g., 5 days
+
+    -- Flexible date description (user-friendly)
+    date_flexibility VARCHAR(50),          -- 'exact', 'flexible', 'month', 'quarter', 'year'
+    flexible_date_notes TEXT,              -- "Sometime in January, preferably first 2 weeks"
 
     -- Location (for search/filtering/display)
     primary_destination_country VARCHAR(100), -- Main/first destination
@@ -256,8 +267,13 @@ CREATE TABLE trips (
     deleted_at TIMESTAMP,
 
     -- Constraints
-    CONSTRAINT valid_dates CHECK (end_date_timestamp >= start_date_timestamp),
-    CONSTRAINT valid_budget CHECK (budget_total IS NULL OR budget_total >= 0)
+    CONSTRAINT valid_dates CHECK (
+        (start_date_timestamp IS NULL AND end_date_timestamp IS NULL) OR
+        (start_date_timestamp IS NOT NULL AND end_date_timestamp IS NOT NULL AND end_date_timestamp >= start_date_timestamp)
+    ),
+    CONSTRAINT valid_budget CHECK (budget_total IS NULL OR budget_total >= 0),
+    CONSTRAINT valid_planned_month CHECK (planned_start_month IS NULL OR (planned_start_month >= 1 AND planned_start_month <= 12)),
+    CONSTRAINT valid_duration CHECK (planned_duration_days IS NULL OR planned_duration_days > 0)
 );
 
 -- Indexes
@@ -266,6 +282,8 @@ CREATE INDEX idx_trips_status ON trips(status);
 CREATE INDEX idx_trips_visibility ON trips(visibility);
 CREATE INDEX idx_trips_type ON trips(trip_type);
 CREATE INDEX idx_trips_dates ON trips(start_date_timestamp, end_date_timestamp);
+CREATE INDEX idx_trips_dates_confirmed ON trips(dates_confirmed);
+CREATE INDEX idx_trips_planned_dates ON trips(planned_start_year, planned_start_month);
 CREATE INDEX idx_trips_primary_destination ON trips(primary_destination_country, primary_destination_city);
 CREATE INDEX idx_trips_tags ON trips USING GIN(tags); -- For array searches
 
@@ -287,6 +305,13 @@ CREATE INDEX idx_trips_public_views ON trips(visibility, views_count DESC)
 - `ON DELETE SET NULL` - trip persists even if creator deleted (especially for public trips)
 - `visibility` enum: private (collaborators only), unlisted (link sharing), public (discoverable)
 - `is_featured` flag for curated public trips in gallery
+- **Flexible date support**:
+  - Exact dates: `start/end_date_timestamp` (when confirmed)
+  - Flexible dates: `planned_start_year/month` + `planned_duration_days`
+  - `dates_confirmed` flag indicates planning vs confirmed stage
+  - `date_flexibility` describes how flexible ('exact', 'flexible', 'month', 'quarter')
+  - Supports common scenarios: "5 days in January", "2 weeks in summer", "TBD"
+  - Constraint: Either both timestamps NULL or both NOT NULL
 - **Multi-destination support**:
   - `primary_destination_*` fields for main/first destination (display, search)
   - `countries_visited`, `cities_visited` arrays for all destinations
@@ -305,6 +330,349 @@ CREATE INDEX idx_trips_public_views ON trips(visibility, views_count DESC)
 - PostgreSQL `POINT` type for coordinates (can upgrade to PostGIS)
 - `TEXT[]` array for flexible tagging
 - Composite indexes for common query patterns
+
+---
+
+### **Flexible Date Model**
+
+Travel planning happens in stages. Users often know **where** and **how long** before they know **exactly when**.
+
+#### The Problem: Rigid Dates
+
+Current travel apps often require exact dates, but reality is:
+- "I want to visit Paris for 5 days in January" (no exact dates yet)
+- "Planning 2 weeks in Europe, summer 2025" (flexible)
+- "Weekend getaway to Barcelona, sometime in March" (TBD)
+
+#### The Solution: Support Both Exact AND Flexible Dates
+
+```sql
+-- Exact dates (when confirmed)
+start_date_timestamp: 1735689600  -- Jan 1, 2025
+end_date_timestamp: 1736121600    -- Jan 6, 2025
+dates_confirmed: TRUE
+
+-- OR Flexible dates (planning stage)
+start_date_timestamp: NULL
+end_date_timestamp: NULL
+dates_confirmed: FALSE
+planned_start_year: 2025
+planned_start_month: 1            -- January
+planned_duration_days: 5
+date_flexibility: 'month'
+flexible_date_notes: 'Preferably first 2 weeks of January'
+```
+
+---
+
+#### Real-World Examples
+
+**Example 1: Exact Dates (Confirmed)**
+```sql
+Trip: "Paris New Year"
+start_date_timestamp: 1735689600      -- Jan 1, 2025, 00:00 UTC
+end_date_timestamp: 1735948800        -- Jan 4, 2025, 00:00 UTC
+dates_confirmed: TRUE
+date_flexibility: 'exact'
+planned_duration_days: 3              -- Calculated from timestamps
+
+-- Display: "Jan 1-4, 2025" ✅
+```
+
+**Example 2: Flexible Month**
+```sql
+Trip: "Paris Winter Trip"
+start_date_timestamp: NULL
+end_date_timestamp: NULL
+dates_confirmed: FALSE
+planned_start_year: 2025
+planned_start_month: 1                -- January
+planned_duration_days: 5
+date_flexibility: 'month'
+flexible_date_notes: 'Flexible within January, avoiding New Year'
+
+-- Display: "January 2025 • 5 days" 📅
+```
+
+**Example 3: Flexible Week**
+```sql
+Trip: "Barcelona Weekend"
+start_date_timestamp: NULL
+dates_confirmed: FALSE
+planned_start_year: 2025
+planned_start_month: 3                -- March
+planned_start_week: 'second'          -- Second week
+planned_duration_days: 3
+date_flexibility: 'flexible'
+
+-- Display: "2nd week of March 2025 • 3 days" 📅
+```
+
+**Example 4: Flexible Quarter**
+```sql
+Trip: "Southeast Asia Adventure"
+start_date_timestamp: NULL
+dates_confirmed: FALSE
+planned_start_year: 2025
+planned_start_month: NULL             -- Not specific month
+planned_duration_days: 21
+date_flexibility: 'quarter'
+flexible_date_notes: 'Q1 2025 - January, February, or March'
+
+-- Display: "Q1 2025 • 3 weeks" 📅
+```
+
+**Example 5: Someday/TBD**
+```sql
+Trip: "Australia Dream Trip"
+start_date_timestamp: NULL
+dates_confirmed: FALSE
+planned_start_year: 2026
+planned_duration_days: 14
+date_flexibility: 'year'
+flexible_date_notes: 'Someday in 2026, need to save up first'
+
+-- Display: "2026 • 2 weeks" 📅
+```
+
+---
+
+#### Date Flexibility Levels
+
+```sql
+CREATE TYPE date_flexibility AS ENUM (
+    'exact',      -- Dates locked in
+    'flexible',   -- Within specific week/month
+    'month',      -- Flexible within a month
+    'quarter',    -- Q1, Q2, Q3, Q4
+    'year',       -- Sometime this year
+    'tbd'         -- To be determined
+);
+```
+
+| Flexibility | Has Exact Dates? | Has Month? | Use Case |
+|-------------|------------------|------------|----------|
+| **exact** | ✅ Yes | ✅ Yes | Flights booked |
+| **flexible** | ❌ No | ✅ Yes | "First week of Jan" |
+| **month** | ❌ No | ✅ Yes | "Sometime in January" |
+| **quarter** | ❌ No | ❌ No | "Q1 2025" |
+| **year** | ❌ No | ❌ No | "Someday in 2025" |
+| **tbd** | ❌ No | ❌ No | "Eventually..." |
+
+---
+
+#### User Journey: Planning → Confirmed
+
+**Stage 1: Initial Idea**
+```sql
+-- User creates trip
+name: "Paris Adventure"
+planned_start_year: 2025
+planned_start_month: 6               -- June
+planned_duration_days: 7
+dates_confirmed: FALSE
+date_flexibility: 'month'
+status: 'planning'
+```
+
+**Stage 2: Narrow Down Dates**
+```sql
+-- User updates trip
+planned_start_week: 'second'         -- Second week of June
+date_flexibility: 'flexible'
+flexible_date_notes: 'June 8-15 or June 9-16'
+```
+
+**Stage 3: Dates Confirmed**
+```sql
+-- User books flights, locks dates
+start_date_timestamp: 1749600000     -- June 9, 2025
+end_date_timestamp: 1750204800       -- June 16, 2025
+start_timezone: 'America/New_York'
+end_timezone: 'Europe/Paris'
+dates_confirmed: TRUE
+date_flexibility: 'exact'
+status: 'planning'                   -- Still planning details
+```
+
+**Stage 4: Trip Happening**
+```sql
+status: 'ongoing'                    -- User on the trip!
+```
+
+**Stage 5: Trip Completed**
+```sql
+status: 'completed'                  -- Memories saved
+```
+
+---
+
+#### Display Logic
+
+**Frontend Display Helper:**
+```python
+def format_trip_dates(trip, user_timezone=None):
+    """Format trip dates based on confirmation status."""
+
+    # Exact dates confirmed
+    if trip.dates_confirmed and trip.start_date_timestamp:
+        start = format_timestamp(trip.start_date_timestamp, trip.start_timezone)
+        end = format_timestamp(trip.end_date_timestamp, trip.end_timezone)
+        return f"{start} - {end}"
+
+    # Flexible dates
+    else:
+        parts = []
+
+        # Week specificity
+        if trip.planned_start_week:
+            week_text = {
+                'first': '1st week',
+                'second': '2nd week',
+                'third': '3rd week',
+                'fourth': '4th week',
+                'last': 'last week'
+            }[trip.planned_start_week]
+            parts.append(week_text + ' of')
+
+        # Month specificity
+        if trip.planned_start_month:
+            month_name = calendar.month_name[trip.planned_start_month]
+            parts.append(month_name)
+        elif trip.date_flexibility == 'quarter':
+            quarter = (trip.planned_start_month - 1) // 3 + 1 if trip.planned_start_month else '?'
+            parts.append(f"Q{quarter}")
+
+        # Year
+        if trip.planned_start_year:
+            parts.append(str(trip.planned_start_year))
+
+        # Duration
+        if trip.planned_duration_days:
+            if trip.planned_duration_days == 1:
+                duration = "1 day"
+            elif trip.planned_duration_days < 7:
+                duration = f"{trip.planned_duration_days} days"
+            elif trip.planned_duration_days % 7 == 0:
+                weeks = trip.planned_duration_days // 7
+                duration = f"{weeks} {'week' if weeks == 1 else 'weeks'}"
+            else:
+                duration = f"{trip.planned_duration_days} days"
+            parts.append('•')
+            parts.append(duration)
+
+        return ' '.join(parts)
+
+# Examples:
+# "2nd week of January 2025 • 5 days"
+# "June 2025 • 2 weeks"
+# "Q1 2025 • 21 days"
+# "2026 • 2 weeks"
+```
+
+---
+
+#### Search & Filter by Flexible Dates
+
+**Query: "Trips planned for January 2025"**
+```sql
+SELECT * FROM trips
+WHERE (
+    -- Exact dates in January 2025
+    (dates_confirmed = TRUE
+     AND start_date_timestamp >= 1735689600  -- Jan 1, 2025
+     AND start_date_timestamp < 1738368000)  -- Feb 1, 2025
+    OR
+    -- Flexible dates targeting January 2025
+    (dates_confirmed = FALSE
+     AND planned_start_year = 2025
+     AND planned_start_month = 1)
+);
+```
+
+**Query: "Trips in planning stage"**
+```sql
+SELECT * FROM trips
+WHERE dates_confirmed = FALSE
+  AND status = 'planning'
+ORDER BY planned_start_year, planned_start_month;
+```
+
+**Query: "Trips with confirmed dates"**
+```sql
+SELECT * FROM trips
+WHERE dates_confirmed = TRUE
+  AND status IN ('planning', 'ongoing')
+ORDER BY start_date_timestamp;
+```
+
+---
+
+#### Benefits of Flexible Dates
+
+✅ **Real planning workflow**: Matches how people actually plan trips
+✅ **Early ideation**: Start planning before booking
+✅ **Gradual refinement**: Narrow down dates over time
+✅ **Public discovery**: "January 2025 trips" works for both exact and flexible
+✅ **Trip status tracking**: Clear distinction between ideas vs booked trips
+✅ **No forced precision**: Don't require exact dates unnecessarily
+
+---
+
+#### Business Logic: Confirming Dates
+
+```python
+async def confirm_trip_dates(
+    trip_id: int,
+    start_date: datetime,
+    end_date: datetime,
+    start_timezone: str,
+    end_timezone: str,
+    db: Session
+):
+    """
+    User confirms exact dates for their trip.
+    Transition from flexible to confirmed.
+    """
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+
+    # Calculate duration
+    duration_seconds = end_date.timestamp() - start_date.timestamp()
+    duration_days = int(duration_seconds / 86400)
+
+    # Update trip
+    trip.start_date_timestamp = int(start_date.timestamp())
+    trip.end_date_timestamp = int(end_date.timestamp())
+    trip.start_timezone = start_timezone
+    trip.end_timezone = end_timezone
+    trip.dates_confirmed = True
+    trip.date_flexibility = 'exact'
+    trip.planned_duration_days = duration_days
+
+    db.commit()
+    return trip
+```
+
+---
+
+#### Alternative Approaches Considered
+
+❌ **Option 1: Always require exact dates**
+- Problem: Forces users to pick arbitrary dates during planning
+- Result: Bad UX, inaccurate data
+
+❌ **Option 2: Store as string "January 2025"**
+- Problem: Can't query/filter efficiently
+- Result: No sorting, no date-based searches
+
+❌ **Option 3: Separate "planned_trips" table**
+- Problem: Duplication, complex migrations when dates confirmed
+- Result: Overkill
+
+✅ **Our Approach: Nullable timestamps + flexible fields**
+- Simple, flexible, queryable
+- Matches real user workflow
+- Single source of truth
 
 ---
 
