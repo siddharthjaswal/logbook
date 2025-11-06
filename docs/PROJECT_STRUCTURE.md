@@ -5,59 +5,59 @@ This document describes the FastAPI project structure following industry best pr
 
 ## Directory Structure
 
+**Feature-based (Domain-Driven) Structure:**
+
 ```
 logbook/
 ├── app/                          # Main application package
 │   ├── __init__.py
 │   ├── main.py                   # FastAPI application entry point
 │   │
-│   ├── api/                      # API layer - Route handlers
+│   ├── features/                 # Feature modules (domain-driven)
 │   │   ├── __init__.py
-│   │   ├── deps.py              # Shared dependencies (auth, db session)
-│   │   ├── auth.py              # Authentication routes
-│   │   ├── users.py             # User routes
-│   │   ├── trips.py             # Trip routes
-│   │   └── trip_days.py         # Trip day routes
+│   │   │
+│   │   ├── trips/               # Trip management feature
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py        # API routes (/trips endpoints)
+│   │   │   ├── models.py        # SQLAlchemy Trip model
+│   │   │   ├── schemas.py       # Pydantic Trip schemas
+│   │   │   ├── crud.py          # Trip CRUD operations
+│   │   │   └── service.py       # Business logic (optional)
+│   │   │
+│   │   ├── users/               # User management feature
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py        # API routes (/users endpoints)
+│   │   │   ├── models.py        # SQLAlchemy User model
+│   │   │   ├── schemas.py       # Pydantic User schemas
+│   │   │   └── crud.py          # User CRUD operations
+│   │   │
+│   │   ├── auth/                # Authentication feature
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py        # API routes (/auth endpoints)
+│   │   │   ├── schemas.py       # Token schemas
+│   │   │   └── service.py       # OAuth & JWT logic
+│   │   │
+│   │   ├── trip_days/           # Trip day planning feature
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py        # API routes (/trip_days endpoints)
+│   │   │   ├── models.py        # SQLAlchemy TripDay model
+│   │   │   ├── schemas.py       # Pydantic TripDay schemas
+│   │   │   └── crud.py          # TripDay CRUD operations
+│   │   │
+│   │   └── [future features]/   # expenses, notes, photos, etc.
 │   │
-│   ├── core/                     # Core application configuration
+│   ├── core/                     # Core infrastructure (shared)
 │   │   ├── __init__.py
 │   │   ├── config.py            # Settings and environment variables
-│   │   ├── security.py          # JWT, OAuth, password hashing
-│   │   └── database.py          # Database connection and session
+│   │   ├── database.py          # Database connection and session
+│   │   ├── security.py          # JWT, OAuth utilities
+│   │   └── deps.py              # Shared dependencies (auth, db)
 │   │
-│   ├── models/                   # SQLAlchemy ORM models
-│   │   ├── __init__.py
-│   │   ├── base.py              # Base model class
-│   │   ├── user.py              # User model
-│   │   ├── trip.py              # Trip model
-│   │   ├── trip_day.py          # TripDay model
-│   │   └── trip_collaborator.py # TripCollaborator model (Phase 2)
-│   │
-│   ├── schemas/                  # Pydantic schemas (request/response)
-│   │   ├── __init__.py
-│   │   ├── user.py              # User schemas
-│   │   ├── trip.py              # Trip schemas
-│   │   ├── trip_day.py          # TripDay schemas
-│   │   ├── auth.py              # Auth schemas (token, login)
-│   │   └── common.py            # Common schemas (pagination, etc.)
-│   │
-│   ├── crud/                     # Database operations (CRUD)
-│   │   ├── __init__.py
-│   │   ├── base.py              # Base CRUD class
-│   │   ├── user.py              # User CRUD operations
-│   │   ├── trip.py              # Trip CRUD operations
-│   │   └── trip_day.py          # TripDay CRUD operations
-│   │
-│   ├── utils/                    # Utility functions
-│   │   ├── __init__.py
-│   │   ├── dates.py             # Date/timezone utilities
-│   │   ├── validators.py        # Custom validators
-│   │   └── enums.py             # Enum definitions
-│   │
-│   └── middleware/               # Custom middleware
+│   └── shared/                   # Shared utilities (cross-feature)
 │       ├── __init__.py
-│       ├── cors.py              # CORS configuration
-│       └── logging.py           # Request logging
+│       ├── enums.py             # Enum definitions
+│       ├── pagination.py        # Pagination utilities
+│       └── validators.py        # Custom validators
 │
 ├── tests/                        # Test suite
 │   ├── __init__.py
@@ -108,9 +108,38 @@ logbook/
 └── IMPLEMENTATION_PLAN.md      # Implementation roadmap
 ```
 
+## Why Feature-based Structure?
+
+**Benefits:**
+- ✅ **Cohesion**: All code for a feature is in one place
+- ✅ **Scalability**: Easy to add new features without cluttering
+- ✅ **Team Collaboration**: Developers can own entire features
+- ✅ **Microservices Ready**: Can extract features to separate services
+- ✅ **Clear Boundaries**: Features are isolated and self-contained
+- ✅ **Less Navigation**: No jumping between api/, models/, schemas/, crud/
+
+**When to use layer-based:**
+- Very small projects (< 5 models)
+- When following strict MVC pattern
+- When all features are tightly coupled
+
+**When to use feature-based:**
+- ✅ Growing projects with multiple domains (Logbook!)
+- ✅ When features have distinct business logic
+- ✅ When you want to scale the codebase
+
+## Feature Module Structure
+
+Each feature folder contains:
+- `router.py` - API routes and request handlers
+- `models.py` - SQLAlchemy ORM models
+- `schemas.py` - Pydantic request/response schemas
+- `crud.py` - Database operations
+- `service.py` - Complex business logic (optional)
+
 ## Layer Responsibilities
 
-### 1. API Layer (`app/api/`)
+### 1. Router Layer (`router.py` in each feature)
 **Purpose**: Handle HTTP requests and responses
 
 **Responsibilities**:
@@ -129,14 +158,23 @@ logbook/
 
 **Example**:
 ```python
-# app/api/trips.py
+# app/features/trips/router.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.core.deps import get_db, get_current_user
+from .schemas import TripCreate, TripResponse
+from .crud import create_trip
+
+router = APIRouter()
+
 @router.post("/", response_model=TripResponse, status_code=201)
-async def create_trip(
+async def create_trip_endpoint(
     trip_in: TripCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    trip = crud.trip.create(db, obj_in=trip_in, user_id=current_user.id)
+    trip = create_trip(db, obj_in=trip_in, user_id=current_user.id)
     return trip
 ```
 
@@ -171,7 +209,12 @@ async def create_trip(
 
 **Example**:
 ```python
-# app/models/trip.py
+# app/features/trips/models.py
+from sqlalchemy import Column, BigInteger, String, ForeignKey
+from sqlalchemy.orm import relationship
+
+from app.core.database import Base
+
 class Trip(Base):
     __tablename__ = "trips"
 
@@ -202,7 +245,11 @@ class Trip(Base):
 
 **Example**:
 ```python
-# app/schemas/trip.py
+# app/features/trips/schemas.py
+from typing import Optional
+from datetime import datetime
+from pydantic import BaseModel
+
 class TripBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -240,21 +287,34 @@ class TripResponse(TripBase):
 
 **Example**:
 ```python
-# app/crud/trip.py
-class CRUDTrip(CRUDBase[Trip, TripCreate, TripUpdate]):
-    def get_user_trips(
-        self, db: Session, user_id: int, skip: int = 0, limit: int = 100
-    ) -> List[Trip]:
-        return (
-            db.query(Trip)
-            .filter(Trip.created_by == user_id)
-            .filter(Trip.deleted_at == None)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+# app/features/trips/crud.py
+from typing import List, Optional
+from sqlalchemy.orm import Session
 
-trip = CRUDTrip(Trip)
+from .models import Trip
+from .schemas import TripCreate, TripUpdate
+
+def get_trip_by_id(db: Session, trip_id: int) -> Optional[Trip]:
+    return db.query(Trip).filter(Trip.id == trip_id).first()
+
+def get_user_trips(
+    db: Session, user_id: int, skip: int = 0, limit: int = 100
+) -> List[Trip]:
+    return (
+        db.query(Trip)
+        .filter(Trip.created_by == user_id)
+        .filter(Trip.deleted_at == None)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+def create_trip(db: Session, trip_in: TripCreate, user_id: int) -> Trip:
+    trip = Trip(**trip_in.dict(), created_by=user_id)
+    db.add(trip)
+    db.commit()
+    db.refresh(trip)
+    return trip
 ```
 
 ### 6. Utils Layer (`app/utils/`)
@@ -277,9 +337,18 @@ trip = CRUDTrip(Trip)
 
 ## Dependency Injection
 
-### Common Dependencies (`app/api/deps.py`)
+### Common Dependencies (`app/core/deps.py`)
 
 ```python
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
+from app.core.database import SessionLocal
+from app.core.security import decode_access_token
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token")
+
 # Database session
 def get_db():
     db = SessionLocal()
@@ -288,21 +357,28 @@ def get_db():
     finally:
         db.close()
 
-# Current authenticated user
-def get_current_user(
+# Get user ID from JWT
+async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
+    payload = decode_access_token(token)
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    return payload.get("sub")
+
+# Get full user object
+async def get_current_user(
     db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
-) -> User:
-    payload = decode_jwt(token)
-    user = crud.user.get(db, id=payload["sub"])
+    user_id: int = Depends(get_current_user_id)
+):
+    from app.features.users.crud import get_user_by_id
+    user = get_user_by_id(db, user_id)
     if not user:
-        raise HTTPException(status_code=401)
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 # Check if user is active
-def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+async def get_current_active_user(
+    current_user = Depends(get_current_user)
+):
     if not current_user.is_active:
         raise HTTPException(status_code=403, detail="Inactive user")
     return current_user
@@ -441,21 +517,58 @@ alembic downgrade -1
 - Document complex business logic
 - Add docstrings to functions
 
-## Development Workflow
+## Development Workflow (Feature-based)
+
+### Adding a New Feature
 
 1. **Create branch**: `git checkout -b feat/feature-name`
-2. **Create migration**: `alembic revision --autogenerate -m "message"`
-3. **Implement feature**:
-   - Add model (if needed)
-   - Add schema
-   - Add CRUD operations
-   - Add API route
-   - Add tests
-   - Add Bruno collection file
-4. **Test**: `pytest tests/test_feature.py -v`
-5. **Manual test**: Test in Bruno app
-6. **Commit**: `git add . && git commit -m "message"`
-7. **Push**: `git push origin feat/feature-name`
+2. **Create feature folder**: `mkdir -p app/features/feature_name`
+3. **Create files**:
+   ```bash
+   touch app/features/feature_name/__init__.py
+   touch app/features/feature_name/router.py
+   touch app/features/feature_name/models.py
+   touch app/features/feature_name/schemas.py
+   touch app/features/feature_name/crud.py
+   ```
+4. **Implement feature**:
+   - Define model in `models.py`
+   - Define schemas in `schemas.py`
+   - Implement CRUD in `crud.py`
+   - Create routes in `router.py`
+   - Register router in `main.py`
+5. **Create migration**: `alembic revision --autogenerate -m "Add feature_name"`
+6. **Add tests**: Create `tests/test_feature_name.py`
+7. **Add Bruno requests**: Create `collection/feature_name/` folder
+8. **Test**: `pytest tests/test_feature_name.py -v`
+9. **Manual test**: Test in Bruno app
+10. **Commit & Push**: `git add . && git commit -m "message" && git push`
+
+### Example: Adding Trips Feature
+
+```bash
+# 1. Create feature folder
+mkdir -p app/features/trips
+
+# 2. Create files
+cd app/features/trips
+touch __init__.py router.py models.py schemas.py crud.py
+
+# 3. Implement each file
+# ... (write code)
+
+# 4. Register router in main.py
+# app.include_router(trips_router, prefix="/api/v1/trips", tags=["trips"])
+
+# 5. Create migration
+alembic revision --autogenerate -m "Add Trip model"
+
+# 6. Add tests
+touch tests/test_trips.py
+
+# 7. Add Bruno collection
+mkdir -p collection/trips
+```
 
 ## Next Steps
 
