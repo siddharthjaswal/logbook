@@ -156,14 +156,19 @@
 ```sql
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    username VARCHAR(50) UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
 
-    -- Profile
+    -- OAuth Authentication (Google only for MVP)
+    google_id VARCHAR(255) NOT NULL UNIQUE,  -- Google user ID
+    email VARCHAR(255) NOT NULL UNIQUE,      -- From Google (always verified)
+    email_verified BOOLEAN DEFAULT TRUE,     -- Google handles verification
+
+    -- Optional username (can be set after signup)
+    username VARCHAR(50) UNIQUE,
+
+    -- Profile (populated from Google)
     first_name VARCHAR(100),
     last_name VARCHAR(100),
-    profile_photo_url TEXT,
+    profile_photo_url TEXT,  -- From Google profile picture
     bio TEXT,
 
     -- Preferences
@@ -174,8 +179,6 @@ CREATE TABLE users (
 
     -- Account Status
     is_active BOOLEAN DEFAULT TRUE,
-    is_verified BOOLEAN DEFAULT FALSE,
-    email_verified_at TIMESTAMP,
 
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -187,6 +190,7 @@ CREATE TABLE users (
 );
 
 -- Indexes
+CREATE INDEX idx_users_google_id ON users(google_id);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_active ON users(is_active) WHERE deleted_at IS NULL;
@@ -194,11 +198,15 @@ CREATE INDEX idx_users_active ON users(is_active) WHERE deleted_at IS NULL;
 
 **Design Decisions:**
 - `BIGSERIAL` for future-proof IDs (supports billions of records)
-- Email as primary identifier (unique + indexed)
-- Optional username for display purposes
+- **Google OAuth only** (no password storage, more secure)
+- `google_id` as OAuth identifier (unique, indexed)
+- Email from Google (always verified, no email verification flow needed)
+- `email_verified` always TRUE (Google handles verification)
+- Profile fields populated from Google profile (name, photo)
+- Optional username (can be set by user after signup for display/URL)
 - Soft delete with `deleted_at` to preserve data integrity
 - Timezone-aware timestamps for global users
-- Separate profile and preference fields for extensibility
+- No password fields (OAuth-only authentication)
 
 ---
 
@@ -1406,6 +1414,21 @@ CREATE TYPE transit_mode AS ENUM (
     'walk', 'bicycle', 'motorcycle', 'other'
 );
 
+CREATE TYPE trip_day_type AS ENUM (
+    'transit',        -- Travel day (flights, long trains, driving)
+    'sightseeing',    -- Visiting landmarks, attractions, tours
+    'leisure',        -- Relaxing, unstructured, beach day
+    'activity',       -- Specific activities (hiking, diving, skiing)
+    'cultural',       -- Museums, theaters, galleries, cultural experiences
+    'adventure',      -- Outdoor activities, sports, adrenaline
+    'culinary',       -- Food tours, cooking classes, restaurant hopping
+    'shopping',       -- Shopping focused day
+    'business',       -- Work-related (conferences, meetings)
+    'exploration',    -- Wandering, discovering neighborhoods
+    'rest',           -- Recovery day, sleep in, minimal plans
+    'mixed'           -- Combination of multiple types
+);
+
 CREATE TABLE trip_days (
     id BIGSERIAL PRIMARY KEY,
     trip_id BIGINT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
@@ -1413,6 +1436,7 @@ CREATE TABLE trip_days (
     -- Day Info
     date DATE NOT NULL,
     day_number INTEGER NOT NULL, -- Calculated: 1, 2, 3...
+    day_type trip_day_type DEFAULT 'mixed',
     title VARCHAR(200),
 
     -- Location
@@ -1461,6 +1485,8 @@ CREATE INDEX idx_trip_days_trip_id ON trip_days(trip_id);
 CREATE INDEX idx_trip_days_date ON trip_days(date);
 CREATE INDEX idx_trip_days_trip_date ON trip_days(trip_id, date);
 CREATE INDEX idx_trip_days_trip_day_number ON trip_days(trip_id, day_number);
+CREATE INDEX idx_trip_days_day_type ON trip_days(day_type);
+CREATE INDEX idx_trip_days_trip_type ON trip_days(trip_id, day_type);
 CREATE INDEX idx_trip_days_location ON trip_days(place_country, place_city);
 CREATE INDEX idx_trip_days_activities ON trip_days USING GIN(activities);
 ```
@@ -1468,6 +1494,12 @@ CREATE INDEX idx_trip_days_activities ON trip_days USING GIN(activities);
 **Design Decisions:**
 - `DATE` type for day date (simpler than timestamp for day-level)
 - `day_number` auto-calculated for easy ordering
+- **Day type classification**:
+  - `day_type` enum categorizes the day's primary purpose
+  - 12 types covering all travel scenarios (transit, sightseeing, leisure, etc.)
+  - Defaults to 'mixed' for days with multiple activities
+  - Enables filtering ("show me all sightseeing days") and statistics
+  - Helps with trip planning and balance (not too many transit days!)
 - **Location fields**:
   - `place`: User-friendly display name (e.g., "Eiffel Tower, Paris")
   - `place_city`, `place_country`: Structured fields for aggregation/search
@@ -1503,6 +1535,220 @@ CREATE INDEX idx_trip_days_activities ON trip_days USING GIN(activities);
     "confirmation": "XYZ789"
   }
 ]
+```
+
+---
+
+### **Trip Day Types: Categorizing Days**
+
+Each day in a trip has a different purpose. Day types help users organize, filter, and balance their itineraries.
+
+#### Day Type Categories
+
+| Type | Purpose | Examples |
+|------|---------|----------|
+| **transit** | Travel days | Long flights, train journeys, road trips |
+| **sightseeing** | Tourist attractions | Eiffel Tower, museums, landmarks |
+| **leisure** | Relaxation | Beach days, pool time, unstructured |
+| **activity** | Specific activities | Scuba diving, skiing, hot air balloon |
+| **cultural** | Cultural experiences | Theater, concerts, art galleries, local festivals |
+| **adventure** | Outdoor/adrenaline | Hiking, rafting, bungee jumping, zip-lining |
+| **culinary** | Food-focused | Food tours, cooking classes, wine tasting |
+| **shopping** | Shopping | Markets, malls, souvenir hunting |
+| **business** | Work-related | Conferences, client meetings, networking |
+| **exploration** | Wandering | Discovering neighborhoods, getting lost |
+| **rest** | Recovery | Sleep in, catch up on rest, no plans |
+| **mixed** | Combination | Multiple activities, varied day |
+
+---
+
+#### Real-World Examples
+
+**Example 1: 10-Day Europe Trip**
+```
+Day 1: transit      - Flight NYC → Paris
+Day 2: rest         - Recover from jet lag
+Day 3: sightseeing  - Eiffel Tower, Louvre, Notre Dame
+Day 4: cultural     - Versailles Palace, Opera
+Day 5: culinary     - Food tour in Le Marais
+Day 6: transit      - Train to Amsterdam
+Day 7: exploration  - Wander canals, neighborhoods
+Day 8: sightseeing  - Anne Frank House, Van Gogh Museum
+Day 9: leisure      - Vondelpark, cafes
+Day 10: transit     - Flight back home
+```
+
+**Day Type Breakdown:**
+- Transit: 3 days (30%)
+- Sightseeing: 2 days (20%)
+- Cultural: 1 day (10%)
+- Culinary: 1 day (10%)
+- Exploration: 1 day (10%)
+- Leisure: 1 day (10%)
+- Rest: 1 day (10%)
+
+**Example 2: Adventure Trip**
+```
+Day 1: transit      - Travel to Queenstown, NZ
+Day 2: activity     - Bungee jumping
+Day 3: adventure    - Skydiving
+Day 4: adventure    - Hiking Milford Sound
+Day 5: leisure      - Relax by lake
+Day 6: activity     - Jet boating
+Day 7: transit      - Return home
+```
+
+---
+
+#### Use Cases
+
+**1. Trip Planning Balance**
+```python
+# Check if trip has too many transit days
+def check_trip_balance(trip_id: int, db: Session):
+    day_counts = db.query(
+        TripDay.day_type,
+        func.count(TripDay.id).label('count')
+    ).filter(
+        TripDay.trip_id == trip_id
+    ).group_by(TripDay.day_type).all()
+
+    total_days = sum(count for _, count in day_counts)
+
+    # Warning if more than 30% transit days
+    transit_days = next((count for type, count in day_counts if type == 'transit'), 0)
+    if transit_days / total_days > 0.3:
+        return "Consider reducing transit days for better experience"
+```
+
+**2. Filter Days**
+```sql
+-- Show all sightseeing days
+SELECT * FROM trip_days
+WHERE trip_id = 1
+  AND day_type = 'sightseeing'
+ORDER BY date;
+
+-- Show active days (activities + adventure)
+SELECT * FROM trip_days
+WHERE trip_id = 1
+  AND day_type IN ('activity', 'adventure')
+ORDER BY date;
+```
+
+**3. Trip Statistics**
+```sql
+-- Day type breakdown for trip
+SELECT
+    day_type,
+    COUNT(*) as count,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) as percentage
+FROM trip_days
+WHERE trip_id = 1
+GROUP BY day_type
+ORDER BY count DESC;
+
+-- Result:
+-- sightseeing | 4 | 40.0%
+-- leisure     | 2 | 20.0%
+-- transit     | 2 | 20.0%
+-- cultural    | 1 | 10.0%
+-- rest        | 1 | 10.0%
+```
+
+**4. Public Trip Search**
+```sql
+-- Find adventure-heavy trips
+SELECT t.*
+FROM trips t
+JOIN trip_days td ON t.id = td.trip_id
+WHERE t.visibility = 'public'
+  AND td.day_type IN ('adventure', 'activity')
+GROUP BY t.id
+HAVING COUNT(td.id) >= 3  -- At least 3 adventure days
+ORDER BY t.views_count DESC;
+```
+
+---
+
+#### Display in UI
+
+**Trip Card:**
+```
+Europe Adventure
+📍 Paris, France + 2 more
+🗓️ 10 days
+🎯 Sightseeing 40% • Cultural 20% • Food 20%
+```
+
+**Daily Itinerary:**
+```
+Day 1 - Transit Day 🚂
+  Flight NYC → Paris
+
+Day 2 - Rest & Recover 😴
+  Sleep in, gentle exploration
+
+Day 3 - Sightseeing 🏛️
+  Eiffel Tower, Louvre, Notre Dame
+
+Day 4 - Culinary Experience 🍷
+  Food tour in Le Marais
+```
+
+**Trip Planning Helper:**
+```
+Your trip balance:
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Transit     ████░░░░░░  30% ⚠️ Consider reducing
+Sightseeing ███░░░░░░░  20%
+Cultural    ██░░░░░░░░  10%
+Leisure     ██░░░░░░░░  10%
+Rest        ██░░░░░░░░  10%
+
+💡 Tip: Add more leisure days for better recovery
+```
+
+---
+
+#### Benefits
+
+✅ **Better Planning**: Ensure balanced itinerary (not all transit!)
+✅ **Easy Filtering**: "Show me all sightseeing days"
+✅ **Statistics**: Understand trip composition at a glance
+✅ **Discovery**: "Find adventure-heavy trips" in public search
+✅ **Templates**: Clone trip patterns ("70% adventure, 30% leisure")
+✅ **Pacing**: Identify if trip is too intense or too relaxed
+
+---
+
+#### Smart Defaults
+
+```python
+def suggest_day_type(trip_day: TripDay) -> str:
+    """Auto-suggest day type based on other fields."""
+
+    # Has transit mode? Likely transit day
+    if trip_day.transit_mode in ['flight', 'train', 'bus']:
+        return 'transit'
+
+    # Has accommodation check-in? Likely arrival/transit
+    if trip_day.accommodation_checkin:
+        return 'transit'
+
+    # Has activities in JSONB?
+    if trip_day.activities:
+        activity_types = extract_activity_types(trip_day.activities)
+
+        if 'museum' in activity_types or 'landmark' in activity_types:
+            return 'sightseeing'
+        elif 'hiking' in activity_types or 'diving' in activity_types:
+            return 'adventure'
+        elif 'restaurant' in activity_types or 'food_tour' in activity_types:
+            return 'culinary'
+
+    # Default to mixed
+    return 'mixed'
 ```
 
 ---
@@ -1876,40 +2122,14 @@ CREATE INDEX idx_sessions_expires ON user_sessions(expires_at)
 
 ---
 
-### **Entity: Email Verification Tokens**
+### **No Email Verification Tokens Needed**
 
-```sql
-CREATE TYPE token_type AS ENUM (
-    'email_verification', 'password_reset', 'email_change'
-);
+**Google OAuth handles all email verification.** No need for:
+- ❌ Email verification tokens
+- ❌ Password reset tokens
+- ❌ Email change tokens
 
-CREATE TABLE verification_tokens (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-
-    token_hash VARCHAR(255) NOT NULL UNIQUE,
-    token_type token_type NOT NULL,
-
-    -- Associated Data (JSON for flexibility)
-    metadata JSONB, -- e.g., {"new_email": "new@example.com"}
-
-    -- Expiry
-    expires_at TIMESTAMP NOT NULL,
-
-    -- Usage
-    used_at TIMESTAMP,
-
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes
-CREATE INDEX idx_tokens_user_id ON verification_tokens(user_id);
-CREATE INDEX idx_tokens_hash ON verification_tokens(token_hash)
-    WHERE used_at IS NULL;
-CREATE INDEX idx_tokens_expires ON verification_tokens(expires_at)
-    WHERE used_at IS NULL;
-```
+Google provides verified email addresses, eliminating the need for a verification token system.
 
 ---
 
@@ -2298,20 +2518,40 @@ class TripResponse(BaseModel):
 
 ## 4. Authentication & Authorization
 
-### 4.1 Authentication Strategy: JWT (JSON Web Tokens)
+### 4.1 Authentication Strategy: Google OAuth 2.0
 
-**Why JWT?**
-- Stateless (no session storage needed)
-- Scalable (works across multiple servers)
-- Contains user info (reduces database queries)
-- Standard and well-supported
+**Why Google OAuth?**
+- ✅ **More secure**: No password storage, Google handles security
+- ✅ **Faster implementation**: No email verification, password reset, etc.
+- ✅ **Better UX**: One-click sign-in, no registration forms
+- ✅ **Trust**: Users trust Google authentication
+- ✅ **Always verified**: Google emails are verified by default
+- ✅ **Profile data**: Get name, photo from Google automatically
 
-**Token Structure:**
+**OAuth Flow: Authorization Code Grant**
 
-**Access Token:**
+**1. Google OAuth Token (from Google):**
 ```json
 {
-  "sub": "user_id_123",
+  "sub": "google_user_id_123456789",
+  "email": "user@example.com",
+  "email_verified": true,
+  "name": "John Doe",
+  "given_name": "John",
+  "family_name": "Doe",
+  "picture": "https://lh3.googleusercontent.com/...",
+  "aud": "YOUR_GOOGLE_CLIENT_ID",
+  "iss": "https://accounts.google.com",
+  "iat": 1730819400,
+  "exp": 1730823000
+}
+```
+
+**2. Our JWT Access Token (issued after OAuth):**
+```json
+{
+  "sub": "our_user_id_123",
+  "google_id": "google_user_id_123456789",
   "email": "user@example.com",
   "type": "access",
   "exp": 1730823000,
@@ -2320,13 +2560,13 @@ class TripResponse(BaseModel):
 }
 ```
 - **Expiry:** 1 hour
-- **Storage:** Memory (never localStorage)
-- **Purpose:** API authentication
+- **Storage:** Memory or httpOnly cookie
+- **Purpose:** API authentication after OAuth
 
-**Refresh Token:**
+**3. Our Refresh Token:**
 ```json
 {
-  "sub": "user_id_123",
+  "sub": "our_user_id_123",
   "type": "refresh",
   "exp": 1731424200,
   "iat": 1730819400,
@@ -2335,86 +2575,173 @@ class TripResponse(BaseModel):
 ```
 - **Expiry:** 7 days
 - **Storage:** httpOnly cookie (secure)
-- **Purpose:** Get new access token
+- **Purpose:** Get new access token without re-authentication
 
 ---
 
-### 4.2 Authentication Flow
+### 4.2 Google OAuth Authentication Flow
 
 ```
-┌────────┐                          ┌────────┐
-│ Client │                          │ Server │
-└───┬────┘                          └───┬────┘
-    │                                   │
-    │ 1. POST /auth/login              │
-    │   {email, password}              │
-    ├─────────────────────────────────►│
-    │                                   │
-    │                                   │ 2. Validate credentials
-    │                                   │ 3. Generate tokens
-    │                                   │
-    │ 4. Response:                     │
-    │   - access_token (JSON)          │
-    │   - refresh_token (httpOnly)     │
-    │◄─────────────────────────────────┤
-    │                                   │
-    │ 5. GET /trips                    │
-    │   Header: Authorization: Bearer  │
-    │   {access_token}                 │
-    ├─────────────────────────────────►│
-    │                                   │
-    │                                   │ 6. Verify token
-    │                                   │ 7. Extract user_id
-    │                                   │ 8. Process request
-    │                                   │
-    │ 9. Response with data            │
-    │◄─────────────────────────────────┤
-    │                                   │
-    │ (After 1 hour)                   │
-    │ 10. GET /trips (401)             │
-    │◄─────────────────────────────────┤
-    │                                   │
-    │ 11. POST /auth/refresh           │
-    │   (refresh_token in cookie)      │
-    ├─────────────────────────────────►│
-    │                                   │
-    │                                   │ 12. Validate refresh token
-    │                                   │ 13. Generate new tokens
-    │                                   │
-    │ 14. New access_token             │
-    │◄─────────────────────────────────┤
-    │                                   │
+┌────────┐              ┌────────┐              ┌────────────┐
+│ Client │              │  Our   │              │   Google   │
+│        │              │ Server │              │   OAuth    │
+└───┬────┘              └───┬────┘              └──────┬─────┘
+    │                       │                          │
+    │ 1. Click "Sign in    │                          │
+    │     with Google"     │                          │
+    │                       │                          │
+    │ 2. GET /auth/google  │                          │
+    ├──────────────────────►│                          │
+    │                       │                          │
+    │ 3. Redirect to Google OAuth                     │
+    │◄──────────────────────┤                          │
+    │                       │                          │
+    │ 4. User authenticates with Google               │
+    ├─────────────────────────────────────────────────►│
+    │                       │                          │
+    │                       │                          │ 5. User approves
+    │                       │                          │
+    │ 6. Redirect back with code                      │
+    │◄─────────────────────────────────────────────────┤
+    │   ?code=AUTH_CODE    │                          │
+    │                       │                          │
+    │ 7. Send code to backend                         │
+    ├──────────────────────►│                          │
+    │                       │                          │
+    │                       │ 8. Exchange code for token
+    │                       ├─────────────────────────►│
+    │                       │                          │
+    │                       │ 9. Google ID token       │
+    │                       │   (with user profile)    │
+    │                       │◄─────────────────────────┤
+    │                       │                          │
+    │                       │ 10. Verify Google token  │
+    │                       │ 11. Get/create user      │
+    │                       │     in our database      │
+    │                       │ 12. Generate our JWT     │
+    │                       │                          │
+    │ 13. Response:         │                          │
+    │   - access_token      │                          │
+    │   - refresh_token     │                          │
+    │   - user profile      │                          │
+    │◄──────────────────────┤                          │
+    │                       │                          │
+    │ 14. GET /trips        │                          │
+    │   Header:             │                          │
+    │   Authorization:      │                          │
+    │   Bearer {token}      │                          │
+    ├──────────────────────►│                          │
+    │                       │ 15. Verify our JWT       │
+    │                       │ 16. Extract user_id      │
+    │                       │ 17. Process request      │
+    │                       │                          │
+    │ 18. Response          │                          │
+    │◄──────────────────────┤                          │
 ```
 
----
-
-### 4.3 Password Security
-
-**Hashing Algorithm: bcrypt**
+**Implementation Details:**
 
 ```python
-from passlib.context import CryptContext
+# Backend OAuth handler
+@router.get("/auth/google")
+async def google_login(request: Request):
+    """Redirect to Google OAuth"""
+    redirect_uri = f"{settings.BASE_URL}/auth/google/callback"
+    google_auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth?"
+        f"client_id={settings.GOOGLE_CLIENT_ID}&"
+        f"redirect_uri={redirect_uri}&"
+        "response_type=code&"
+        "scope=openid email profile&"
+        "access_type=offline"  # Get refresh token
+    )
+    return RedirectResponse(google_auth_url)
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+@router.get("/auth/google/callback")
+async def google_callback(code: str, db: Session = Depends(get_db)):
+    """Handle Google OAuth callback"""
 
-# Hashing
-hashed = pwd_context.hash("user_password")
+    # 1. Exchange code for token
+    token_response = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "code": code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": f"{settings.BASE_URL}/auth/google/callback",
+            "grant_type": "authorization_code"
+        }
+    )
+    google_token = token_response.json()
 
-# Verification
-is_valid = pwd_context.verify("user_password", hashed)
+    # 2. Verify and decode Google ID token
+    from google.oauth2 import id_token
+    from google.auth.transport import requests as google_requests
+
+    user_info = id_token.verify_oauth2_token(
+        google_token['id_token'],
+        google_requests.Request(),
+        settings.GOOGLE_CLIENT_ID
+    )
+
+    # 3. Get or create user
+    user = db.query(User).filter(
+        User.google_id == user_info['sub']
+    ).first()
+
+    if not user:
+        # Create new user from Google profile
+        user = User(
+            google_id=user_info['sub'],
+            email=user_info['email'],
+            email_verified=user_info['email_verified'],
+            first_name=user_info.get('given_name'),
+            last_name=user_info.get('family_name'),
+            profile_photo_url=user_info.get('picture')
+        )
+        db.add(user)
+        db.commit()
+
+    # Update last login
+    user.last_login_at = datetime.utcnow()
+    db.commit()
+
+    # 4. Generate our JWT tokens
+    access_token = create_access_token(user.id)
+    refresh_token = create_refresh_token(user.id)
+
+    # 5. Store refresh token in database
+    session = UserSession(
+        user_id=user.id,
+        refresh_token_hash=hash_token(refresh_token),
+        expires_at=datetime.utcnow() + timedelta(days=7)
+    )
+    db.add(session)
+    db.commit()
+
+    # 6. Return tokens
+    response = RedirectResponse(url=f"{settings.FRONTEND_URL}/auth/callback")
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=604800  # 7 days
+    )
+    return response
 ```
 
-**Password Requirements:**
-- Minimum 8 characters
-- At least 1 uppercase letter
-- At least 1 lowercase letter
-- At least 1 number
-- At least 1 special character
-- Not in common password list
+**No Password Security Needed!** 🎉
+- ❌ No password hashing
+- ❌ No password validation
+- ❌ No password reset flow
+- ❌ No email verification
+- ✅ Google handles all security
 
 ---
 
-### 4.4 Authorization Strategy: Collaborative Role-Based Access Control (RBAC)
+### 4.3 Authorization Strategy: Collaborative Role-Based Access Control (RBAC)
 
 **Collaborative Trip Model with Roles**
 
