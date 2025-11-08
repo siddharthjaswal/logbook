@@ -16,6 +16,7 @@ google-auth==2.27.0
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
 authlib==1.3.0
+itsdangerous==2.2.0
 
 # Settings Management
 pydantic==2.5.3

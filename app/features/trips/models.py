@@ -6,10 +6,11 @@ between multiple users. Trips can span multiple destinations and
 support flexible date planning.
 """
 
-from sqlalchemy import Column, BigInteger, String, Text, Boolean, Integer, TIMESTAMP, DECIMAL, ForeignKey, ARRAY
+from sqlalchemy import Column, String, Text, Boolean, Integer, TIMESTAMP, DECIMAL, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import ENUM
+from sqlalchemy.dialects.postgresql import ENUM, ARRAY
+from sqlalchemy import JSON
 
 from app.core.database import Base
 from app.shared.enums import TripStatus, TripVisibility, TripType, DateFlexibility
@@ -21,10 +22,10 @@ class Trip(Base):
     __tablename__ = "trips"
 
     # Primary Key
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
     # Creator (can be NULL if user deleted)
-    created_by = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Basic Info
     name = Column(String(200), nullable=False)
@@ -32,9 +33,9 @@ class Trip(Base):
     cover_photo_url = Column(Text, nullable=True)
 
     # Dates - Exact dates (optional for flexible planning)
-    start_date_timestamp = Column(BigInteger, nullable=True, index=True)
+    start_date_timestamp = Column(Integer, nullable=True, index=True)
     start_timezone = Column(String(50), default="UTC", nullable=False)
-    end_date_timestamp = Column(BigInteger, nullable=True, index=True)
+    end_date_timestamp = Column(Integer, nullable=True, index=True)
     end_timezone = Column(String(50), default="UTC", nullable=False)
 
     # Flexible/tentative dates (for planning stage)
@@ -52,8 +53,8 @@ class Trip(Base):
     # primary_destination_coordinates = Column(POINT, nullable=True)  # Add PostGIS later
 
     # All destinations visited (auto-calculated from trip_days)
-    countries_visited = Column(ARRAY(Text), default=[], nullable=False)
-    cities_visited = Column(ARRAY(Text), default=[], nullable=False)
+    countries_visited = Column(JSON, default=list, nullable=False)
+    cities_visited = Column(JSON, default=list, nullable=False)
 
     # Trip type classification
     trip_type = Column(
@@ -87,7 +88,7 @@ class Trip(Base):
     likes_count = Column(Integer, default=0, nullable=False)
 
     # Metadata
-    tags = Column(ARRAY(Text), default=[], nullable=False)
+    tags = Column(JSON, default=list, nullable=False)
     notes = Column(Text, nullable=True)
 
     # Timestamps
@@ -99,7 +100,7 @@ class Trip(Base):
 
     # Relationships
     creator = relationship("User", back_populates="trips", foreign_keys=[created_by])
-    trip_days = relationship("TripDay", back_populates="trip", cascade="all, delete-orphan")
+    # trip_days = relationship("TripDay", back_populates="trip", cascade="all, delete-orphan")  # Uncomment when TripDay feature is implemented
     # collaborators = relationship("TripCollaborator", back_populates="trip")  # Phase 2
 
     def __repr__(self):

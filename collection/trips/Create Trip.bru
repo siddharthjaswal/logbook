@@ -1,0 +1,65 @@
+meta {
+  name: Create Trip
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/trips
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Japan Adventure 2025",
+    "description": "Two-week trip exploring Tokyo, Kyoto, and Osaka",
+    "primary_destination_country": "Japan",
+    "primary_destination_city": "Tokyo",
+    "start_date_timestamp": 1735689600,
+    "end_date_timestamp": 1736899200,
+    "start_timezone": "Asia/Tokyo",
+    "end_timezone": "Asia/Tokyo",
+    "dates_confirmed": true,
+    "trip_type": "multi_city",
+    "status": "planning",
+    "visibility": "private",
+    "budget_total": 5000.00,
+    "currency": "USD",
+    "tags": ["adventure", "culture", "food"],
+    "notes": "Visit during cherry blossom season if possible"
+  }
+}
+
+docs {
+  Create a new trip.
+
+  Required Fields:
+  - name: Trip name (1-200 characters)
+
+  Optional Fields:
+  - description: Trip description
+  - cover_photo_url: URL to cover photo
+  - start_date_timestamp: Unix timestamp for start date
+  - end_date_timestamp: Unix timestamp for end date
+  - start_timezone: IANA timezone (default: UTC)
+  - end_timezone: IANA timezone (default: UTC)
+  - dates_confirmed: Whether dates are confirmed (default: false)
+  - planned_start_year, planned_start_month: For flexible planning
+  - planned_duration_days: Expected trip duration
+  - date_flexibility: exact, week, month, season, year
+  - flexible_date_notes: Notes about flexible dates
+  - primary_destination_country: Main destination country
+  - primary_destination_city: Main destination city
+  - trip_type: single_destination, multi_city, multi_country, road_trip, cruise, round_trip
+  - status: planning, upcoming, in_progress, completed, cancelled
+  - visibility: private, unlisted, public
+  - budget_total: Total budget (decimal)
+  - currency: 3-letter currency code (default: USD)
+  - tags: Array of tags
+  - notes: Trip notes
+}

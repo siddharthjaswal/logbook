@@ -1,0 +1,23 @@
+meta {
+  name: Get My Trip Stats
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/trips/stats/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Get trip statistics for the authenticated user.
+
+  Returns:
+  - total_trips: Total number of trips created by the user
+  - user_id: User's ID
+}

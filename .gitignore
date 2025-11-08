@@ -142,3 +142,9 @@ dmypy.json
 *.db
 uploads/
 temp/
+
+# Client Secret Files
+client_secret_*.json
+
+# Bruno environments with auth tokens
+collection/environments/sid_auth_test.bru

@@ -1,0 +1,27 @@
+meta {
+  name: Get Trip
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/trips/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Get trip by ID.
+
+  Returns trip if:
+  - User is the owner (any visibility), OR
+  - Trip is public or unlisted
+
+  Increments view count if not the owner.
+
+  Replace '1' in URL with actual trip ID.
+}

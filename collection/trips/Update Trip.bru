@@ -1,0 +1,39 @@
+meta {
+  name: Update Trip
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/trips/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Japan Adventure 2025 - Updated",
+    "status": "upcoming",
+    "budget_total": 6000.00,
+    "notes": "Confirmed flights and first hotel"
+  }
+}
+
+docs {
+  Update a trip (owner only).
+
+  All fields are optional - only include fields you want to update.
+  Replace '1' in URL with actual trip ID.
+
+  Example updates:
+  - Change name, description
+  - Update dates or make dates flexible
+  - Change status (planning → upcoming → in_progress → completed)
+  - Update visibility (private → unlisted → public)
+  - Modify budget
+  - Add/remove tags
+}

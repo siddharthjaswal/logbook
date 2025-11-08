@@ -1,0 +1,32 @@
+meta {
+  name: Browse Public Trips
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/trips/public?skip=0&limit=100
+  body: none
+  auth: none
+}
+
+params:query {
+  skip: 0
+  limit: 100
+  ~country: Japan
+  ~city: Tokyo
+  ~trip_type: multi_city
+}
+
+docs {
+  Browse public trips (no authentication required).
+
+  Query Parameters:
+  - skip: Number of trips to skip (default: 0)
+  - limit: Maximum number of trips to return (default: 100, max: 100)
+  - country: Filter by primary destination country
+  - city: Filter by primary destination city
+  - trip_type: Filter by trip type (single_destination, multi_city, etc.)
+
+  Returns only trips with visibility=public.
+}

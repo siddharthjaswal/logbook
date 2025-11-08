@@ -1,0 +1,192 @@
+"""
+API routes for Trip management.
+"""
+
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.deps import get_current_active_user
+from app.features.users.models import User
+from app.features.trips import crud
+from app.features.trips.schemas import (
+    TripCreate,
+    TripUpdate,
+    TripResponse,
+    TripListResponse
+)
+from app.shared.enums import TripStatus
+
+router = APIRouter()
+
+
+@router.get("/", response_model=List[TripListResponse])
+async def list_my_trips(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    status_filter: Optional[TripStatus] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """List all trips created by the authenticated user."""
+    trips = crud.get_trips_by_user(
+        db,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        status_filter=status_filter
+    )
+    return trips
+
+
+@router.post("/", response_model=TripResponse, status_code=status.HTTP_201_CREATED)
+async def create_trip(
+    trip_in: TripCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Create a new trip."""
+    trip = crud.create_trip(db, trip_in, user_id=current_user.id)
+    return trip
+
+
+@router.get("/public", response_model=List[TripListResponse])
+async def browse_public_trips(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    country: Optional[str] = None,
+    city: Optional[str] = None,
+    trip_type: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Browse public trips (no authentication required)."""
+    trips = crud.get_public_trips(
+        db,
+        skip=skip,
+        limit=limit,
+        country=country,
+        city=city,
+        trip_type=trip_type
+    )
+    return trips
+
+
+@router.get("/search", response_model=List[TripListResponse])
+async def search_trips(
+    q: str = Query(..., min_length=1, description="Search query"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_active_user)
+):
+    """
+    Search trips by name, description, or destination.
+
+    If authenticated, includes user's private trips in results.
+    """
+    user_id = current_user.id if current_user else None
+    trips = crud.search_trips(
+        db,
+        search_query=q,
+        user_id=user_id,
+        skip=skip,
+        limit=limit
+    )
+    return trips
+
+
+@router.get("/{trip_id}", response_model=TripResponse)
+async def get_trip(
+    trip_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_active_user)
+):
+    """
+    Get trip by ID.
+
+    Returns trip if:
+    - User is the owner (any visibility), OR
+    - Trip is public or unlisted
+
+    Increments view count if not the owner.
+    """
+    user_id = current_user.id if current_user else None
+    trip = crud.get_trip_by_id(db, trip_id, user_id=user_id)
+
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found or access denied"
+        )
+
+    # Increment view count if not the owner
+    if not current_user or trip.created_by != current_user.id:
+        crud.increment_trip_views(db, trip)
+
+    return trip
+
+
+@router.put("/{trip_id}", response_model=TripResponse)
+async def update_trip(
+    trip_id: int,
+    trip_in: TripUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update a trip (owner only)."""
+    trip = crud.get_trip_by_id(db, trip_id, user_id=current_user.id)
+
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+
+    if not crud.check_trip_ownership(trip, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to update this trip"
+        )
+
+    trip = crud.update_trip(db, trip, trip_in)
+    return trip
+
+
+@router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_trip(
+    trip_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Soft delete a trip (owner only)."""
+    trip = crud.get_trip_by_id(db, trip_id, user_id=current_user.id)
+
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+
+    if not crud.check_trip_ownership(trip, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this trip"
+        )
+
+    crud.delete_trip(db, trip)
+    return None
+
+
+@router.get("/stats/me")
+async def get_my_trip_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get trip statistics for the authenticated user."""
+    total_trips = crud.get_user_trip_count(db, current_user.id)
+
+    return {
+        "total_trips": total_trips,
+        "user_id": current_user.id
+    }

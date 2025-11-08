@@ -1,0 +1,30 @@
+meta {
+  name: List My Trips
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/trips?skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+  ~status_filter: planning
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  List all trips created by the authenticated user.
+
+  Query Parameters:
+  - skip: Number of trips to skip (default: 0)
+  - limit: Maximum number of trips to return (default: 100, max: 100)
+  - status_filter: Filter by status (planning, upcoming, in_progress, completed, cancelled)
+}

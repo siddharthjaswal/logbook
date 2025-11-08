@@ -6,6 +6,7 @@ This module creates and configures the FastAPI application.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.core.config import settings
 
@@ -15,6 +16,13 @@ app = FastAPI(
     version=settings.VERSION,
     description="Travel planning and tracking API",
     debug=settings.DEBUG,
+)
+
+# Add Session Middleware (required for OAuth)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    max_age=3600,  # Session expires after 1 hour
 )
 
 # Configure CORS
@@ -47,6 +55,7 @@ async def health_check():
 # Register API routers
 from app.features.auth import router as auth_router
 from app.features.users import router as users_router
+from app.features.trips import router as trips_router
 
 app.include_router(
     auth_router.router,
@@ -60,8 +69,12 @@ app.include_router(
     tags=["users"]
 )
 
+app.include_router(
+    trips_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/trips",
+    tags=["trips"]
+)
+
 # TODO: Register remaining routers
-# from app.features.trips import router as trips_router
 # from app.features.trip_days import router as trip_days_router
-# app.include_router(trips_router.router, prefix=f"{settings.API_V1_PREFIX}/trips", tags=["trips"])
 # app.include_router(trip_days_router.router, prefix=f"{settings.API_V1_PREFIX}/trip_days", tags=["trip_days"])

@@ -1,0 +1,39 @@
+meta {
+  name: Search Trips
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/trips/search?q=Japan&skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  q: Japan
+  skip: 0
+  limit: 100
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Search trips by name, description, or destination.
+
+  Query Parameters:
+  - q: Search query (required, min 1 character)
+  - skip: Number of trips to skip (default: 0)
+  - limit: Maximum number of trips to return (default: 100, max: 100)
+
+  If authenticated, includes user's private trips in search results.
+  If not authenticated, only searches public trips.
+
+  Searches in:
+  - Trip name
+  - Trip description
+  - Primary destination country
+  - Primary destination city
+}

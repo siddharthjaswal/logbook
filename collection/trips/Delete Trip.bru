@@ -1,0 +1,24 @@
+meta {
+  name: Delete Trip
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/trips/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Soft delete a trip (owner only).
+
+  Replace '1' in URL with actual trip ID.
+
+  This is a soft delete - the trip is marked as deleted but not removed from the database.
+  The trip will no longer appear in lists or be accessible.
+}

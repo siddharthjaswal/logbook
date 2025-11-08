@@ -52,8 +52,7 @@ class User(Base):
     deleted_at = Column(TIMESTAMP, nullable=True)
 
     # Relationships
-    # NOTE: Trips relationship will be configured after Trip model is fully implemented
-    # trips = relationship("Trip", back_populates="creator", foreign_keys="[Trip.created_by]")
+    trips = relationship("Trip", back_populates="creator", foreign_keys="[Trip.created_by]")
     # trip_collaborations = relationship("TripCollaborator", back_populates="user")  # Phase 2
 
     def __repr__(self):
