@@ -1,0 +1,55 @@
+meta {
+  name: Refresh Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/refresh
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refresh_token": "{{refreshToken}}"
+  }
+}
+
+docs {
+  # Refresh Access Token
+
+  Get a new access token using the refresh token.
+
+  ## When to Use
+  - When your access token expires (after 30 minutes)
+  - To get a new token without re-authenticating with Google
+
+  ## Request Body
+  ```json
+  {
+    "refresh_token": "your_refresh_token_here"
+  }
+  ```
+
+  ## Response
+  ```json
+  {
+    "access_token": "new_access_token",
+    "token_type": "bearer",
+    "expires_in": 1800
+  }
+  ```
+
+  ## Steps
+  1. Ensure you have a valid refresh_token in {{refreshToken}}
+  2. Send this request
+  3. Copy the new access_token
+  4. Update {{accessToken}} with the new value
+  5. Continue using authenticated endpoints
+
+  ## Error Responses
+  - **401 Unauthorized**: Refresh token is invalid or expired
+  - **404 Not Found**: User not found
+  - **403 Forbidden**: User account is inactive
+}

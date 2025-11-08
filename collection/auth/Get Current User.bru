@@ -1,0 +1,56 @@
+meta {
+  name: Get Current User
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Current Authenticated User
+
+  Retrieve the current user's profile using their access token.
+
+  ## Authentication Required
+  - Yes (Bearer token)
+
+  ## Response
+  ```json
+  {
+    "id": 1,
+    "email": "user@example.com",
+    "username": "johndoe",
+    "first_name": "John",
+    "last_name": "Doe",
+    "bio": "Travel enthusiast",
+    "profile_photo_url": "https://lh3.googleusercontent.com/...",
+    "email_verified": true,
+    "is_active": true,
+    "default_currency": "USD",
+    "date_format": "YYYY-MM-DD",
+    "timezone": "UTC",
+    "language": "en",
+    "created_at": "2024-11-08T12:00:00",
+    "last_login_at": "2024-11-08T12:30:00"
+  }
+  ```
+
+  ## Use Cases
+  - Verify that authentication is working
+  - Get user info after login
+  - Check which user is currently authenticated
+  - Same as GET /users/me but in auth context
+
+  ## Error Responses
+  - **401 Unauthorized**: No token or invalid token
+  - **403 Forbidden**: User is inactive or deleted
+  - **404 Not Found**: User not found in database
+}

@@ -1,0 +1,49 @@
+meta {
+  name: Logout
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/auth/logout
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Logout
+
+  Logout the current user.
+
+  ## Authentication Required
+  - Yes (Bearer token)
+
+  ## Note on Stateless JWT
+  With stateless JWT tokens, logout is primarily client-side:
+  - The server cannot "invalidate" a JWT token
+  - The client must delete the access_token and refresh_token from storage
+
+  This endpoint exists for:
+  - Consistency with traditional auth flows
+  - Potential future server-side token blacklisting
+  - Logging user activity
+
+  ## What You Should Do After Logout
+  1. Delete access_token from your app's storage
+  2. Delete refresh_token from your app's storage
+  3. Redirect user to login page
+  4. Clear any user data from local state
+
+  ## Response
+  - **204 No Content**: Logout successful
+
+  ## Future Enhancement
+  This endpoint could be extended to:
+  - Add token to a blacklist/revocation list
+  - Track logout events for analytics
+  - Notify other devices of logout (for multi-device sessions)
+}
