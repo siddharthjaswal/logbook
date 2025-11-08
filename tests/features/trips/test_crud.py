@@ -200,10 +200,13 @@ def test_search_trips(db, test_user, trip_data):
         crud.create_trip(db, trip_create, user_id=test_user.id)
 
     # Search for "Japan"
+    # Note: All trips have Japan in country field from trip_data fixture,
+    # plus two have "Japan" in the name, so we expect all 3 to match
     results = crud.search_trips(db, "Japan")
 
-    assert len(results) == 2
-    assert all("Japan" in trip.name for trip in results)
+    assert len(results) == 3
+    # Verify search matches on country (all 3) or name (2 of them)
+    assert all("Japan" in trip.name or trip.primary_destination_country == "Japan" for trip in results)
 
 
 def test_search_trips_includes_user_private(db, test_user, trip_data):

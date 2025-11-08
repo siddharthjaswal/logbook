@@ -6,8 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.deps import get_current_active_user
+from app.core.deps import get_db, get_current_active_user, get_current_active_user_optional
 from app.features.users.models import User
 from app.features.trips import crud
 from app.features.trips.schemas import (
@@ -100,7 +99,7 @@ async def search_trips(
 async def get_trip(
     trip_id: int,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_active_user)
+    current_user: Optional[User] = Depends(get_current_active_user_optional)
 ):
     """
     Get trip by ID.

@@ -1,0 +1,97 @@
+meta {
+  name: Create Trip Day
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/trip-days/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "date": "2025-07-15",
+    "day_number": 3,
+    "day_type": "sightseeing",
+    "title": "Exploring Paris",
+    "place": "Paris",
+    "place_city": "Paris",
+    "place_country": "France",
+    "timezone": "Europe/Paris",
+    "accommodation_name": "Hotel Plaza Athénée",
+    "accommodation_address": "25 Avenue Montaigne, 75008 Paris",
+    "accommodation_checkin": 1720972800,
+    "accommodation_checkout": 1721059200,
+    "accommodation_confirmation": "HTL456789",
+    "activities": [
+      {
+        "name": "Eiffel Tower Visit",
+        "time": "10:00",
+        "duration": 2,
+        "location": "Champ de Mars, Paris",
+        "notes": "Book tickets online in advance",
+        "cost": 26.10,
+        "booking_required": true,
+        "confirmation_number": "EIF123456"
+      },
+      {
+        "name": "Louvre Museum",
+        "time": "14:00",
+        "duration": 3,
+        "location": "Rue de Rivoli, Paris",
+        "notes": "Skip-the-line tickets",
+        "cost": 17.00,
+        "booking_required": true
+      }
+    ],
+    "bookings": [
+      {
+        "type": "restaurant",
+        "name": "Le Jules Verne",
+        "confirmation_number": "RES789",
+        "cost": 150.00,
+        "time": "19:30",
+        "location": "Eiffel Tower",
+        "notes": "Dress code: Smart casual",
+        "contact": "+33 1 45 55 61 44"
+      }
+    ],
+    "notes": "Remember to bring camera and comfortable shoes"
+  }
+}
+
+docs {
+  # Create Trip Day
+
+  Creates a new day in the trip itinerary.
+
+  ## Requirements
+  - Must be trip owner
+  - Date must be unique for the trip
+  - Trip must exist
+
+  ## Fields
+  - `trip_id`: ID of the parent trip
+  - `date`: Calendar date (YYYY-MM-DD format)
+  - `day_number`: Sequential day number (1, 2, 3...)
+  - `day_type`: Type of day (transit, sightseeing, leisure, etc.)
+  - `title`: Optional title for the day
+  - `place`, `place_city`, `place_country`: Location details
+  - `timezone`: Timezone for the location
+  - `activities`: Array of planned activities (name, time, duration, cost, etc.)
+  - `bookings`: Array of bookings (restaurant, tour, show, etc.)
+  - `accommodation_*`: Hotel/lodging details
+  - `notes`: Free-form notes
+
+  ## Auto-updates
+  Creating a trip day will automatically update the parent trip's:
+  - `countries_visited`
+  - `cities_visited`
+}

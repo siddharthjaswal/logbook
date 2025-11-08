@@ -24,10 +24,9 @@ def init_db():
 
     try:
         # Import all models to register them with Base
-        # TODO: Import models when they're created
-        # from app.features.users.models import User
-        # from app.features.trips.models import Trip
-        # from app.features.trip_days.models import TripDay
+        from app.features.users.models import User
+        from app.features.trips.models import Trip
+        from app.features.trip_days.models import TripDay
 
         # Create all tables
         Base.metadata.create_all(bind=engine)

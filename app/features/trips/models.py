@@ -6,11 +6,10 @@ between multiple users. Trips can span multiple destinations and
 support flexible date planning.
 """
 
-from sqlalchemy import Column, String, Text, Boolean, Integer, TIMESTAMP, DECIMAL, ForeignKey
+from sqlalchemy import Column, String, Text, Boolean, Integer, TIMESTAMP, DECIMAL, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import ENUM, ARRAY
-from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import ENUM
 
 from app.core.database import Base
 from app.shared.enums import TripStatus, TripVisibility, TripType, DateFlexibility
@@ -53,8 +52,8 @@ class Trip(Base):
     # primary_destination_coordinates = Column(POINT, nullable=True)  # Add PostGIS later
 
     # All destinations visited (auto-calculated from trip_days)
-    countries_visited = Column(JSON, default=list, nullable=False)
-    cities_visited = Column(JSON, default=list, nullable=False)
+    countries_visited = Column(JSON, default=lambda: [], nullable=False)
+    cities_visited = Column(JSON, default=lambda: [], nullable=False)
 
     # Trip type classification
     trip_type = Column(
@@ -88,7 +87,7 @@ class Trip(Base):
     likes_count = Column(Integer, default=0, nullable=False)
 
     # Metadata
-    tags = Column(JSON, default=list, nullable=False)
+    tags = Column(JSON, default=lambda: [], nullable=False)
     notes = Column(Text, nullable=True)
 
     # Timestamps
@@ -100,7 +99,7 @@ class Trip(Base):
 
     # Relationships
     creator = relationship("User", back_populates="trips", foreign_keys=[created_by])
-    # trip_days = relationship("TripDay", back_populates="trip", cascade="all, delete-orphan")  # Uncomment when TripDay feature is implemented
+    trip_days = relationship("TripDay", back_populates="trip", cascade="all, delete-orphan")
     # collaborators = relationship("TripCollaborator", back_populates="trip")  # Phase 2
 
     def __repr__(self):

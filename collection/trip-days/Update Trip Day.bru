@@ -1,0 +1,85 @@
+meta {
+  name: Update Trip Day
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/trip-days/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "Exploring Paris - Updated",
+    "notes": "Don't forget to visit Notre Dame (if open)",
+    "activities": [
+      {
+        "name": "Eiffel Tower Visit",
+        "time": "10:00",
+        "duration": 2,
+        "location": "Champ de Mars, Paris",
+        "notes": "Book tickets online in advance",
+        "cost": 26.10,
+        "booking_required": true,
+        "confirmation_number": "EIF123456"
+      },
+      {
+        "name": "Louvre Museum",
+        "time": "14:00",
+        "duration": 3,
+        "location": "Rue de Rivoli, Paris",
+        "notes": "Skip-the-line tickets",
+        "cost": 17.00,
+        "booking_required": true
+      },
+      {
+        "name": "Seine River Cruise",
+        "time": "20:00",
+        "duration": 1,
+        "location": "Pont de l'Alma",
+        "cost": 15.00,
+        "notes": "Evening cruise with views of illuminated monuments"
+      }
+    ]
+  }
+}
+
+docs {
+  # Update Trip Day
+
+  Update any field of an existing trip day.
+
+  ## URL Params
+  - `{trip_day_id}`: ID of the trip day to update
+
+  ## Request Body
+  All fields are optional - only include fields you want to update:
+  - `date`: Change the calendar date
+  - `day_number`: Change the sequential day number
+  - `day_type`: Change the day type
+  - `title`: Update the day title
+  - `place`, `place_city`, `place_country`, `timezone`: Update location
+  - `transit_mode`, `transit_details`: Update transit information
+  - `arrival_time`, `departure_time`: Update arrival/departure timestamps
+  - `accommodation_*`: Update accommodation details
+  - `activities`: Replace entire activities array
+  - `bookings`: Replace entire bookings array
+  - `notes`: Update notes
+
+  ## Important Notes
+  - Only trip owner can update (for now)
+  - If changing date, new date must be unique for the trip
+  - Activities and bookings are REPLACED (not merged) when updated
+  - Auto-updates trip destinations if location changed
+
+  ## Example Usage
+  - Update just the title: `{"title": "New Title"}`
+  - Add more activities: Send full array with old + new activities
+  - Change location: `{"place_city": "London", "place_country": "UK", "timezone": "Europe/London"}`
+}

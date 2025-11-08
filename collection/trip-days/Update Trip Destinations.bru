@@ -1,0 +1,51 @@
+meta {
+  name: Update Trip Destinations
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/trip-days/trip/1/update-destinations
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Update Trip Destinations
+
+  Manually trigger update of trip's countries_visited and cities_visited
+  based on all trip days.
+
+  ## URL Params
+  - `{trip_id}`: ID of the trip to update
+
+  ## Response
+  Returns:
+  - `trip_id`: ID of the trip
+  - `countries_visited`: Updated array of countries
+  - `cities_visited`: Updated array of cities
+
+  ## When to Use
+  This endpoint is **automatically called** when:
+  - Creating a trip day
+  - Updating a trip day (if location changed)
+  - Deleting a trip day
+
+  You typically **don't need to call this manually** unless:
+  - You suspect the data is out of sync
+  - You want to force a recalculation
+  - You're debugging data issues
+
+  ## How it Works
+  1. Queries all trip days for the trip
+  2. Extracts unique values from `place_country` and `place_city` fields
+  3. Updates the parent trip's `countries_visited` and `cities_visited` arrays
+  4. Sorts the arrays alphabetically
+
+  ## Access Control
+  - Must be trip owner
+}

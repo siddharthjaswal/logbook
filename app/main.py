@@ -56,6 +56,7 @@ async def health_check():
 from app.features.auth import router as auth_router
 from app.features.users import router as users_router
 from app.features.trips import router as trips_router
+from app.features.trip_days import router as trip_days_router
 
 app.include_router(
     auth_router.router,
@@ -75,6 +76,8 @@ app.include_router(
     tags=["trips"]
 )
 
-# TODO: Register remaining routers
-# from app.features.trip_days import router as trip_days_router
-# app.include_router(trip_days_router.router, prefix=f"{settings.API_V1_PREFIX}/trip_days", tags=["trip_days"])
+app.include_router(
+    trip_days_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/trip-days",
+    tags=["trip-days"]
+)
