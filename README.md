@@ -85,27 +85,75 @@ logbook/
 
 ### Prerequisites
 
-*   Python 3.8+
+*   Python 3.11+ (3.13 not yet supported by all dependencies)
+*   PostgreSQL 15+
+*   Homebrew (macOS)
 
 ### Setup and Installation
 
+**📚 Complete setup guide:** See [docs/DEVELOPMENT_SETUP.md](docs/DEVELOPMENT_SETUP.md)
+
+**Quick Start:**
+
 1.  **Create and activate a virtual environment:**
     ```bash
-    python3 -m venv venv
+    python3.11 -m venv venv
     source venv/bin/activate
     ```
 
 2.  **Install the dependencies:**
     ```bash
+    pip install --upgrade pip
     pip install -r requirements.txt
     ```
 
-3.  **Run the application:**
+3.  **Set up PostgreSQL:**
+    ```bash
+    # Install PostgreSQL
+    brew install postgresql@15
+
+    # Start PostgreSQL service
+    brew services start postgresql@15
+
+    # Create database
+    createdb logbook
+    ```
+
+4.  **Configure environment variables:**
+    ```bash
+    # Copy example env file
+    cp .env.example .env
+
+    # Edit .env and update:
+    # - DATABASE_URL (already set for local PostgreSQL)
+    # - GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (from Google Cloud Console)
+    # - SECRET_KEY is pre-generated
+    ```
+
+5.  **Test database connection:**
+    ```bash
+    python scripts/test_db_connection.py
+    ```
+
+6.  **Run the application:**
     ```bash
     uvicorn app.main:app --reload
     ```
 
     The server will start, and you can access the API at `http://127.0.0.1:8000`.
+
+### Testing the Setup
+
+```bash
+# Check database connection
+python scripts/test_db_connection.py
+
+# Run tests
+pytest
+
+# Start development server
+uvicorn app.main:app --reload
+```
 
 ## Roadmap
 
