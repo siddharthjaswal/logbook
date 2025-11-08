@@ -17,7 +17,7 @@ class Activity(BaseModel):
     """Schema for activity within a trip day."""
     name: str = Field(..., min_length=1, max_length=200)
     time: Optional[str] = Field(None, description="Time in HH:MM format")
-    duration: Optional[int] = Field(None, ge=0, description="Duration in hours")
+    duration: Optional[float] = Field(None, ge=0, description="Duration in hours (can be decimal, e.g., 1.5 for 1h 30m)")
     location: Optional[str] = Field(None, max_length=200)
     notes: Optional[str] = None
     cost: Optional[float] = Field(None, ge=0)

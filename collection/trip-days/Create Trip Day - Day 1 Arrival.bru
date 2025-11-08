@@ -1,0 +1,104 @@
+meta {
+  name: Create Trip Day - Day 1 Arrival
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/trip-days/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "date": "2025-01-01",
+    "day_number": 1,
+    "day_type": "transit",
+    "title": "Arrival in Tokyo",
+    "place": "Narita Airport to Shinjuku",
+    "place_city": "Tokyo",
+    "place_country": "Japan",
+    "timezone": "Asia/Tokyo",
+    "transit_mode": "train",
+    "transit_details": {
+      "carrier": "Narita Express (N'EX)",
+      "route": "Narita Airport Terminal 1 → Shinjuku Station",
+      "departure_location": "Narita Airport Terminal 1",
+      "arrival_location": "Shinjuku Station",
+      "duration_minutes": 80,
+      "ticket_type": "Reserved seat",
+      "cost": 3250.00,
+      "confirmation_number": "NEX20250101",
+      "seat": "Car 4, Seat 12A"
+    },
+    "arrival_time": 1735711200,
+    "departure_time": 1735715400,
+    "accommodation_name": "Park Hyatt Tokyo",
+    "accommodation_address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo",
+    "accommodation_checkin": 1735722000,
+    "accommodation_checkout": 1735999200,
+    "accommodation_confirmation": "PH2025010104",
+    "activities": [
+      {
+        "name": "Airport Arrival",
+        "time": "14:00",
+        "duration": 1,
+        "location": "Narita International Airport Terminal 1",
+        "notes": "Flight lands at 14:00, allow time for immigration and customs"
+      },
+      {
+        "name": "Hotel Check-in",
+        "time": "17:30",
+        "duration": 0.5,
+        "location": "Park Hyatt Tokyo",
+        "notes": "Check-in available from 15:00, but we'll arrive around 17:30"
+      },
+      {
+        "name": "Dinner at Shinjuku",
+        "time": "19:00",
+        "duration": 1.5,
+        "location": "Omoide Yokocho, Shinjuku",
+        "notes": "Explore the atmospheric alley of small restaurants",
+        "cost": 3000.00
+      }
+    ],
+    "notes": "Light day due to travel fatigue. JR Pass can be picked up at airport if purchased. Remember to get pocket WiFi or SIM card at airport."
+  }
+}
+
+docs {
+  # Create Trip Day - Day 1 (Arrival)
+
+  Example of a TRANSIT type day for arrival in Japan.
+
+  ## Trip Timeline
+  - 14:00: Arrive at Narita Airport (arrival_time: 1735711200)
+  - 15:10: Depart on Narita Express (departure_time: 1735715400)
+  - 16:30: Arrive at Shinjuku Station
+  - 17:30: Hotel check-in (accommodation_checkin: 1735722000)
+  - 19:00: Dinner at local restaurants
+
+  ## Transit Details
+  The `transit_details` field is flexible JSON that can contain:
+  - carrier: Train/airline/bus company name
+  - route: Detailed route description
+  - departure_location: Where transit starts
+  - arrival_location: Where transit ends
+  - duration_minutes: How long the transit takes
+  - ticket_type: Type of ticket/reservation
+  - cost: Cost in local currency
+  - confirmation_number: Booking reference
+  - seat: Seat assignment (if applicable)
+  - Additional fields as needed (gate, terminal, etc.)
+
+  ## Timestamps
+  - arrival_time: 1735711200 = 2025-01-01 14:00 JST (when arriving at destination)
+  - departure_time: 1735715400 = 2025-01-01 15:10 JST (when leaving for destination)
+  - accommodation_checkin: 1735722000 = 2025-01-01 17:30 JST
+}
