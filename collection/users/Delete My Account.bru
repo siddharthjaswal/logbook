@@ -1,0 +1,45 @@
+meta {
+  name: Delete My Account
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/users/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete My Account
+
+  Soft deletes the current user's account.
+
+  ## Authentication Required
+  - Yes (Bearer token)
+
+  ## Behavior
+  - Sets `deleted_at` timestamp
+  - Account is hidden from all queries
+  - User data retained for 30-day recovery period
+  - Permanent deletion occurs after 30 days (via cleanup job)
+
+  ## Effects on Related Data
+  - **Trips created by user**: Set `created_by` to NULL (public trips persist)
+  - **Private trips**: Hidden (will be permanently deleted after 30 days)
+  - **Trip days**: Deleted when trip is permanently deleted
+
+  ## Response
+  - 204 No Content (success)
+
+  ## Recovery
+  - User can contact support within 30 days to restore account
+  - After 30 days, data is permanently deleted
+
+  ## Warning
+  This action marks the account for deletion. Use with caution.
+}

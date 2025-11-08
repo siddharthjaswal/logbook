@@ -55,6 +55,7 @@ def client(db):
     Yields:
         FastAPI test client
     """
+    from app.core.deps import get_db
 
     def override_get_db():
         try:
@@ -63,7 +64,8 @@ def client(db):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
     app.dependency_overrides.clear()
 
 
@@ -120,7 +122,26 @@ def test_trip_day_data():
     }
 
 
+@pytest.fixture
+def test_user(db, test_user_data):
+    """Create a test user in the database."""
+    from app.features.users.crud import create_user
+    from app.features.users.schemas import UserCreate
+
+    user_create = UserCreate(**test_user_data)
+    user = create_user(db, user_create)
+    return user
+
+
+@pytest.fixture
+def auth_headers(test_user):
+    """Create authentication headers with a valid JWT token."""
+    from app.core.security import create_access_token
+
+    access_token = create_access_token(data={"sub": test_user.id})
+    return {"Authorization": f"Bearer {access_token}"}
+
+
 # TODO: Add fixtures for:
-# - test_user (created user in database)
-# - auth_token (JWT token for authenticated requests)
 # - test_trip (created trip in database)
+# - test_trip_day (created trip day in database)

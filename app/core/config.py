@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://localhost/logbook"
 
-    # Google OAuth
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
+    # Google OAuth (Optional - will be set up in auth feature)
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
 
     # JWT

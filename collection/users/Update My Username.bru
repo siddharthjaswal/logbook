@@ -1,0 +1,46 @@
+meta {
+  name: Update My Username
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/users/me/username
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "username": "new_username"
+  }
+}
+
+docs {
+  # Update My Username
+
+  Updates only the username for the current user.
+
+  ## Authentication Required
+  - Yes (Bearer token)
+
+  ## Request Body
+  - `username`: New username (required, 3-50 chars)
+
+  ## Validation
+  - Username must be unique (returns 400 if already taken)
+  - Username length: 3-50 characters
+
+  ## Response
+  Returns updated UserResponse with new username
+
+  ## Use Case
+  Dedicated endpoint for username updates, useful for:
+  - Username-only update forms
+  - Simplified frontend logic
+  - Clear audit trail for username changes
+}

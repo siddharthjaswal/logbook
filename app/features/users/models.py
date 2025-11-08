@@ -5,7 +5,7 @@ Users authenticate via Google OAuth and can create trips,
 collaborate on trips, and interact with public trips.
 """
 
-from sqlalchemy import Column, BigInteger, String, Boolean, Text, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Boolean, Text, TIMESTAMP
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -18,7 +18,7 @@ class User(Base):
     __tablename__ = "users"
 
     # Primary Key
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
     # OAuth Authentication (Google only for MVP)
     google_id = Column(String(255), unique=True, nullable=False, index=True)
@@ -52,7 +52,8 @@ class User(Base):
     deleted_at = Column(TIMESTAMP, nullable=True)
 
     # Relationships
-    trips = relationship("Trip", back_populates="creator", foreign_keys="Trip.created_by")
+    # NOTE: Trips relationship will be configured after Trip model is fully implemented
+    # trips = relationship("Trip", back_populates="creator", foreign_keys="[Trip.created_by]")
     # trip_collaborations = relationship("TripCollaborator", back_populates="user")  # Phase 2
 
     def __repr__(self):

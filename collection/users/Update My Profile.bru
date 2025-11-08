@@ -1,0 +1,55 @@
+meta {
+  name: Update My Profile
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/users/me
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "first_name": "John",
+    "last_name": "Doe",
+    "bio": "Travel enthusiast exploring the world one trip at a time",
+    "username": "johndoe_traveler",
+    "default_currency": "USD",
+    "timezone": "America/New_York",
+    "date_format": "MM/DD/YYYY",
+    "language": "en"
+  }
+}
+
+docs {
+  # Update My Profile
+
+  Updates the current user's profile information.
+
+  ## Authentication Required
+  - Yes (Bearer token)
+
+  ## Request Body
+  All fields are optional:
+  - `username`: Unique username (3-50 chars)
+  - `first_name`: First name (max 100 chars)
+  - `last_name`: Last name (max 100 chars)
+  - `bio`: User biography (text)
+  - `default_currency`: 3-letter currency code (e.g., "USD", "EUR", "JPY")
+  - `date_format`: Preferred date format (max 20 chars)
+  - `timezone`: Timezone string (e.g., "America/New_York", "Europe/Paris")
+  - `language`: Language code (e.g., "en", "es", "fr")
+
+  ## Validation
+  - Username must be unique (returns 400 if already taken)
+  - Only provided fields will be updated
+
+  ## Response
+  Returns updated UserResponse
+}

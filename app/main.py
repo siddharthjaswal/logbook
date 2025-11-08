@@ -44,9 +44,19 @@ async def health_check():
     return {"status": "healthy"}
 
 
-# TODO: Register routers
-# from app.api import auth, users, trips, trip_days
-# app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["auth"])
-# app.include_router(users.router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["users"])
-# app.include_router(trips.router, prefix=f"{settings.API_V1_PREFIX}/trips", tags=["trips"])
-# app.include_router(trip_days.router, prefix=f"{settings.API_V1_PREFIX}/trip_days", tags=["trip_days"])
+# Register API routers
+from app.features.users import router as users_router
+
+app.include_router(
+    users_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/users",
+    tags=["users"]
+)
+
+# TODO: Register remaining routers
+# from app.features.auth import router as auth_router
+# from app.features.trips import router as trips_router
+# from app.features.trip_days import router as trip_days_router
+# app.include_router(auth_router.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["auth"])
+# app.include_router(trips_router.router, prefix=f"{settings.API_V1_PREFIX}/trips", tags=["trips"])
+# app.include_router(trip_days_router.router, prefix=f"{settings.API_V1_PREFIX}/trip_days", tags=["trip_days"])
