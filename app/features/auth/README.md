@@ -5,21 +5,67 @@ The Auth feature handles user authentication via Google OAuth 2.0. For MVP, Logb
 
 ## Current Implementation Status
 
-### ✅ Completed
+### ✅ **COMPLETED - Phase 1**
+
+**Core Security Infrastructure:**
 - [x] JWT token utilities (create, decode, validate)
 - [x] Security module (app/core/security.py)
 - [x] Dependency injection for authentication (app/core/deps.py)
-- [x] Password hashing utilities (for future use)
-- [x] Token types: access and refresh tokens
+- [x] Token types: access (30 min) and refresh tokens (7 days)
+- [x] JWT subject (sub) converted to string for spec compliance
+- [x] Token type validation (prevent access token used as refresh)
 
-### ⏳ In Progress / Not Started
-- [ ] Google OAuth integration
-- [ ] Auth router (`/auth` endpoints)
-- [ ] OAuth callback handler
-- [ ] Token refresh endpoint
-- [ ] Logout functionality
-- [ ] User session management
-- [ ] Tests (pytest + Bruno)
+**Google OAuth Integration:**
+- [x] Authlib OAuth client configuration
+- [x] SessionMiddleware for OAuth state management
+- [x] itsdangerous dependency for secure sessions
+- [x] Google OpenID Connect auto-discovery
+- [x] OAuth scopes: openid, email, profile
+
+**Pydantic Schemas (5 schemas):**
+- [x] TokenResponse - Login response with tokens
+- [x] TokenRefreshRequest - Refresh token request
+- [x] TokenRefreshResponse - New access token response
+- [x] GoogleUserInfo - Google OAuth user data
+- [x] AuthUserResponse - Combined user + tokens response
+
+**Service Layer (3 functions):**
+- [x] get_or_create_user_from_google - OAuth user handling
+- [x] generate_tokens_for_user - JWT token generation
+- [x] create_auth_response - Format auth response
+
+**API Router (5 endpoints):**
+- [x] GET /auth/google - Initiate OAuth flow
+- [x] GET /auth/google/callback - Handle OAuth callback
+- [x] POST /auth/refresh - Refresh access token
+- [x] POST /auth/logout - Logout (client-side token clearing)
+- [x] GET /auth/me - Get current authenticated user
+
+**Testing:**
+- [x] Bruno API Collection (4 request files)
+- [x] Pytest service tests (6 tests)
+- [x] Pytest API integration tests (10 tests)
+- [x] **Test Results:** 16/16 passing (100% pass rate)
+
+**Documentation:**
+- [x] Comprehensive Google OAuth setup guide (docs/GOOGLE_OAUTH_SETUP.md)
+- [x] Step-by-step OAuth configuration instructions
+- [x] Token refresh workflow documentation
+- [x] Troubleshooting guide for common OAuth errors
+
+**Security Features:**
+- [x] Stateless JWT authentication (no server-side sessions)
+- [x] Automatic last_login_at tracking
+- [x] Active user validation
+- [x] Deleted user rejection
+- [x] Secure token expiration (30 min access, 7 days refresh)
+
+### 📋 Future Enhancements (Phase 2+)
+- [ ] Token revocation/blacklist
+- [ ] Multi-provider OAuth (GitHub, Apple)
+- [ ] Session management dashboard
+- [ ] Two-factor authentication (2FA)
+- [ ] Email notifications for new logins
 
 ---
 
