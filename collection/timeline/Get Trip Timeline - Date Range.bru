@@ -1,0 +1,33 @@
+meta {
+  name: Get Trip Timeline - Date Range
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/trips/1/timeline?start_date=2024-06-01&end_date=2024-06-07
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Get timeline filtered by date range.
+
+  **Query Parameters:**
+  - `start_date`: Filter events from this date (inclusive, YYYY-MM-DD)
+  - `end_date`: Filter events until this date (inclusive, YYYY-MM-DD)
+
+  **Example:** Get timeline for first week of June 2024
+
+  Replace '1' in URL with actual trip ID.
+  Adjust dates as needed.
+
+  **Useful for:**
+  - Viewing specific week or month
+  - Focusing on a portion of a long trip
+  - Loading data incrementally for large trips
+}

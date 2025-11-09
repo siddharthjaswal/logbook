@@ -61,6 +61,7 @@ from app.features.activities import router as activities_router
 from app.features.bookings import router as bookings_router
 from app.features.accommodations import router as accommodations_router
 from app.features.transits import router as transits_router
+from app.features.timeline import router as timeline_router
 
 app.include_router(
     auth_router.router,
@@ -108,4 +109,10 @@ app.include_router(
     transits_router.router,
     prefix=f"{settings.API_V1_PREFIX}/transits",
     tags=["transits"]
+)
+
+app.include_router(
+    timeline_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["timeline"]
 )

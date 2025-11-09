@@ -1,0 +1,35 @@
+meta {
+  name: Get Trip Timeline - Combined Filters
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/trips/1/timeline?start_date=2024-06-01&end_date=2024-06-10&skip=0&limit=50
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Get timeline with combined date range and pagination filters.
+
+  **Query Parameters:**
+  - `start_date`: Filter from this date (YYYY-MM-DD)
+  - `end_date`: Filter until this date (YYYY-MM-DD)
+  - `skip`: Records to skip for pagination
+  - `limit`: Max records to return
+
+  **Example:** Get first 50 events from June 1-10, 2024
+
+  Replace '1' in URL with actual trip ID.
+  Adjust parameters as needed.
+
+  **Common use cases:**
+  - Load a specific week with pagination
+  - Filter to date range then paginate through results
+  - Combine all filters for optimal data loading
+}

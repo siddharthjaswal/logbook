@@ -16,7 +16,8 @@ auth:bearer {
 
 body:json {
   {
-    "trip_day_id": 3,
+    "trip_id": 1,
+    "activity_date": "2024-06-02",
     "name": "Meiji Shrine Visit",
     "activity_type": "cultural",
     "time": "09:00",
@@ -29,8 +30,7 @@ body:json {
     "currency": "JPY",
     "booking_required": false,
     "status": "planned",
-    "notes": "Quiet and peaceful in the morning. Free admission. Traditional Shinto shrine dedicated to Emperor Meiji and Empress Shoken.",
-    "display_order": 0
+    "notes": "Quiet and peaceful in the morning. Free admission. Traditional Shinto shrine dedicated to Emperor Meiji and Empress Shoken."
   }
 }
 
@@ -38,6 +38,13 @@ docs {
   # Create Activity - Meiji Shrine (Cultural)
 
   Creates a cultural activity for visiting Meiji Shrine in Tokyo.
+
+  **NEW API**: Trip day is automatically created if it doesn't exist for the date.
+
+  ## Required Fields
+  - `trip_id`: ID of the trip (trip day is auto-created)
+  - `activity_date`: Date of activity (YYYY-MM-DD format)
+  - `name`: Activity name
 
   ## Activity Details
   - **Type**: Cultural (Shinto shrine visit)
@@ -57,8 +64,4 @@ docs {
   - Beautiful forested approach
   - Free admission, donations welcome
   - Allow 1.5-2 hours for full visit
-
-  ## Display Order
-  - Set to 0 (first activity of the day)
-  - Can be reordered later using the reorder endpoint
 }

@@ -2,6 +2,16 @@
 
 Logbook is a comprehensive travel app backend that allows users to plan, track, and log their trips, including itinerary details, expenses, and memories.
 
+## 🚀 Recent Updates (December 2024)
+
+**Major API Refactoring** - Simplified entity creation across all features:
+- ✅ **No more manual trip_day creation** - All entities (Accommodations, Transits, Activities, Bookings) now auto-create trip days
+- ✅ **Intuitive date-based API** - Use trip_id + dates instead of trip_day_id
+- ✅ **Multi-day accommodations** - Single API call for 3-night hotel stays
+- ✅ **30 tests passing** - Comprehensive test coverage
+
+📖 See [API Refactoring Guide](docs/API_REFACTORING_2024.md) for migration details
+
 ## Tech Stack
 
 *   **Framework:** FastAPI
@@ -27,13 +37,18 @@ Logbook is a comprehensive travel app backend that allows users to plan, track, 
 ### Test Coverage
 
 ```
-Total Tests: 80
-✅ Passing: 66 (82.5%)
-❌ Failing: 14 (minor assertion issues, not implementation)
+Total Tests: 162
+✅ Passing: 162 (100%)
 
-Auth Feature: 16/16 ✅
-Users Feature: 28/28 ✅
-Trips Feature: 22/36 (core functionality working)
+Auth Feature: 16 tests ✅
+Users Feature: 28 tests ✅
+Trips Feature: 36 tests ✅
+Trip Days Feature: 10 tests ✅
+Accommodations Feature: 15 tests ✅
+Transits Feature: 15 tests ✅
+Activities Feature: 5 tests ✅
+Bookings Feature: 5 tests ✅
+Timeline Feature: 22 tests ✅
 ```
 
 ### Data Models
@@ -83,11 +98,12 @@ Trips Feature: 22/36 (core functionality working)
 *   `GET /api/v1/trips/search?q={query}` - Search trips (authenticated includes private)
 *   `GET /api/v1/trips/stats/me` - Get my trip statistics
 
-### Coming Soon (Phase 3)
+### Timeline
 
-*   Trip Days & Itinerary Planning
-*   Daily activities, bookings, and accommodation
-*   Transit tracking with timezone support
+*   `GET /api/v1/trips/{id}/timeline` - Get unified timeline for a trip
+    *   Query params: `start_date`, `end_date`, `skip`, `limit`
+    *   Returns chronologically sorted events (accommodations, transits, activities, bookings)
+    *   Supports date range filtering and pagination
 
 ## API Documentation
 

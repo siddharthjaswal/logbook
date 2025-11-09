@@ -1,0 +1,41 @@
+meta {
+  name: Get Trip Timeline - All Events
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/trips/1/timeline
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Get unified timeline for a trip with all events sorted chronologically.
+
+  Returns a merged, sorted timeline containing:
+  - Accommodations (check-ins, check-outs, stays)
+  - Transits (flights, trains, etc.)
+  - Activities (sightseeing, dining, etc.)
+  - Bookings (tours, reservations, etc.)
+
+  All items are sorted by date and time for easy client-side rendering.
+
+  Replace '1' in URL with actual trip ID.
+
+  **Response includes:**
+  - `trip_id`: Trip ID
+  - `timeline`: Array of timeline items
+  - `total_items`: Total count of events
+
+  **Each timeline item includes:**
+  - `type`: Event type (accommodation, transit, activity, booking)
+  - `date`: Event date
+  - `time`: Event time (if available)
+  - `name`: Event name
+  - `data`: Full event object with all details
+}
