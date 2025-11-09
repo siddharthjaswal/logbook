@@ -1,0 +1,28 @@
+meta {
+  name: Get Accommodation by Confirmation
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/accommodations/confirmation/HYATT123456
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get Accommodation by Confirmation Number
+
+  Look up an accommodation using its confirmation number.
+
+  **Use Cases**:
+  - Quick lookup from booking email
+  - Verify which trip day a booking is for
+  - Check booking details without knowing the ID
+
+  Replace `HYATT123456` with the actual confirmation number.
+}

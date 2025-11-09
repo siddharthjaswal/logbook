@@ -195,7 +195,7 @@ async def update_trip_day(
     return updated_trip_day
 
 
-@router.delete("/{trip_day_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{trip_day_id}", response_model=dict)
 async def delete_trip_day(
     trip_day_id: int,
     db: Session = Depends(get_db),
@@ -218,14 +218,22 @@ async def delete_trip_day(
     # Check trip access (owner only)
     check_trip_access(db, trip_day.trip_id, current_user.id, require_owner=True)
 
-    # Delete trip day
+    # Store info for response
     trip_id = trip_day.trip_id
+    deleted_date = trip_day.date
+
+    # Delete trip day
     crud.delete_trip_day(db, trip_day)
 
     # Auto-update trip destinations
     crud.update_trip_destinations(db, trip_id)
 
-    return None
+    return {
+        "message": "Trip day deleted successfully",
+        "trip_day_id": trip_day_id,
+        "trip_id": trip_id,
+        "date": deleted_date
+    }
 
 
 @router.get("/trip/{trip_id}/summary", response_model=dict)

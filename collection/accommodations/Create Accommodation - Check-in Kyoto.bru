@@ -1,0 +1,52 @@
+meta {
+  name: Create Accommodation - Check-in Kyoto
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/accommodations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_day_id": 5,
+    "accommodation_type": "check_in",
+    "check_in_time": 1704470400,
+    "check_out_time": null,
+    "name": "The Ritz-Carlton Kyoto",
+    "address": "Kamogawa Nijo-Ohashi Hotori, Nakagyo-ku, Kyoto 604-0902, Japan",
+    "latitude": 35.0116,
+    "longitude": 135.7681,
+    "confirmation_number": "RC789012",
+    "booking_url": "https://www.ritzcarlton.com/en/hotels/japan/kyoto",
+    "cost": 650.00,
+    "currency": "USD",
+    "contact_phone": "+81-75-746-5555",
+    "contact_email": "rc.ukykr.reservation@ritzcarlton.com",
+    "room_type": "Garden View Deluxe Room",
+    "notes": "Arriving from Tokyo. Request quiet room away from elevator.",
+    "display_order": 1
+  }
+}
+
+docs {
+  # Create Accommodation - Check-in Kyoto
+
+  Creates a check-in accommodation entry for arrival at new hotel.
+
+  **Accommodation Type**: `check_in` - Arriving and checking in (e.g., arrival day)
+
+  **Multi-Accommodation Day Example**:
+  - Trip Day 5 has TWO accommodations:
+    1. Check-out from Park Hyatt Tokyo (display_order: 0)
+    2. Check-in to Ritz-Carlton Kyoto (display_order: 1)
+
+  This accurately reflects traveling between cities with hotel changes.
+}

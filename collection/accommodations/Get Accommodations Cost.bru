@@ -1,0 +1,40 @@
+meta {
+  name: Get Accommodations Cost
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/accommodations/trip-day/1/cost?currency=USD
+  body: none
+  auth: bearer
+}
+
+params:query {
+  currency: USD
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get Accommodations Cost
+
+  Calculate total cost of all accommodations for a trip day.
+
+  **Query Parameters**:
+  - `currency`: Currency code to filter by (default: USD)
+
+  **Response**:
+  ```json
+  {
+    "trip_day_id": 1,
+    "currency": "USD",
+    "total_cost": 450.00
+  }
+  ```
+
+  **Note**: Only sums accommodations matching the specified currency.
+  For multi-currency trips, query each currency separately.
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Get Transit by Confirmation
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/transits/confirmation/ANA123XYZ
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get Transit by Confirmation Number
+
+  Look up a transit using its confirmation number.
+
+  **Use Cases**:
+  - Quick lookup from booking email
+  - Find flight details from confirmation code
+  - Verify which trip day a booking is for
+
+  Replace `ANA123XYZ` with the actual confirmation number.
+}

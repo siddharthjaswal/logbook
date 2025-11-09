@@ -1,0 +1,23 @@
+meta {
+  name: Get Accommodation
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/accommodations/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get Accommodation
+
+  Get a specific accommodation by ID.
+
+  Replace `1` with the actual accommodation ID.
+}

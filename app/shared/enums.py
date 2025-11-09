@@ -117,3 +117,10 @@ class BookingStatus(str, Enum):
     CONFIRMED = "confirmed"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+
+
+class AccommodationType(str, Enum):
+    """Accommodation type enum for trip days."""
+    CHECK_IN = "check_in"      # Arriving and checking in (e.g., arrival day)
+    WHOLE_DAY = "whole_day"    # Staying entire day (no check-in/out activity)
+    CHECK_OUT = "check_out"    # Departing and checking out (e.g., departure day)

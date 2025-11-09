@@ -152,7 +152,7 @@ async def update_trip(
     return trip
 
 
-@router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{trip_id}", response_model=dict)
 async def delete_trip(
     trip_id: int,
     db: Session = Depends(get_db),
@@ -173,8 +173,18 @@ async def delete_trip(
             detail="You don't have permission to delete this trip"
         )
 
+    # Store info for response
+    trip_name = trip.name
+    trip_slug = trip.slug
+
     crud.delete_trip(db, trip)
-    return None
+
+    return {
+        "message": "Trip deleted successfully",
+        "trip_id": trip_id,
+        "trip_name": trip_name,
+        "trip_slug": trip_slug
+    }
 
 
 @router.get("/stats/me")

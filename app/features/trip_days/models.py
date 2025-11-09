@@ -9,10 +9,9 @@ from sqlalchemy import Column, Integer, String, Text, Date, TIMESTAMP, ForeignKe
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import ENUM
-from sqlalchemy import JSON
 
 from app.core.database import Base
-from app.shared.enums import TripDayType, TransitMode
+from app.shared.enums import TripDayType
 
 
 class TripDay(Base):
@@ -44,24 +43,8 @@ class TripDay(Base):
     timezone = Column(String(50), nullable=False)
     # coordinates = Column(POINT, nullable=True)  # Add PostGIS later
 
-    # Transit (Travel TO this location)
-    transit_mode = Column(
-        ENUM(TransitMode, name="transit_mode", create_type=True),
-        nullable=True
-    )
-    transit_details = Column(JSON, default=lambda: {}, nullable=False)
-    arrival_time = Column(Integer, nullable=True)
-    departure_time = Column(Integer, nullable=True)
-
-    # Accommodation
-    accommodation_name = Column(String(200), nullable=True)
-    accommodation_address = Column(Text, nullable=True)
-    accommodation_checkin = Column(Integer, nullable=True)
-    accommodation_checkout = Column(Integer, nullable=True)
-    accommodation_confirmation = Column(String(100), nullable=True)
-
     # Planning
-    weather_forecast = Column(JSON, nullable=True)
+    weather_forecast = Column(Text, nullable=True)
 
     # Notes
     notes = Column(Text, nullable=True)
@@ -79,6 +62,8 @@ class TripDay(Base):
     trip = relationship("Trip", back_populates="trip_days")
     activities = relationship("Activity", back_populates="trip_day", cascade="all, delete-orphan")
     bookings = relationship("Booking", back_populates="trip_day", cascade="all, delete-orphan")
+    accommodations = relationship("Accommodation", back_populates="trip_day", cascade="all, delete-orphan")
+    transits = relationship("Transit", back_populates="trip_day", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<TripDay(id={self.id}, trip_id={self.trip_id}, date='{self.date}', day_type='{self.day_type}')>"

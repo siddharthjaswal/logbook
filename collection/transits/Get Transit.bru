@@ -1,0 +1,23 @@
+meta {
+  name: Get Transit
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/transits/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get Transit
+
+  Get a specific transit by ID.
+
+  Replace `1` with the actual transit ID.
+}

@@ -1,0 +1,57 @@
+meta {
+  name: Create Accommodation - Park Hyatt Tokyo
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/accommodations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_day_id": 1,
+    "accommodation_type": "whole_day",
+    "check_in_time": 1704096000,
+    "check_out_time": null,
+    "name": "Park Hyatt Tokyo",
+    "address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo 163-1055, Japan",
+    "latitude": 35.6852,
+    "longitude": 139.6917,
+    "confirmation_number": "HYATT123456",
+    "booking_url": "https://www.hyatt.com/en-US/hotel/japan/park-hyatt-tokyo/tyoph",
+    "cost": 450.00,
+    "currency": "USD",
+    "contact_phone": "+81-3-5322-1234",
+    "contact_email": "tokyo.park@hyatt.com",
+    "room_type": "Deluxe King Room",
+    "notes": "Request high floor with city view. Late checkout if possible.",
+    "display_order": 0
+  }
+}
+
+docs {
+  # Create Accommodation - Park Hyatt Tokyo
+
+  Creates a whole-day accommodation entry for Park Hyatt Tokyo.
+
+  **Accommodation Type**: `whole_day` - Staying entire day with no check-in/out activity
+
+  **Fields**:
+  - `trip_day_id`: ID of the trip day (replace with actual ID)
+  - `accommodation_type`: Can be `check_in`, `whole_day`, or `check_out`
+  - `check_in_time`/`check_out_time`: Unix timestamps
+  - `name`: Hotel/accommodation name
+  - `address`: Full address
+  - `latitude`/`longitude`: GPS coordinates
+  - `confirmation_number`: Booking confirmation
+  - `cost`: Per night cost
+  - `currency`: ISO currency code (USD, JPY, etc.)
+  - `display_order`: Order for multiple accommodations per day
+}

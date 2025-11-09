@@ -59,6 +59,8 @@ from app.features.trips import router as trips_router
 from app.features.trip_days import router as trip_days_router
 from app.features.activities import router as activities_router
 from app.features.bookings import router as bookings_router
+from app.features.accommodations import router as accommodations_router
+from app.features.transits import router as transits_router
 
 app.include_router(
     auth_router.router,
@@ -94,4 +96,16 @@ app.include_router(
     bookings_router.router,
     prefix=f"{settings.API_V1_PREFIX}/bookings",
     tags=["bookings"]
+)
+
+app.include_router(
+    accommodations_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/accommodations",
+    tags=["accommodations"]
+)
+
+app.include_router(
+    transits_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/transits",
+    tags=["transits"]
 )

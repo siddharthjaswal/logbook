@@ -1,0 +1,38 @@
+meta {
+  name: Update Accommodation
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{base_url}}/accommodations/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "room_type": "Park Suite",
+    "cost": 850.00,
+    "notes": "Upgraded to suite. Late checkout confirmed at 2pm."
+  }
+}
+
+docs {
+  # Update Accommodation
+
+  Update specific fields of an accommodation. All fields are optional.
+
+  **Common Updates**:
+  - Room upgrades
+  - Cost changes
+  - Updated check-in/check-out times
+  - Additional notes
+  - Contact information changes
+
+  Only include fields you want to update.
+}

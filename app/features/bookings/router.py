@@ -225,7 +225,7 @@ async def update_booking(
     return booking
 
 
-@router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{booking_id}", response_model=dict)
 async def delete_booking(
     booking_id: int,
     db: Session = Depends(get_db),
@@ -252,8 +252,20 @@ async def delete_booking(
             detail="Not authorized to delete this booking"
         )
 
+    # Store info for response
+    booking_name = booking.name
+    trip_day_id = booking.trip_day_id
+    activity_id = booking.activity_id
+
     crud.delete_booking(db, booking)
-    return None
+
+    return {
+        "message": "Booking deleted successfully",
+        "booking_id": booking_id,
+        "booking_name": booking_name,
+        "trip_day_id": trip_day_id,
+        "activity_id": activity_id
+    }
 
 
 @router.get("/trip-day/{trip_day_id}/cost", response_model=dict)

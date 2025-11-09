@@ -1,0 +1,45 @@
+meta {
+  name: Get Transits Cost
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/transits/trip-day/5/cost?currency=USD
+  body: none
+  auth: bearer
+}
+
+params:query {
+  currency: USD
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get Transits Cost
+
+  Calculate total cost of all transits for a trip day.
+
+  **Query Parameters**:
+  - `currency`: Currency code to filter by (default: USD)
+
+  **Response**:
+  ```json
+  {
+    "trip_day_id": 5,
+    "currency": "USD",
+    "total_cost": 390.00
+  }
+  ```
+
+  **Example Calculation**:
+  - Taxi to station: $250
+  - Shinkansen: $140
+  - **Total**: $390
+
+  **Note**: Only sums transits matching the specified currency.
+  For multi-currency trips, query each currency separately.
+}

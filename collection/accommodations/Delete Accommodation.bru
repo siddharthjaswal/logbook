@@ -1,0 +1,25 @@
+meta {
+  name: Delete Accommodation
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{base_url}}/accommodations/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Delete Accommodation
+
+  Permanently delete an accommodation.
+
+  Replace `1` with the accommodation ID to delete.
+
+  **Returns**: 204 No Content on success
+}

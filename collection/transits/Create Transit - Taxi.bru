@@ -1,0 +1,50 @@
+meta {
+  name: Create Transit - Taxi
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/transits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_day_id": 1,
+    "transit_mode": "car",
+    "carrier": "Tokyo Taxi",
+    "from_location": "Tokyo Narita Airport (NRT)",
+    "to_location": "Park Hyatt Tokyo",
+    "from_latitude": 35.7720,
+    "from_longitude": 140.3929,
+    "to_latitude": 35.6852,
+    "to_longitude": 139.6917,
+    "departure_time": 1704121200,
+    "arrival_time": 1704126600,
+    "departure_timezone": "Asia/Tokyo",
+    "arrival_timezone": "Asia/Tokyo",
+    "duration_minutes": 90,
+    "cost": 250.00,
+    "currency": "USD",
+    "notes": "Taxi from airport to hotel. Traffic can vary - allow extra time.",
+    "display_order": 1
+  }
+}
+
+docs {
+  # Create Transit - Taxi/Car
+
+  Short-distance ground transportation.
+
+  **For Taxis/Cars**:
+  - `carrier`: Taxi company or "Uber", "Lyft", etc.
+  - `flight_number`: Not typically used
+  - `confirmation_number`: Ride confirmation if pre-booked
+  - Most fields optional for simple rides
+}

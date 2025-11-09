@@ -1,0 +1,41 @@
+meta {
+  name: Update Transit
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{base_url}}/transits/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "seat": "14B",
+    "gate": "G15",
+    "booking_class": "Premium Economy",
+    "cost": 250.00,
+    "notes": "Upgraded to premium economy. Gate changed from G12 to G15."
+  }
+}
+
+docs {
+  # Update Transit
+
+  Update specific fields of a transit. All fields are optional.
+
+  **Common Updates**:
+  - Seat assignments
+  - Gate changes
+  - Time changes (delays/reschedules)
+  - Booking class upgrades
+  - Cost adjustments
+  - Additional notes
+
+  Only include fields you want to update.
+}

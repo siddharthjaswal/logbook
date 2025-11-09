@@ -1,0 +1,36 @@
+meta {
+  name: List Accommodations by Trip Day
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/accommodations/trip-day/1?skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+  ~accommodation_type: whole_day
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # List Accommodations by Trip Day
+
+  Get all accommodations for a specific trip day, ordered by display_order and check-in time.
+
+  **Query Parameters**:
+  - `skip`: Number of records to skip (pagination)
+  - `limit`: Maximum records to return (max 100)
+  - `accommodation_type`: Filter by type (check_in, whole_day, check_out)
+
+  **Returns**: Array of accommodations ordered by:
+  1. `display_order` (for manual ordering)
+  2. `check_in_time` (chronological)
+}
