@@ -13,58 +13,6 @@ from app.shared.enums import TripDayType, TransitMode
 
 # Nested schemas for complex fields
 
-class Activity(BaseModel):
-    """Schema for activity within a trip day."""
-    name: str = Field(..., min_length=1, max_length=200)
-    time: Optional[str] = Field(None, description="Time in HH:MM format")
-    duration: Optional[float] = Field(None, ge=0, description="Duration in hours (can be decimal, e.g., 1.5 for 1h 30m)")
-    location: Optional[str] = Field(None, max_length=200)
-    notes: Optional[str] = None
-    cost: Optional[float] = Field(None, ge=0)
-    booking_required: bool = False
-    confirmation_number: Optional[str] = Field(None, max_length=100)
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Eiffel Tower Visit",
-                "time": "10:00",
-                "duration": 2,
-                "location": "Champ de Mars, Paris",
-                "notes": "Book tickets online in advance",
-                "cost": 26.10,
-                "booking_required": True,
-                "confirmation_number": "EIF123456"
-            }
-        }
-
-
-class Booking(BaseModel):
-    """Schema for booking within a trip day."""
-    type: str = Field(..., min_length=1, max_length=50, description="tour, restaurant, show, etc.")
-    name: str = Field(..., min_length=1, max_length=200)
-    confirmation_number: Optional[str] = Field(None, max_length=100)
-    cost: Optional[float] = Field(None, ge=0)
-    time: Optional[str] = Field(None, description="Time in HH:MM format")
-    location: Optional[str] = Field(None, max_length=200)
-    notes: Optional[str] = None
-    contact: Optional[str] = Field(None, max_length=200)
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "type": "restaurant",
-                "name": "Le Jules Verne",
-                "confirmation_number": "RES789",
-                "cost": 150.00,
-                "time": "19:30",
-                "location": "Eiffel Tower",
-                "notes": "Dress code: Smart casual",
-                "contact": "+33 1 45 55 61 44"
-            }
-        }
-
-
 class TransitDetails(BaseModel):
     """Schema for transit details."""
     carrier: Optional[str] = Field(None, max_length=100, description="Airline, train company, etc.")
@@ -125,42 +73,8 @@ class TripDayBase(BaseModel):
     accommodation_checkout: Optional[int] = Field(None, description="Unix timestamp")
     accommodation_confirmation: Optional[str] = Field(None, max_length=100)
 
-    # Planning
-    activities: List[Dict[str, Any]] = Field(default_factory=list)
-    bookings: List[Dict[str, Any]] = Field(default_factory=list)
-
     # Notes
     notes: Optional[str] = None
-
-    @field_validator('activities', mode='before')
-    @classmethod
-    def validate_activities(cls, v):
-        if v is None:
-            return []
-        if isinstance(v, list):
-            # Validate each activity against Activity schema
-            validated = []
-            for activity in v:
-                if isinstance(activity, dict):
-                    Activity(**activity)  # Validate
-                    validated.append(activity)
-            return validated
-        return v
-
-    @field_validator('bookings', mode='before')
-    @classmethod
-    def validate_bookings(cls, v):
-        if v is None:
-            return []
-        if isinstance(v, list):
-            # Validate each booking against Booking schema
-            validated = []
-            for booking in v:
-                if isinstance(booking, dict):
-                    Booking(**booking)  # Validate
-                    validated.append(booking)
-            return validated
-        return v
 
     @field_validator('transit_details', mode='before')
     @classmethod
@@ -203,40 +117,8 @@ class TripDayUpdate(BaseModel):
     accommodation_checkout: Optional[int] = None
     accommodation_confirmation: Optional[str] = Field(None, max_length=100)
 
-    # Planning
-    activities: Optional[List[Dict[str, Any]]] = None
-    bookings: Optional[List[Dict[str, Any]]] = None
-
     # Notes
     notes: Optional[str] = None
-
-    @field_validator('activities', mode='before')
-    @classmethod
-    def validate_activities(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, list):
-            validated = []
-            for activity in v:
-                if isinstance(activity, dict):
-                    Activity(**activity)  # Validate
-                    validated.append(activity)
-            return validated
-        return v
-
-    @field_validator('bookings', mode='before')
-    @classmethod
-    def validate_bookings(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, list):
-            validated = []
-            for booking in v:
-                if isinstance(booking, dict):
-                    Booking(**booking)  # Validate
-                    validated.append(booking)
-            return validated
-        return v
 
     @field_validator('transit_details', mode='before')
     @classmethod
@@ -276,9 +158,7 @@ class TripDayResponse(BaseModel):
     accommodation_checkout: Optional[int]
     accommodation_confirmation: Optional[str]
 
-    # Planning
-    activities: List[Dict[str, Any]]
-    bookings: List[Dict[str, Any]]
+    # Weather
     weather_forecast: Optional[Dict[str, Any]]
 
     # Notes
@@ -316,22 +196,6 @@ class TripDayResponse(BaseModel):
                 "accommodation_checkin": 1720972800,
                 "accommodation_checkout": 1721059200,
                 "accommodation_confirmation": "HTL456789",
-                "activities": [
-                    {
-                        "name": "Eiffel Tower",
-                        "time": "10:00",
-                        "duration": 2,
-                        "cost": 26.10
-                    }
-                ],
-                "bookings": [
-                    {
-                        "type": "restaurant",
-                        "name": "Le Jules Verne",
-                        "time": "19:30",
-                        "cost": 150.00
-                    }
-                ],
                 "weather_forecast": None,
                 "notes": "Remember to bring camera",
                 "created_at": 1720540800,

@@ -74,3 +74,46 @@ class DateFlexibility(str, Enum):
     MONTH = "month"
     SEASON = "season"
     YEAR = "year"
+
+
+class ActivityType(str, Enum):
+    """Activity type enum."""
+    SIGHTSEEING = "sightseeing"
+    DINING = "dining"
+    ADVENTURE = "adventure"
+    CULTURAL = "cultural"
+    SHOPPING = "shopping"
+    ENTERTAINMENT = "entertainment"
+    RELAXATION = "relaxation"
+    SPORTS = "sports"
+    NIGHTLIFE = "nightlife"
+    TRANSPORTATION = "transportation"
+    OTHER = "other"
+
+
+class ActivityStatus(str, Enum):
+    """Activity status enum."""
+    PLANNED = "planned"
+    BOOKED = "booked"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class BookingType(str, Enum):
+    """Booking type enum."""
+    ACCOMMODATION = "accommodation"
+    RESTAURANT = "restaurant"
+    TOUR = "tour"
+    SHOW = "show"
+    TRANSPORT = "transport"
+    ACTIVITY = "activity"
+    RENTAL = "rental"
+    OTHER = "other"
+
+
+class BookingStatus(str, Enum):
+    """Booking status enum."""
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"

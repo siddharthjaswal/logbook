@@ -1,5 +1,5 @@
 meta {
-  name: Create Trip Day
+  name: Create Trip Day - Day 2 Tokyo
   type: http
   seq: 1
 }
@@ -17,8 +17,8 @@ auth:bearer {
 body:json {
   {
     "trip_id": 1,
-    "date": "2025-01-03",
-    "day_number": 3,
+    "date": "2025-01-02",
+    "day_number": 2,
     "day_type": "sightseeing",
     "title": "Exploring Tokyo",
     "place": "Shibuya & Harajuku",
@@ -27,9 +27,9 @@ body:json {
     "timezone": "Asia/Tokyo",
     "accommodation_name": "Park Hyatt Tokyo",
     "accommodation_address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo",
-    "accommodation_checkin": 1735912800,
+    "accommodation_checkin": 1735826400,
     "accommodation_checkout": 1735999200,
-    "accommodation_confirmation": "PH2025010203",
+    "accommodation_confirmation": "PH2025010202",
     "activities": [
       {
         "name": "Meiji Shrine Visit",
@@ -77,30 +77,17 @@ body:json {
 }
 
 docs {
-  # Create Trip Day
+  # Create Trip Day - Day 2 (Tokyo Immersion)
 
-  Creates a new day in the trip itinerary.
+  Example SIGHTSEEING day focused on central Tokyo.
 
-  ## Requirements
-  - Must be trip owner
-  - Date must be unique for the trip
-  - Trip must exist
+  ## Day Outline
+  - Morning: Meiji Shrine + Harajuku exploration
+  - Afternoon: Shibuya Crossing + shopping districts
+  - Evening: teamLab Borderless + sushi dinner reservation
 
-  ## Fields
-  - `trip_id`: ID of the parent trip
-  - `date`: Calendar date (YYYY-MM-DD format)
-  - `day_number`: Sequential day number (1, 2, 3...)
-  - `day_type`: Type of day (transit, sightseeing, leisure, etc.)
-  - `title`: Optional title for the day
-  - `place`, `place_city`, `place_country`: Location details
-  - `timezone`: Timezone for the location
-  - `activities`: Array of planned activities (name, time, duration, cost, etc.)
-  - `bookings`: Array of bookings (restaurant, tour, show, etc.)
-  - `accommodation_*`: Hotel/lodging details
-  - `notes`: Free-form notes
-
-  ## Auto-updates
-  Creating a trip day will automatically update the parent trip's:
-  - `countries_visited`
-  - `cities_visited`
+  ## Tips
+  - Times are local to `Asia/Tokyo`
+  - `trip_id` is set to 1 for sample data – update to match your database
+  - Keep activities array ordered chronologically for easier UI rendering
 }

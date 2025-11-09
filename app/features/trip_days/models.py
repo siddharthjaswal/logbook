@@ -61,8 +61,6 @@ class TripDay(Base):
     accommodation_confirmation = Column(String(100), nullable=True)
 
     # Planning
-    activities = Column(JSON, default=lambda: [], nullable=False)
-    bookings = Column(JSON, default=lambda: [], nullable=False)
     weather_forecast = Column(JSON, nullable=True)
 
     # Notes
@@ -79,6 +77,8 @@ class TripDay(Base):
 
     # Relationships
     trip = relationship("Trip", back_populates="trip_days")
+    activities = relationship("Activity", back_populates="trip_day", cascade="all, delete-orphan")
+    bookings = relationship("Booking", back_populates="trip_day", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<TripDay(id={self.id}, trip_id={self.trip_id}, date='{self.date}', day_type='{self.day_type}')>"

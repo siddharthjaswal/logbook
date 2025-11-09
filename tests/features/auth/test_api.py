@@ -23,7 +23,7 @@ def test_refresh_token_success(client, test_user):
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
-    assert data["expires_in"] == 1800
+    assert data["expires_in"] == 604800
 
 
 def test_refresh_token_invalid(client):

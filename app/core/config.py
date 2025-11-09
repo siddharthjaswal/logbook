@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # JWT
     SECRET_KEY: str  # Generate with: openssl rand -hex 32
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days (7 * 24 * 60)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # CORS

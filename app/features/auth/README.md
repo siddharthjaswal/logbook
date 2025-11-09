@@ -11,7 +11,7 @@ The Auth feature handles user authentication via Google OAuth 2.0. For MVP, Logb
 - [x] JWT token utilities (create, decode, validate)
 - [x] Security module (app/core/security.py)
 - [x] Dependency injection for authentication (app/core/deps.py)
-- [x] Token types: access (30 min) and refresh tokens (7 days)
+- [x] Token types: access (7 days) and refresh tokens (7 days)
 - [x] JWT subject (sub) converted to string for spec compliance
 - [x] Token type validation (prevent access token used as refresh)
 
@@ -58,7 +58,7 @@ The Auth feature handles user authentication via Google OAuth 2.0. For MVP, Logb
 - [x] Automatic last_login_at tracking
 - [x] Active user validation
 - [x] Deleted user rejection
-- [x] Secure token expiration (30 min access, 7 days refresh)
+- [x] Secure token expiration (7 day access, 7 day refresh)
 
 ### 📋 Future Enhancements (Phase 2+)
 - [ ] Token revocation/blacklist
@@ -223,8 +223,8 @@ Step 11: Return tokens + user data
 
 ### Access Token
 
-**Purpose**: Short-lived token for API authentication
-**Expiration**: 30 minutes (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`)
+**Purpose**: Token for API authentication
+**Expiration**: 7 days / 10,080 minutes (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`)
 **Storage**: Frontend stores in memory or sessionStorage (NOT localStorage for security)
 
 **Payload**:
@@ -245,7 +245,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEyMywidHlwZSI6ImFjY2VzcyIsImV4cCI
 ### Refresh Token
 
 **Purpose**: Long-lived token to obtain new access tokens
-**Expiration**: 30 days (configurable via `REFRESH_TOKEN_EXPIRE_DAYS`)
+**Expiration**: 7 days (configurable via `REFRESH_TOKEN_EXPIRE_DAYS`)
 **Storage**: Frontend stores in httpOnly cookie (most secure) or localStorage
 
 **Payload**:
@@ -253,7 +253,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEyMywidHlwZSI6ImFjY2VzcyIsImV4cCI
 {
   "sub": 123,                    // User ID
   "type": "refresh",             // Token type
-  "exp": 1723132800,             // Expiration (30 days later)
+  "exp": 1723132800,             // Expiration (7 days later)
   "iat": 1720539000              // Issued at timestamp
 }
 ```
@@ -273,8 +273,8 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEyMywidHlwZSI6ImFjY2VzcyIsImV4cCI
 ```python
 SECRET_KEY: str  # Generated with: openssl rand -hex 32
 ALGORITHM: str = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
+REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 ```
 
 **Security Notes**:
@@ -383,7 +383,7 @@ GET /auth/google/callback?code={auth_code}
   "access_token": "eyJhbGc...",
   "refresh_token": "eyJhbGc...",
   "token_type": "bearer",
-  "expires_in": 1800,
+  "expires_in": 604800,
   "user": {
     "id": 123,
     "email": "user@example.com",
@@ -412,7 +412,7 @@ Content-Type: application/json
 {
   "access_token": "eyJhbGc...",
   "token_type": "bearer",
-  "expires_in": 1800
+  "expires_in": 604800
 }
 ```
 
@@ -636,7 +636,7 @@ class Settings(BaseSettings):
 ### 1. Token Security
 - **Never log tokens**: Don't log access/refresh tokens in production
 - **HTTPS only**: All token transmission over HTTPS
-- **Short expiration**: Access tokens expire in 30 minutes
+- **Token lifetime**: Access tokens expire in 7 days
 - **Validate token type**: Prevent access token used as refresh token
 
 ### 2. Google OAuth
@@ -720,8 +720,8 @@ provider_id = Column(String(255))  # Generic provider user ID
 # JWT Configuration
 SECRET_KEY=your-secret-key-here  # Generate with: openssl rand -hex 32
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=30
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
+REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com

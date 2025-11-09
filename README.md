@@ -256,7 +256,7 @@ Bruno is a fast, Git-friendly API client that we use for manual API testing. The
 
 5. **Refresh Expired Tokens**
 
-   Access tokens expire after 30 minutes. When you get a 401 error:
+   Access tokens expire after 7 days (10,080 minutes). When you get a 401 error after they lapse:
 
    **Method 1: Using Bruno (Recommended)**
    - Open `collection/auth/Refresh Token.bru`
