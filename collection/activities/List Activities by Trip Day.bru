@@ -1,0 +1,60 @@
+meta {
+  name: List Activities by Trip Day
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/activities/trip-day/3?skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+  ~activity_type: cultural
+  ~activity_status: planned
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Activities by Trip Day
+
+  Retrieves all activities for a specific trip day with optional filtering.
+
+  ## Query Parameters
+  - `skip` (optional): Number of records to skip (default: 0)
+  - `limit` (optional): Max records to return (default: 100, max: 100)
+  - `activity_type` (optional): Filter by type (sightseeing, dining, adventure, cultural, entertainment, shopping, relaxation, transportation, accommodation, business, other)
+  - `activity_status` (optional): Filter by status (planned, booked, completed, cancelled)
+
+  ## Example Filters
+
+  **Get only cultural activities:**
+  ```
+  GET /api/v1/activities/trip-day/3?activity_type=cultural
+  ```
+
+  **Get only booked activities:**
+  ```
+  GET /api/v1/activities/trip-day/3?activity_status=booked
+  ```
+
+  **Combined filters:**
+  ```
+  GET /api/v1/activities/trip-day/3?activity_type=dining&activity_status=planned
+  ```
+
+  ## Response
+  Returns array of ActivityListResponse objects ordered by:
+  1. display_order (ascending)
+  2. time (if set)
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip containing this trip day
+}

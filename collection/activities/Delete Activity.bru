@@ -1,0 +1,56 @@
+meta {
+  name: Delete Activity
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/activities/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete Activity
+
+  Permanently deletes an activity from a trip day.
+
+  ## URL Parameters
+  - `activity_id`: The ID of the activity to delete
+
+  ## Important Notes
+  - This is a **hard delete** (permanent removal)
+  - Associated bookings will also be deleted (CASCADE)
+  - Cannot be undone
+  - Use with caution
+
+  ## Response
+  - Status: 204 No Content (success)
+  - Empty response body
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip containing this activity
+  - Returns 403 Forbidden if user doesn't own the trip
+  - Returns 404 Not Found if activity doesn't exist
+
+  ## Alternative: Cancel Instead
+  If you want to keep the record but mark it as cancelled:
+  ```
+  PUT /api/v1/activities/{activity_id}
+  {
+    "status": "cancelled",
+    "notes": "Reason for cancellation"
+  }
+  ```
+
+  ## Cascade Effects
+  When an activity is deleted:
+  - All bookings associated with this activity are also deleted
+  - Trip day remains intact
+  - Other activities are not affected
+}

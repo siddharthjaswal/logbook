@@ -1,0 +1,96 @@
+meta {
+  name: Update Booking
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/bookings/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "completed",
+    "notes": "Checked out. Excellent service, room was amazing with stunning views. Staff very helpful. Would definitely stay again!"
+  }
+}
+
+docs {
+  # Update Booking
+
+  Updates an existing booking. All fields are optional - only send fields you want to change.
+
+  ## URL Parameters
+  - `booking_id`: The ID of the booking to update
+
+  ## Updatable Fields
+  All fields from BookingUpdate schema are optional:
+  - `booking_type`: Booking type enum
+  - `name`: Booking name
+  - `provider`: Provider/vendor name
+  - `confirmation_number`: Confirmation number
+  - `booking_reference`: Secondary reference
+  - `cost`: Cost amount
+  - `currency`: ISO currency code
+  - `booking_date`: Date of booking
+  - `booking_time`: Time (HH:MM format)
+  - `location`: Location name
+  - `location_address`: Full address
+  - `contact_phone`: Provider phone
+  - `contact_email`: Provider email
+  - `booking_url`: Management URL
+  - `status`: Status enum (pending, confirmed, completed, cancelled)
+  - `notes`: Additional notes
+
+  ## Common Use Cases
+
+  **Mark as completed after stay:**
+  ```json
+  {
+    "status": "completed",
+    "notes": "Great experience!"
+  }
+  ```
+
+  **Update confirmation after receiving:**
+  ```json
+  {
+    "status": "confirmed",
+    "confirmation_number": "UPDATED-12345",
+    "notes": "Received confirmation email"
+  }
+  ```
+
+  **Cancel reservation:**
+  ```json
+  {
+    "status": "cancelled",
+    "notes": "Cancelled due to itinerary change. Refund pending."
+  }
+  ```
+
+  **Update contact info:**
+  ```json
+  {
+    "contact_phone": "+81-3-1234-5678",
+    "contact_email": "updated@example.com"
+  }
+  ```
+
+  ## Status Workflow
+  1. `pending` → Just made reservation, awaiting confirmation
+  2. `confirmed` → Received confirmation number/email
+  3. `completed` → Service used/stay finished
+  4. `cancelled` → Reservation cancelled
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip
+  - Returns 403 if unauthorized
+}

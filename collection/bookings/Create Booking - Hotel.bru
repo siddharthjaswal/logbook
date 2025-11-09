@@ -1,0 +1,74 @@
+meta {
+  name: Create Booking - Hotel
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/bookings/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_day_id": 1,
+    "booking_type": "accommodation",
+    "name": "Park Hyatt Tokyo",
+    "provider": "Hyatt Hotels Corporation",
+    "confirmation_number": "PH2025010104",
+    "booking_reference": "HYATT-JP-001",
+    "cost": 45000,
+    "currency": "JPY",
+    "booking_date": "2025-01-01",
+    "booking_time": "15:00",
+    "location": "Park Hyatt Tokyo",
+    "location_address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo 163-1055, Japan",
+    "contact_phone": "+81-3-5322-1234",
+    "contact_email": "tokyo.park@hyatt.com",
+    "booking_url": "https://www.hyatt.com/en-US/hotel/japan/park-hyatt-tokyo/tyoph",
+    "status": "confirmed",
+    "notes": "Check-in: 3:00 PM. Check-out: 12:00 PM. Late checkout requested. Room: Deluxe King with Park View (Floor 41-47). Breakfast included."
+  }
+}
+
+docs {
+  # Create Booking - Hotel Accommodation
+
+  Creates an accommodation booking for Park Hyatt Tokyo.
+
+  ## Booking Details
+  - **Type**: Accommodation (hotel)
+  - **Provider**: Hyatt Hotels Corporation
+  - **Check-in**: 3:00 PM, January 1, 2025
+  - **Cost**: ¥45,000 per night (~$310 USD)
+  - **Status**: Confirmed
+
+  ## Hotel Information
+  - **Name**: Park Hyatt Tokyo (パークハイアット東京)
+  - **Location**: Shinjuku, Tokyo (floors 39-52 of Shinjuku Park Tower)
+  - **Famous for**: Lost in Translation movie filming location
+  - **Amenities**: Sky-high views, New York Grill restaurant, excellent service
+
+  ## Confirmation Details
+  - Confirmation #: PH2025010104
+  - Booking Reference: HYATT-JP-001
+  - Contact: +81-3-5322-1234
+
+  ## Association
+  - Linked to `trip_day_id: 1` (Arrival Day)
+  - Not linked to specific activity (day-level booking)
+
+  ## Notes
+  - Breakfast included in rate
+  - Late checkout requested (subject to availability)
+  - Deluxe King room on high floor (41-47)
+  - Park view requested
+
+  ## Booking URL
+  Direct link to manage reservation online
+}

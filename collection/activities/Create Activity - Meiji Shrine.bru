@@ -1,0 +1,64 @@
+meta {
+  name: Create Activity - Meiji Shrine
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/activities/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_day_id": 3,
+    "name": "Meiji Shrine Visit",
+    "activity_type": "cultural",
+    "time": "09:00",
+    "duration": 2.0,
+    "location": "Meiji Shrine",
+    "location_address": "1-1 Yoyogikamizonocho, Shibuya City, Tokyo 151-8557, Japan",
+    "latitude": 35.6764,
+    "longitude": 139.6993,
+    "cost": 0,
+    "currency": "JPY",
+    "booking_required": false,
+    "status": "planned",
+    "notes": "Quiet and peaceful in the morning. Free admission. Traditional Shinto shrine dedicated to Emperor Meiji and Empress Shoken.",
+    "display_order": 0
+  }
+}
+
+docs {
+  # Create Activity - Meiji Shrine (Cultural)
+
+  Creates a cultural activity for visiting Meiji Shrine in Tokyo.
+
+  ## Activity Details
+  - **Type**: Cultural (Shinto shrine visit)
+  - **Duration**: 2 hours (09:00 - 11:00)
+  - **Cost**: Free admission
+  - **Booking**: Not required
+
+  ## Location
+  - Name: Meiji Shrine (明治神宮)
+  - Address: 1-1 Yoyogikamizonocho, Shibuya City, Tokyo
+  - Coordinates: 35.6764°N, 139.6993°E
+  - Near Harajuku Station
+
+  ## Tips
+  - Best to visit early in the morning (less crowded)
+  - Traditional shrine etiquette applies
+  - Beautiful forested approach
+  - Free admission, donations welcome
+  - Allow 1.5-2 hours for full visit
+
+  ## Display Order
+  - Set to 0 (first activity of the day)
+  - Can be reordered later using the reorder endpoint
+}

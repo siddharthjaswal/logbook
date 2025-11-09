@@ -1,0 +1,74 @@
+meta {
+  name: List Bookings by Activity
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/bookings/activity/2?skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Bookings by Activity
+
+  Retrieves all bookings associated with a specific activity.
+
+  ## URL Parameters
+  - `activity_id`: The activity to get bookings for
+
+  ## Query Parameters
+  - `skip` (optional): Number of records to skip (default: 0)
+  - `limit` (optional): Max records to return (default: 100, max: 100)
+
+  ## Response
+  Returns array of BookingListResponse objects ordered by:
+  1. booking_date
+  2. booking_time
+
+  ## Use Cases
+
+  **Restaurant activity with reservation:**
+  ```
+  Activity: "Dinner at Sukiyabashi Jiro" (id: 2)
+  Booking: Restaurant reservation with confirmation
+  ```
+
+  **Tour activity with tickets:**
+  ```
+  Activity: "Tokyo DisneySea Visit" (id: 5)
+  Booking: Theme park tickets
+  ```
+
+  **Show activity with seats:**
+  ```
+  Activity: "Kabuki Theater Performance" (id: 8)
+  Booking: Theater tickets with seat numbers
+  ```
+
+  ## Association Pattern
+  This endpoint is useful when:
+  - An activity requires a booking/reservation
+  - You want to see all bookings related to one activity
+  - Activity has multiple associated bookings (e.g., tickets + parking)
+
+  ## Example Workflow
+  1. Create activity: "Disney Sea Visit"
+  2. Create booking 1: Park tickets (linked to activity)
+  3. Create booking 2: Fast Pass (linked to same activity)
+  4. GET /bookings/activity/{id} → Returns both bookings
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip containing the activity
+}
