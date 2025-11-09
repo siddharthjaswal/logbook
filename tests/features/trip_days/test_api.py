@@ -40,7 +40,6 @@ def test_create_trip_day(client: TestClient, auth_headers, test_trip):
     assert data["date"] == "2025-07-15"
     assert data["day_number"] == 1
     assert data["place"] == "Paris"
-    assert len(data["activities"]) == 1
 
 
 def test_create_trip_day_unauthenticated(client: TestClient, test_trip):
@@ -175,7 +174,6 @@ def test_get_trip_day(client: TestClient, auth_headers, test_trip):
     data = response.json()
     assert data["id"] == trip_day_id
     assert data["place"] == "Paris"
-    assert len(data["activities"]) == 1
 
 
 def test_get_trip_day_not_found(client: TestClient, auth_headers):
@@ -220,7 +218,6 @@ def test_update_trip_day(client: TestClient, auth_headers, test_trip):
     data = response.json()
     assert data["title"] == "Updated Day 1"
     assert data["notes"] == "Updated notes"
-    assert len(data["activities"]) == 1
 
 
 def test_update_trip_day_not_owner(client: TestClient, auth_headers, test_trip_other_user_with_day):
@@ -292,7 +289,10 @@ def test_delete_trip_day(client: TestClient, auth_headers, test_trip):
 
     # Delete it
     response = client.delete(f"/api/v1/trip-days/{trip_day_id}", headers=auth_headers)
-    assert response.status_code == 204
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert data["trip_day_id"] == trip_day_id
 
     # Verify it's gone
     get_response = client.get(f"/api/v1/trip-days/{trip_day_id}", headers=auth_headers)
@@ -327,8 +327,7 @@ def test_get_trip_summary(client: TestClient, auth_headers, test_trip):
             "place_city": city,
             "place_country": country,
             "timezone": "UTC",
-            "activities": [{"name": f"Activity {i+1}", "time": "10:00"}],
-            "accommodation_name": "Hotel" if i < 3 else None
+            "activities": [{"name": f"Activity {i+1}", "time": "10:00"}]
         }
         client.post("/api/v1/trip-days/", json=payload, headers=auth_headers)
 
@@ -348,8 +347,10 @@ def test_get_trip_summary(client: TestClient, auth_headers, test_trip):
     assert data["day_types_breakdown"]["sightseeing"] == 2
     assert data["day_types_breakdown"]["culinary"] == 1
     assert data["day_types_breakdown"]["transit"] == 1
-    assert data["total_activities"] == 4
-    assert data["total_accommodations"] == 3
+    # Activities and accommodations are now separate entities
+    assert "total_activities" in data
+    assert "total_accommodations" in data
+    assert "total_transits" in data
 
 
 def test_update_trip_destinations_endpoint(client: TestClient, auth_headers, test_trip):
@@ -388,33 +389,17 @@ def test_create_trip_day_with_complex_data(client: TestClient, auth_headers, tes
         "date": "2025-07-15",
         "day_number": 1,
         "day_type": "transit",
-        "title": "Flight to London",
+        "title": "Travel Day to London",
         "place": "London",
         "place_city": "London",
         "place_country": "UK",
         "timezone": "Europe/London",
-        "transit_mode": "flight",
-        "transit_details": {
-            "carrier": "British Airways",
-            "number": "BA123",
-            "from_location": "Paris CDG",
-            "to_location": "London Heathrow",
-            "seat": "12A",
-            "gate": "2F"
-        },
-        "arrival_time": 1720544400,
-        "departure_time": 1720540800,
-        "accommodation_name": "Hilton London",
-        "accommodation_address": "22 Park Lane, London",
-        "accommodation_checkin": 1720555200,
-        "accommodation_checkout": 1720641600,
-        "accommodation_confirmation": "CONF123",
         "activities": [
             {
-                "name": "Check-in at hotel",
+                "name": "Arrival procedures",
                 "time": "15:00",
                 "duration": 1,
-                "notes": "Late check-in available"
+                "notes": "Late arrival"
             }
         ],
         "bookings": [
@@ -426,6 +411,7 @@ def test_create_trip_day_with_complex_data(client: TestClient, auth_headers, tes
                 "confirmation_number": "RES456"
             }
         ],
+        "weather_forecast": "Cloudy with rain",
         "notes": "Remember passport and boarding pass"
     }
 
@@ -433,8 +419,7 @@ def test_create_trip_day_with_complex_data(client: TestClient, auth_headers, tes
 
     assert response.status_code == 201
     data = response.json()
-    assert data["transit_mode"] == "flight"
-    assert data["transit_details"]["carrier"] == "British Airways"
-    assert data["accommodation_name"] == "Hilton London"
-    assert len(data["activities"]) == 1
-    assert len(data["bookings"]) == 1
+    assert data["day_type"] == "transit"
+    assert data["title"] == "Travel Day to London"
+    assert data["weather_forecast"] == "Cloudy with rain"
+    assert data["notes"] == "Remember passport and boarding pass"

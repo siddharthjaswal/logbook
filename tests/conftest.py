@@ -17,6 +17,10 @@ from app.main import app
 from app.features.users.models import User
 from app.features.trips.models import Trip
 from app.features.trip_days.models import TripDay
+from app.features.activities.models import Activity
+from app.features.bookings.models import Booking
+from app.features.accommodations.models import Accommodation
+from app.features.transits.models import Transit
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

@@ -180,7 +180,10 @@ def test_delete_trip_as_owner(client, auth_headers, test_trip, db):
     """Test deleting trip as owner."""
     response = client.delete(f"/api/v1/trips/{test_trip.id}", headers=auth_headers)
 
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert data["trip_id"] == test_trip.id
 
     # Verify trip is soft deleted
     db.refresh(test_trip)

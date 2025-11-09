@@ -7,7 +7,7 @@ A trip day can have multiple accommodations (e.g., check-out from one hotel, che
 
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, TIMESTAMP, Enum as SQLEnum, DECIMAL
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import text
+from sqlalchemy.sql import func
 
 from app.core.database import Base
 from app.shared.enums import AccommodationType
@@ -60,8 +60,8 @@ class Accommodation(Base):
     display_order = Column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at = Column(TIMESTAMP, server_default=text('now()'), nullable=False)
-    updated_at = Column(TIMESTAMP, server_default=text('now()'), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
 
     # Relationships
     trip_day = relationship("TripDay", back_populates="accommodations")

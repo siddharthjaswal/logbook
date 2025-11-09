@@ -6,7 +6,7 @@ These schemas handle validation and serialization for transit data.
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 from app.shared.enums import TransitMode
@@ -43,9 +43,37 @@ class TransitBase(BaseModel):
         from_attributes = True
 
 
-class TransitCreate(TransitBase):
-    """Schema for creating a Transit."""
-    trip_day_id: int = Field(..., gt=0)
+class TransitCreate(BaseModel):
+    """Schema for creating a Transit.
+
+    User provides trip_id and date. Backend finds/creates the trip day.
+    """
+    trip_id: int = Field(..., gt=0, description="ID of the trip")
+    transit_date: date = Field(..., description="Date of transit (YYYY-MM-DD)")
+
+    transit_mode: TransitMode
+    carrier: Optional[str] = Field(None, max_length=200)
+    flight_number: Optional[str] = Field(None, max_length=50)
+    from_location: Optional[str] = Field(None, max_length=200)
+    to_location: Optional[str] = Field(None, max_length=200)
+    from_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    from_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    to_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    to_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    departure_time: Optional[int] = Field(None, description="Unix timestamp")
+    arrival_time: Optional[int] = Field(None, description="Unix timestamp")
+    departure_timezone: Optional[str] = Field(None, max_length=50)
+    arrival_timezone: Optional[str] = Field(None, max_length=50)
+    duration_minutes: Optional[int] = Field(None, ge=0)
+    confirmation_number: Optional[str] = Field(None, max_length=100)
+    ticket_number: Optional[str] = Field(None, max_length=100)
+    seat: Optional[str] = Field(None, max_length=50)
+    gate: Optional[str] = Field(None, max_length=20)
+    terminal: Optional[str] = Field(None, max_length=50)
+    booking_class: Optional[str] = Field(None, max_length=50)
+    cost: Optional[Decimal] = Field(None, ge=0)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    notes: Optional[str] = None
 
 
 class TransitUpdate(BaseModel):

@@ -25,14 +25,7 @@ def test_create_trip_day(db: Session, test_user, test_trip):
         place_city="Paris",
         place_country="France",
         timezone="Europe/Paris",
-        activities=[
-            {
-                "name": "Eiffel Tower",
-                "time": "10:00",
-                "duration": 2,
-                "cost": 26.10
-            }
-        ],
+        weather_forecast="Sunny, 25°C",
         notes="Bring camera"
     )
 
@@ -48,8 +41,7 @@ def test_create_trip_day(db: Session, test_user, test_trip):
     assert trip_day.place_city == "Paris"
     assert trip_day.place_country == "France"
     assert trip_day.timezone == "Europe/Paris"
-    assert len(trip_day.activities) == 1
-    assert trip_day.activities[0]["name"] == "Eiffel Tower"
+    assert trip_day.weather_forecast == "Sunny, 25°C"
     assert trip_day.notes == "Bring camera"
 
 
@@ -158,22 +150,15 @@ def test_update_trip_day(db: Session, test_user, test_trip):
     # Update it
     update_data = TripDayUpdate(
         title="Updated Day 1",
-        notes="Updated notes",
-        activities=[
-            {
-                "name": "New Activity",
-                "time": "15:00",
-                "duration": 1
-            }
-        ]
+        weather_forecast="Rainy, 18°C",
+        notes="Updated notes"
     )
     updated = crud.update_trip_day(db, trip_day, update_data)
 
     assert updated.id == trip_day.id
     assert updated.title == "Updated Day 1"
+    assert updated.weather_forecast == "Rainy, 18°C"
     assert updated.notes == "Updated notes"
-    assert len(updated.activities) == 1
-    assert updated.activities[0]["name"] == "New Activity"
 
 
 def test_delete_trip_day(db: Session, test_user, test_trip):
@@ -329,120 +314,5 @@ def test_get_trip_days_by_day_type(db: Session, test_user, test_trip):
     assert len(transit_days) == 1
 
 
-def test_get_trip_days_with_activities(db: Session, test_user, test_trip):
-    """Test getting trip days that have activities."""
-    # Create trip day with activities
-    trip_day_in1 = TripDayCreate(
-        trip_id=test_trip.id,
-        date=date(2025, 7, 15),
-        day_number=1,
-        place="Paris",
-        timezone="UTC",
-        activities=[{"name": "Eiffel Tower", "time": "10:00"}]
-    )
-    crud.create_trip_day(db, trip_day_in1)
-
-    # Create trip day without activities
-    trip_day_in2 = TripDayCreate(
-        trip_id=test_trip.id,
-        date=date(2025, 7, 16),
-        day_number=2,
-        place="Paris",
-        timezone="UTC"
-    )
-    crud.create_trip_day(db, trip_day_in2)
-
-    days_with_activities = crud.get_trip_days_with_activities(db, test_trip.id)
-    assert len(days_with_activities) == 1
-    assert days_with_activities[0].day_number == 1
 
 
-def test_get_trip_days_with_accommodation(db: Session, test_user, test_trip):
-    """Test getting trip days that have accommodation."""
-    # Create trip day with accommodation
-    trip_day_in1 = TripDayCreate(
-        trip_id=test_trip.id,
-        date=date(2025, 7, 15),
-        day_number=1,
-        place="Paris",
-        timezone="UTC",
-        accommodation_name="Hotel Plaza"
-    )
-    crud.create_trip_day(db, trip_day_in1)
-
-    # Create trip day without accommodation
-    trip_day_in2 = TripDayCreate(
-        trip_id=test_trip.id,
-        date=date(2025, 7, 16),
-        day_number=2,
-        place="Paris",
-        timezone="UTC"
-    )
-    crud.create_trip_day(db, trip_day_in2)
-
-    days_with_accommodation = crud.get_trip_days_with_accommodation(db, test_trip.id)
-    assert len(days_with_accommodation) == 1
-    assert days_with_accommodation[0].accommodation_name == "Hotel Plaza"
-
-
-def test_create_trip_day_with_transit(db: Session, test_user, test_trip):
-    """Test creating a trip day with transit information."""
-    trip_day_in = TripDayCreate(
-        trip_id=test_trip.id,
-        date=date(2025, 7, 15),
-        day_number=1,
-        day_type=TripDayType.TRANSIT,
-        place="London",
-        timezone="Europe/London",
-        transit_mode=TransitMode.FLIGHT,
-        transit_details={
-            "carrier": "British Airways",
-            "number": "BA123",
-            "from_location": "Paris CDG",
-            "to_location": "London Heathrow",
-            "departure_time": 1720540800,
-            "arrival_time": 1720544400
-        },
-        arrival_time=1720544400,
-        departure_time=1720540800
-    )
-
-    trip_day = crud.create_trip_day(db, trip_day_in)
-
-    assert trip_day.transit_mode == TransitMode.FLIGHT
-    assert trip_day.transit_details["carrier"] == "British Airways"
-    assert trip_day.transit_details["number"] == "BA123"
-    assert trip_day.arrival_time == 1720544400
-
-
-def test_create_trip_day_with_bookings(db: Session, test_user, test_trip):
-    """Test creating a trip day with bookings."""
-    trip_day_in = TripDayCreate(
-        trip_id=test_trip.id,
-        date=date(2025, 7, 15),
-        day_number=1,
-        place="Paris",
-        timezone="Europe/Paris",
-        bookings=[
-            {
-                "type": "restaurant",
-                "name": "Le Jules Verne",
-                "time": "19:30",
-                "cost": 150.00,
-                "confirmation_number": "RES123"
-            },
-            {
-                "type": "tour",
-                "name": "Seine River Cruise",
-                "time": "20:00",
-                "cost": 15.00
-            }
-        ]
-    )
-
-    trip_day = crud.create_trip_day(db, trip_day_in)
-
-    assert len(trip_day.bookings) == 2
-    assert trip_day.bookings[0]["type"] == "restaurant"
-    assert trip_day.bookings[0]["name"] == "Le Jules Verne"
-    assert trip_day.bookings[1]["type"] == "tour"

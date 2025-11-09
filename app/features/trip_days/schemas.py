@@ -8,40 +8,7 @@ including nested structures for activities, bookings, and transit details.
 from pydantic import BaseModel, Field, field_validator, field_serializer
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime
-from app.shared.enums import TripDayType, TransitMode
-
-
-# Nested schemas for complex fields
-
-class TransitDetails(BaseModel):
-    """Schema for transit details."""
-    carrier: Optional[str] = Field(None, max_length=100, description="Airline, train company, etc.")
-    number: Optional[str] = Field(None, max_length=50, description="Flight/train number")
-    from_location: Optional[str] = Field(None, max_length=200)
-    to_location: Optional[str] = Field(None, max_length=200)
-    departure_time: Optional[int] = Field(None, description="Unix timestamp")
-    arrival_time: Optional[int] = Field(None, description="Unix timestamp")
-    confirmation_number: Optional[str] = Field(None, max_length=100)
-    seat: Optional[str] = Field(None, max_length=50)
-    gate: Optional[str] = Field(None, max_length=20)
-    terminal: Optional[str] = Field(None, max_length=50)
-    notes: Optional[str] = None
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "carrier": "Air France",
-                "number": "AF1234",
-                "from_location": "Paris CDG",
-                "to_location": "London Heathrow",
-                "departure_time": 1720540800,
-                "arrival_time": 1720544400,
-                "confirmation_number": "ABC123",
-                "seat": "12A",
-                "gate": "2F",
-                "terminal": "2E"
-            }
-        }
+from app.shared.enums import TripDayType
 
 
 # Main TripDay schemas
@@ -60,30 +27,9 @@ class TripDayBase(BaseModel):
     place_country: Optional[str] = Field(None, max_length=100)
     timezone: str = Field(default="UTC", max_length=50)
 
-    # Transit
-    transit_mode: Optional[TransitMode] = None
-    transit_details: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    arrival_time: Optional[int] = Field(None, description="Unix timestamp")
-    departure_time: Optional[int] = Field(None, description="Unix timestamp")
-
-    # Accommodation
-    accommodation_name: Optional[str] = Field(None, max_length=200)
-    accommodation_address: Optional[str] = None
-    accommodation_checkin: Optional[int] = Field(None, description="Unix timestamp")
-    accommodation_checkout: Optional[int] = Field(None, description="Unix timestamp")
-    accommodation_confirmation: Optional[str] = Field(None, max_length=100)
-
-    # Notes
+    # Weather & Notes
+    weather_forecast: Optional[str] = None
     notes: Optional[str] = None
-
-    @field_validator('transit_details', mode='before')
-    @classmethod
-    def validate_transit_details(cls, v):
-        if v is None:
-            return {}
-        if isinstance(v, dict) and v:
-            TransitDetails(**v)  # Validate
-        return v
 
 
 class TripDayCreate(TripDayBase):
@@ -104,30 +50,9 @@ class TripDayUpdate(BaseModel):
     place_country: Optional[str] = Field(None, max_length=100)
     timezone: Optional[str] = Field(None, max_length=50)
 
-    # Transit
-    transit_mode: Optional[TransitMode] = None
-    transit_details: Optional[Dict[str, Any]] = None
-    arrival_time: Optional[int] = None
-    departure_time: Optional[int] = None
-
-    # Accommodation
-    accommodation_name: Optional[str] = Field(None, max_length=200)
-    accommodation_address: Optional[str] = None
-    accommodation_checkin: Optional[int] = None
-    accommodation_checkout: Optional[int] = None
-    accommodation_confirmation: Optional[str] = Field(None, max_length=100)
-
-    # Notes
+    # Weather & Notes
+    weather_forecast: Optional[str] = None
     notes: Optional[str] = None
-
-    @field_validator('transit_details', mode='before')
-    @classmethod
-    def validate_transit_details(cls, v):
-        if v is None or (isinstance(v, dict) and not v):
-            return None
-        if isinstance(v, dict):
-            TransitDetails(**v)  # Validate
-        return v
 
 
 class TripDayResponse(BaseModel):
@@ -145,23 +70,8 @@ class TripDayResponse(BaseModel):
     place_country: Optional[str]
     timezone: str
 
-    # Transit
-    transit_mode: Optional[TransitMode]
-    transit_details: Dict[str, Any]
-    arrival_time: Optional[int]
-    departure_time: Optional[int]
-
-    # Accommodation
-    accommodation_name: Optional[str]
-    accommodation_address: Optional[str]
-    accommodation_checkin: Optional[int]
-    accommodation_checkout: Optional[int]
-    accommodation_confirmation: Optional[str]
-
-    # Weather
-    weather_forecast: Optional[Dict[str, Any]]
-
-    # Notes
+    # Weather & Notes
+    weather_forecast: Optional[str]
     notes: Optional[str]
 
     # Timestamps
@@ -187,16 +97,7 @@ class TripDayResponse(BaseModel):
                 "place_city": "Paris",
                 "place_country": "France",
                 "timezone": "Europe/Paris",
-                "transit_mode": None,
-                "transit_details": {},
-                "arrival_time": None,
-                "departure_time": None,
-                "accommodation_name": "Hotel Plaza Athénée",
-                "accommodation_address": "25 Avenue Montaigne, 75008 Paris",
-                "accommodation_checkin": 1720972800,
-                "accommodation_checkout": 1721059200,
-                "accommodation_confirmation": "HTL456789",
-                "weather_forecast": None,
+                "weather_forecast": "Sunny, 25°C",
                 "notes": "Remember to bring camera",
                 "created_at": 1720540800,
                 "updated_at": 1720540800
@@ -218,6 +119,7 @@ class TripDayListResponse(BaseModel):
     has_activities: bool
     has_bookings: bool
     has_accommodation: bool
+    has_transits: bool
 
     class Config:
         from_attributes = True
@@ -237,5 +139,6 @@ class TripDayListResponse(BaseModel):
             place_country=trip_day.place_country,
             has_activities=bool(trip_day.activities and len(trip_day.activities) > 0),
             has_bookings=bool(trip_day.bookings and len(trip_day.bookings) > 0),
-            has_accommodation=bool(trip_day.accommodation_name)
+            has_accommodation=bool(trip_day.accommodations and len(trip_day.accommodations) > 0),
+            has_transits=bool(trip_day.transits and len(trip_day.transits) > 0)
         )

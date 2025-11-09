@@ -7,7 +7,7 @@ A trip day can have multiple transits (e.g., taxi → airport, flight, train →
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, TIMESTAMP, Enum as SQLEnum, DECIMAL
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import text
+from sqlalchemy.sql import func
 
 from app.core.database import Base
 from app.shared.enums import TransitMode
@@ -65,8 +65,8 @@ class Transit(Base):
     display_order = Column(Integer, default=0, nullable=False)  # For ordering multiple transits in a day
 
     # Timestamps
-    created_at = Column(TIMESTAMP, server_default=text('now()'), nullable=False)
-    updated_at = Column(TIMESTAMP, server_default=text('now()'), nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
 
     # Relationships
     trip_day = relationship("TripDay", back_populates="transits")

@@ -6,7 +6,7 @@ These schemas handle validation and serialization for accommodation data.
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 from app.shared.enums import AccommodationType
@@ -35,9 +35,31 @@ class AccommodationBase(BaseModel):
         from_attributes = True
 
 
-class AccommodationCreate(AccommodationBase):
-    """Schema for creating an Accommodation."""
-    trip_day_id: int = Field(..., gt=0)
+class AccommodationCreate(BaseModel):
+    """Schema for creating an Accommodation.
+
+    User provides trip_id and date range. Backend creates appropriate
+    accommodation records for each day (CHECK_IN, WHOLE_DAY, CHECK_OUT).
+    """
+    trip_id: int = Field(..., gt=0, description="ID of the trip")
+    check_in_date: date = Field(..., description="Check-in date (YYYY-MM-DD)")
+    check_out_date: date = Field(..., description="Check-out date (YYYY-MM-DD)")
+    check_in_time: Optional[int] = Field(None, description="Unix timestamp for check-in time")
+    check_out_time: Optional[int] = Field(None, description="Unix timestamp for check-out time")
+
+    # Accommodation details
+    name: str = Field(..., min_length=1, max_length=200)
+    address: Optional[str] = None
+    latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    confirmation_number: Optional[str] = Field(None, max_length=100)
+    booking_url: Optional[str] = None
+    cost: Optional[Decimal] = Field(None, ge=0, description="Total cost for entire stay")
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    contact_phone: Optional[str] = Field(None, max_length=50)
+    contact_email: Optional[str] = Field(None, max_length=255)
+    room_type: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = None
 
 
 class AccommodationUpdate(BaseModel):

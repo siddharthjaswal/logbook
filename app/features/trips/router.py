@@ -175,15 +175,13 @@ async def delete_trip(
 
     # Store info for response
     trip_name = trip.name
-    trip_slug = trip.slug
 
     crud.delete_trip(db, trip)
 
     return {
         "message": "Trip deleted successfully",
         "trip_id": trip_id,
-        "trip_name": trip_name,
-        "trip_slug": trip_slug
+        "trip_name": trip_name
     }
 
 

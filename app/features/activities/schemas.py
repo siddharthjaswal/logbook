@@ -6,7 +6,7 @@ These schemas handle validation and serialization for activity data.
 
 from pydantic import BaseModel, Field, field_serializer
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 from app.shared.enums import ActivityType, ActivityStatus
@@ -37,9 +37,32 @@ class ActivityBase(BaseModel):
         from_attributes = True
 
 
-class ActivityCreate(ActivityBase):
-    """Schema for creating an Activity."""
-    trip_day_id: int = Field(..., gt=0)
+class ActivityCreate(BaseModel):
+    """Schema for creating an Activity.
+
+    User provides trip_id and date. Backend finds/creates the trip day.
+    """
+    trip_id: int = Field(..., gt=0, description="ID of the trip")
+    activity_date: date = Field(..., description="Date of activity (YYYY-MM-DD)")
+
+    # Activity details
+    name: str = Field(..., min_length=1, max_length=200)
+    activity_type: ActivityType = ActivityType.OTHER
+    time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
+    duration: Optional[Decimal] = Field(None, ge=0, le=99.99, description="Duration in hours")
+    location: Optional[str] = Field(None, max_length=200)
+    location_address: Optional[str] = None
+    latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    cost: Optional[Decimal] = Field(None, ge=0)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    booking_required: bool = False
+    confirmation_number: Optional[str] = Field(None, max_length=100)
+    booking_url: Optional[str] = None
+    contact_phone: Optional[str] = Field(None, max_length=50)
+    contact_email: Optional[str] = Field(None, max_length=255)
+    status: ActivityStatus = ActivityStatus.PLANNED
+    notes: Optional[str] = None
 
 
 class ActivityUpdate(BaseModel):

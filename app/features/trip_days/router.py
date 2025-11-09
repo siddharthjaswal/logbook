@@ -267,10 +267,11 @@ async def get_trip_summary(
         day_type = day.day_type.value if hasattr(day.day_type, 'value') else str(day.day_type)
         day_types[day_type] = day_types.get(day_type, 0) + 1
 
-    # Count activities, bookings, accommodations
+    # Count activities, bookings, accommodations, transits
     total_activities = sum(len(day.activities) for day in trip_days if day.activities)
     total_bookings = sum(len(day.bookings) for day in trip_days if day.bookings)
-    total_accommodations = sum(1 for day in trip_days if day.accommodation_name)
+    total_accommodations = sum(len(day.accommodations) for day in trip_days if day.accommodations)
+    total_transits = sum(len(day.transits) for day in trip_days if day.transits)
 
     return {
         "trip_id": trip_id,
@@ -283,6 +284,7 @@ async def get_trip_summary(
         "total_activities": total_activities,
         "total_bookings": total_bookings,
         "total_accommodations": total_accommodations,
+        "total_transits": total_transits,
         "first_day": trip_days[0].date if trip_days else None,
         "last_day": trip_days[-1].date if trip_days else None
     }

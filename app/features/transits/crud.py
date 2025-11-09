@@ -7,28 +7,64 @@ These functions handle database operations for transits.
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import Optional, List
+from datetime import date
 
 from app.features.transits.models import Transit
 from app.features.transits.schemas import TransitCreate, TransitUpdate
 from app.shared.enums import TransitMode
+from app.features.trip_days import crud as trip_days_crud
+from app.features.trip_days.schemas import TripDayCreate
 
 
 def create_transit(db: Session, transit_in: TransitCreate) -> Transit:
     """
-    Create a new transit.
+    Create a new transit. Auto-finds or creates trip day for the date.
 
     Args:
         db: Database session
-        transit_in: Transit data
+        transit_in: Transit data with trip_id and transit_date
 
     Returns:
         Created Transit instance
     """
-    transit = Transit(**transit_in.model_dump(mode='python'))
+    # Find or create trip day for this date
+    trip_day = trip_days_crud.get_trip_day_by_trip_and_date(
+        db, transit_in.trip_id, transit_in.transit_date
+    )
+
+    if not trip_day:
+        # Auto-create trip day
+        trip_day_in = TripDayCreate(
+            trip_id=transit_in.trip_id,
+            date=transit_in.transit_date,
+            day_number=_get_next_day_number(db, transit_in.trip_id, transit_in.transit_date),
+            place="TBD",
+            timezone="UTC"
+        )
+        trip_day = trip_days_crud.create_trip_day(db, trip_day_in)
+
+    # Create transit with trip_day_id
+    data = transit_in.model_dump(mode='python', exclude={'trip_id', 'transit_date'})
+    transit = Transit(trip_day_id=trip_day.id, **data)
     db.add(transit)
     db.commit()
     db.refresh(transit)
     return transit
+
+
+def _get_next_day_number(db: Session, trip_id: int, target_date: date) -> int:
+    """Get the next available day number for a trip."""
+    trip_days = trip_days_crud.get_trip_days_by_trip_id(db, trip_id)
+    if not trip_days:
+        return 1
+    days_before = [td for td in trip_days if td.date < target_date]
+    days_after = [td for td in trip_days if td.date > target_date]
+    if days_before:
+        return max(td.day_number for td in days_before) + 1
+    elif days_after:
+        return min(td.day_number for td in days_after)
+    else:
+        return max(td.day_number for td in trip_days) + 1
 
 
 def get_transit_by_id(db: Session, transit_id: int) -> Optional[Transit]:

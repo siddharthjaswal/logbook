@@ -16,7 +16,7 @@ from app.features.transits.schemas import (
     TransitListResponse
 )
 from app.features.trip_days.crud import get_trip_day_by_id
-from app.features.trips.crud import check_trip_ownership
+from app.features.trips import crud as trips_crud
 from app.shared.enums import TransitMode
 
 router = APIRouter()
@@ -28,17 +28,17 @@ async def create_transit(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Create a new transit for a trip day."""
-    # Verify trip day exists and user owns the trip
-    trip_day = get_trip_day_by_id(db, transit_in.trip_day_id)
-    if not trip_day:
+    """Create a new transit. Trip day is auto-created if needed."""
+    # Verify trip exists and user owns it
+    trip = trips_crud.get_trip_by_id(db, transit_in.trip_id, current_user.id)
+    if not trip:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trip day not found"
+            detail="Trip not found"
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to add transits to this trip"
@@ -67,7 +67,7 @@ async def list_transits_by_trip_day(
         )
 
     # Check trip ownership (or public access)
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view transits for this trip"
@@ -97,7 +97,7 @@ async def get_transit_by_confirmation(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(transit.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this transit"
@@ -121,7 +121,7 @@ async def get_transit(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(transit.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this transit"
@@ -146,7 +146,7 @@ async def update_transit(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(transit.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this transit"
@@ -171,7 +171,7 @@ async def delete_transit(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(transit.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this transit"
@@ -212,7 +212,7 @@ async def reorder_transits(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to reorder transits for this trip"
@@ -239,7 +239,7 @@ async def get_trip_day_transits_cost(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view cost for this trip"

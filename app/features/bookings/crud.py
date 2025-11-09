@@ -7,28 +7,64 @@ These functions handle database operations for bookings.
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from typing import Optional, List
+from datetime import date
 
 from app.features.bookings.models import Booking
 from app.features.bookings.schemas import BookingCreate, BookingUpdate
 from app.shared.enums import BookingStatus, BookingType
+from app.features.trip_days import crud as trip_days_crud
+from app.features.trip_days.schemas import TripDayCreate
 
 
 def create_booking(db: Session, booking_in: BookingCreate) -> Booking:
     """
-    Create a new booking.
+    Create a new booking. Auto-finds or creates trip day for the date.
 
     Args:
         db: Database session
-        booking_in: Booking data
+        booking_in: Booking data with trip_id and event_date
 
     Returns:
         Created Booking instance
     """
-    booking = Booking(**booking_in.model_dump(mode='python'))
+    # Find or create trip day for this date
+    trip_day = trip_days_crud.get_trip_day_by_trip_and_date(
+        db, booking_in.trip_id, booking_in.event_date
+    )
+
+    if not trip_day:
+        # Auto-create trip day
+        trip_day_in = TripDayCreate(
+            trip_id=booking_in.trip_id,
+            date=booking_in.event_date,
+            day_number=_get_next_day_number(db, booking_in.trip_id, booking_in.event_date),
+            place="TBD",
+            timezone="UTC"
+        )
+        trip_day = trip_days_crud.create_trip_day(db, trip_day_in)
+
+    # Create booking with trip_day_id
+    data = booking_in.model_dump(mode='python', exclude={'trip_id', 'event_date'})
+    booking = Booking(trip_day_id=trip_day.id, **data)
     db.add(booking)
     db.commit()
     db.refresh(booking)
     return booking
+
+
+def _get_next_day_number(db: Session, trip_id: int, target_date: date) -> int:
+    """Get the next available day number for a trip."""
+    trip_days = trip_days_crud.get_trip_days_by_trip_id(db, trip_id)
+    if not trip_days:
+        return 1
+    days_before = [td for td in trip_days if td.date < target_date]
+    days_after = [td for td in trip_days if td.date > target_date]
+    if days_before:
+        return max(td.day_number for td in days_before) + 1
+    elif days_after:
+        return min(td.day_number for td in days_after)
+    else:
+        return max(td.day_number for td in trip_days) + 1
 
 
 def get_booking_by_id(db: Session, booking_id: int) -> Optional[Booking]:

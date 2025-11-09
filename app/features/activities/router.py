@@ -16,7 +16,7 @@ from app.features.activities.schemas import (
     ActivityListResponse
 )
 from app.features.trip_days.crud import get_trip_day_by_id
-from app.features.trips.crud import check_trip_ownership
+from app.features.trips import crud as trips_crud
 from app.shared.enums import ActivityType, ActivityStatus
 
 router = APIRouter()
@@ -28,17 +28,17 @@ async def create_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Create a new activity for a trip day."""
-    # Verify trip day exists and user owns the trip
-    trip_day = get_trip_day_by_id(db, activity_in.trip_day_id)
-    if not trip_day:
+    """Create a new activity. Trip day is auto-created if needed."""
+    # Verify trip exists and user owns it
+    trip = trips_crud.get_trip_by_id(db, activity_in.trip_id, current_user.id)
+    if not trip:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trip day not found"
+            detail="Trip not found"
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to add activities to this trip"
@@ -68,7 +68,7 @@ async def list_activities_by_trip_day(
         )
 
     # Check trip ownership (or public access)
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view activities for this trip"
@@ -100,7 +100,7 @@ async def get_activity(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(activity.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this activity"
@@ -125,7 +125,7 @@ async def update_activity(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(activity.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this activity"
@@ -150,7 +150,7 @@ async def delete_activity(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(activity.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this activity"
@@ -187,7 +187,7 @@ async def reorder_activities(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to reorder activities for this trip"
@@ -214,7 +214,7 @@ async def get_trip_day_activities_cost(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view cost for this trip"

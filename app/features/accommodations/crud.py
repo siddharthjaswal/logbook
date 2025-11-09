@@ -7,28 +7,135 @@ These functions handle database operations for accommodations.
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import Optional, List
+from datetime import date, timedelta
 
 from app.features.accommodations.models import Accommodation
 from app.features.accommodations.schemas import AccommodationCreate, AccommodationUpdate
 from app.shared.enums import AccommodationType
+from app.features.trip_days import crud as trip_days_crud
+from app.features.trip_days.schemas import TripDayCreate
 
 
-def create_accommodation(db: Session, accommodation_in: AccommodationCreate) -> Accommodation:
+def create_accommodation(db: Session, accommodation_in: AccommodationCreate) -> List[Accommodation]:
     """
-    Create a new accommodation.
+    Create accommodation(s) for a date range.
+
+    Creates individual accommodation records for each day:
+    - First day: CHECK_IN
+    - Middle days: WHOLE_DAY
+    - Last day: CHECK_OUT
+
+    For same-day check-in/out (1 night), creates both CHECK_IN and CHECK_OUT.
 
     Args:
         db: Database session
-        accommodation_in: Accommodation data
+        accommodation_in: Accommodation data with trip_id and date range
 
     Returns:
-        Created Accommodation instance
+        List of created Accommodation instances
+
+    Raises:
+        ValueError: If check_out_date is before check_in_date
     """
-    accommodation = Accommodation(**accommodation_in.model_dump(mode='python'))
-    db.add(accommodation)
+    if accommodation_in.check_out_date < accommodation_in.check_in_date:
+        raise ValueError("Check-out date must be on or after check-in date")
+
+    # Generate all dates in the range (inclusive)
+    current_date = accommodation_in.check_in_date
+    dates = []
+    while current_date <= accommodation_in.check_out_date:
+        dates.append(current_date)
+        current_date += timedelta(days=1)
+
+    created_accommodations = []
+
+    for i, day_date in enumerate(dates):
+        # Find or create trip day for this date
+        trip_day = trip_days_crud.get_trip_day_by_trip_and_date(
+            db, accommodation_in.trip_id, day_date
+        )
+
+        if not trip_day:
+            # Auto-create trip day
+            trip_day_in = TripDayCreate(
+                trip_id=accommodation_in.trip_id,
+                date=day_date,
+                day_number=_get_next_day_number(db, accommodation_in.trip_id, day_date),
+                place="TBD",  # User can update later
+                timezone="UTC"
+            )
+            trip_day = trip_days_crud.create_trip_day(db, trip_day_in)
+
+        # Determine accommodation type
+        if i == 0:
+            acc_type = AccommodationType.CHECK_IN
+            check_time = accommodation_in.check_in_time
+        elif i == len(dates) - 1:
+            acc_type = AccommodationType.CHECK_OUT
+            check_time = accommodation_in.check_out_time
+        else:
+            acc_type = AccommodationType.WHOLE_DAY
+            check_time = None
+
+        # Create accommodation record
+        accommodation = Accommodation(
+            trip_day_id=trip_day.id,
+            accommodation_type=acc_type,
+            check_in_time=check_time if acc_type == AccommodationType.CHECK_IN else None,
+            check_out_time=check_time if acc_type == AccommodationType.CHECK_OUT else None,
+            name=accommodation_in.name,
+            address=accommodation_in.address,
+            latitude=accommodation_in.latitude,
+            longitude=accommodation_in.longitude,
+            confirmation_number=accommodation_in.confirmation_number,
+            booking_url=accommodation_in.booking_url,
+            cost=accommodation_in.cost if i == 0 else None,  # Only store cost on first record
+            currency=accommodation_in.currency,
+            contact_phone=accommodation_in.contact_phone,
+            contact_email=accommodation_in.contact_email,
+            room_type=accommodation_in.room_type,
+            notes=accommodation_in.notes if i == 0 else None,  # Only store notes on first record
+            display_order=0
+        )
+
+        db.add(accommodation)
+        created_accommodations.append(accommodation)
+
     db.commit()
-    db.refresh(accommodation)
-    return accommodation
+
+    # Refresh all created accommodations
+    for accommodation in created_accommodations:
+        db.refresh(accommodation)
+
+    return created_accommodations
+
+
+def _get_next_day_number(db: Session, trip_id: int, target_date: date) -> int:
+    """
+    Get the next available day number for a trip.
+
+    Looks at existing trip days before and after the target date to determine
+    the appropriate day number.
+    """
+    # Get all trip days for this trip
+    trip_days = trip_days_crud.get_trip_days_by_trip_id(db, trip_id)
+
+    if not trip_days:
+        return 1
+
+    # Find trip days before and after target date
+    days_before = [td for td in trip_days if td.date < target_date]
+    days_after = [td for td in trip_days if td.date > target_date]
+
+    if days_before:
+        # Insert after the last day before target
+        return max(td.day_number for td in days_before) + 1
+    elif days_after:
+        # Insert before the first day after target
+        return min(td.day_number for td in days_after)
+    else:
+        # No days before or after, use next number
+        return max(td.day_number for td in trip_days) + 1
 
 
 def get_accommodation_by_id(db: Session, accommodation_id: int) -> Optional[Accommodation]:

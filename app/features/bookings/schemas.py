@@ -35,10 +35,33 @@ class BookingBase(BaseModel):
         from_attributes = True
 
 
-class BookingCreate(BookingBase):
-    """Schema for creating a Booking."""
-    trip_day_id: Optional[int] = Field(None, gt=0)
-    activity_id: Optional[int] = Field(None, gt=0)
+class BookingCreate(BaseModel):
+    """Schema for creating a Booking.
+
+    User provides trip_id and event_date. Backend finds/creates the trip day.
+    activity_id is optional - if provided, the booking is linked to that activity.
+    """
+    trip_id: int = Field(..., gt=0, description="ID of the trip")
+    event_date: date = Field(..., description="Date of the booking event (YYYY-MM-DD)")
+    activity_id: Optional[int] = Field(None, gt=0, description="Optional activity ID to link this booking to")
+
+    # Booking details
+    booking_type: BookingType = BookingType.OTHER
+    name: str = Field(..., min_length=1, max_length=200)
+    provider: Optional[str] = Field(None, max_length=200)
+    confirmation_number: Optional[str] = Field(None, max_length=100)
+    booking_reference: Optional[str] = Field(None, max_length=100)
+    cost: Optional[Decimal] = Field(None, ge=0)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    booking_date: Optional[date] = None
+    booking_time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
+    location: Optional[str] = Field(None, max_length=200)
+    location_address: Optional[str] = None
+    contact_phone: Optional[str] = Field(None, max_length=50)
+    contact_email: Optional[str] = Field(None, max_length=255)
+    booking_url: Optional[str] = None
+    status: BookingStatus = BookingStatus.PENDING
+    notes: Optional[str] = None
 
 
 class BookingUpdate(BaseModel):

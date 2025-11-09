@@ -16,36 +16,51 @@ from app.features.accommodations.schemas import (
     AccommodationListResponse
 )
 from app.features.trip_days.crud import get_trip_day_by_id
-from app.features.trips.crud import check_trip_ownership
+from app.features.trips import crud as trips_crud
 from app.shared.enums import AccommodationType
 
 router = APIRouter()
 
 
-@router.post("/", response_model=AccommodationResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=List[AccommodationResponse], status_code=status.HTTP_201_CREATED)
 async def create_accommodation(
     accommodation_in: AccommodationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Create a new accommodation for a trip day."""
-    # Verify trip day exists and user owns the trip
-    trip_day = get_trip_day_by_id(db, accommodation_in.trip_day_id)
-    if not trip_day:
+    """
+    Create accommodation(s) for a date range.
+
+    Creates individual accommodation records for each day:
+    - Check-in day: CHECK_IN type
+    - Middle days: WHOLE_DAY type
+    - Check-out day: CHECK_OUT type
+
+    Trip days are auto-created if they don't exist.
+    """
+    # Verify trip exists and user owns it
+    trip = trips_crud.get_trip_by_id(db, accommodation_in.trip_id, current_user.id)
+    if not trip:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Trip day not found"
+            detail="Trip not found"
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to add accommodations to this trip"
         )
 
-    accommodation = crud.create_accommodation(db, accommodation_in)
-    return accommodation
+    try:
+        accommodations = crud.create_accommodation(db, accommodation_in)
+        return accommodations
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.get("/trip-day/{trip_day_id}", response_model=List[AccommodationResponse])
