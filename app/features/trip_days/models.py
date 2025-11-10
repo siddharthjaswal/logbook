@@ -64,6 +64,8 @@ class TripDay(Base):
     bookings = relationship("Booking", back_populates="trip_day", cascade="all, delete-orphan")
     accommodations = relationship("Accommodation", back_populates="trip_day", cascade="all, delete-orphan")
     transits = relationship("Transit", back_populates="trip_day", cascade="all, delete-orphan")
+    expenses = relationship("Expense", back_populates="trip_day", cascade="all, delete-orphan")
+    notes = relationship("TripNote", back_populates="trip_day", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<TripDay(id={self.id}, trip_id={self.trip_id}, date='{self.date}', day_type='{self.day_type}')>"

@@ -102,6 +102,15 @@ class Trip(Base):
     trip_days = relationship("TripDay", back_populates="trip", cascade="all, delete-orphan")
     # collaborators = relationship("TripCollaborator", back_populates="trip")  # Phase 2
 
+    # Expense & Budget relationships
+    expenses = relationship("Expense", back_populates="trip", cascade="all, delete-orphan")
+    budget_categories = relationship("BudgetCategory", back_populates="trip", cascade="all, delete-orphan")
+
+    # Notes & Packing relationships
+    notes = relationship("TripNote", back_populates="trip", cascade="all, delete-orphan")
+    packing_lists = relationship("PackingList", back_populates="trip", cascade="all, delete-orphan")
+    checklists = relationship("Checklist", back_populates="trip", cascade="all, delete-orphan")
+
     def __repr__(self):
         return f"<Trip(id={self.id}, name='{self.name}', status='{self.status}')>"
 

@@ -1,0 +1,3 @@
+"""
+trip notes feature module.
+"""

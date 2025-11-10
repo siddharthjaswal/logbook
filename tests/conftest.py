@@ -21,6 +21,10 @@ from app.features.activities.models import Activity
 from app.features.bookings.models import Booking
 from app.features.accommodations.models import Accommodation
 from app.features.transits.models import Transit
+from app.features.expenses.models import Expense, ExpenseSplit, BudgetCategory
+from app.features.trip_notes.models import TripNote
+from app.features.packing_lists.models import PackingList, PackingItem
+from app.features.checklists.models import Checklist, ChecklistItem
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
