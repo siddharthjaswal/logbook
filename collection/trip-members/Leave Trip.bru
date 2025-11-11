@@ -1,0 +1,30 @@
+meta {
+  name: Leave Trip
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/trips/{{tripId}}/leave
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Leave Trip
+
+  Leave a trip you're a member of.
+
+  **Permission Required:** Any member (viewer, editor, or owner)
+
+  **Notes:**
+  - Any member can leave a trip voluntarily
+  - Cannot leave if you're the last owner (at least one owner must remain)
+  - Permanently removes your membership
+  - You'll lose all access to the trip
+  - Creates an activity log entry
+}

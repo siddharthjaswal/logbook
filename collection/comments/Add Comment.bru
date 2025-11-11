@@ -1,0 +1,45 @@
+meta {
+  name: Add Comment
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/trips/{{tripId}}/comments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "content": "This itinerary looks great! @john what do you think about the timing?",
+    "entity_type": "day",
+    "entity_id": 5,
+    "parent_id": null
+  }
+}
+
+docs {
+  # Add Comment
+
+  Add a comment to a trip or trip entity (day, accommodation, activity, etc.).
+
+  **Permission Required:** Viewer or higher
+
+  **Request Body:**
+  - `content` (required): Comment text (supports @username mentions)
+  - `entity_type` (optional): Type of entity being commented on (day, accommodation, activity, booking, etc.)
+  - `entity_id` (optional): ID of the entity being commented on
+  - `parent_id` (optional): ID of parent comment (for nested replies)
+
+  **Notes:**
+  - Automatically detects @username mentions and stores user IDs
+  - Supports nested comment threads via parent_id
+  - If entity_type/entity_id not provided, comment is on the trip itself
+  - Creates an activity log entry
+  - Mentioned users can be notified (future feature)
+}

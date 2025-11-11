@@ -1,0 +1,31 @@
+meta {
+  name: Decline Invitation
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/invitations/{{invitationToken}}/decline
+  body: none
+  auth: none
+}
+
+docs {
+  # Decline Invitation
+
+  Decline an invitation to join a trip.
+
+  **Permission Required:** None (public endpoint, no authentication required)
+
+  **URL Parameters:**
+  - `invitationToken`: The secure token from the invitation link
+
+  **Notes:**
+  - No authentication required (can be declined without logging in)
+  - Validates the token
+  - Updates invitation status to "declined"
+  - Records the decline timestamp
+  - The invitation link becomes invalid
+  - Returns 404 if token is invalid
+  - Returns 400 if invitation is already used or cancelled
+}

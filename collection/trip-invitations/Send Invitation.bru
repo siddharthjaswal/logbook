@@ -1,0 +1,43 @@
+meta {
+  name: Send Invitation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/trips/{{tripId}}/invitations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "invitee_email": "friend@example.com",
+    "role": "editor",
+    "message": "Join me on this amazing trip to Paris!"
+  }
+}
+
+docs {
+  # Send Trip Invitation
+
+  Invite someone to collaborate on a trip via email.
+
+  **Permission Required:** Editor or higher
+
+  **Request Body:**
+  - `invitee_email` (required): Email address of the person to invite
+  - `role` (required): Role to assign ("editor" or "viewer")
+  - `message` (optional): Personal message to include with the invitation
+
+  **Notes:**
+  - Generates a secure random token for the invitation link
+  - Invitation expires after 7 days
+  - Email can be for existing or non-existing users
+  - Creates an activity log entry
+  - Inviter information is tracked
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Cancel Invitation
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/trips/{{tripId}}/invitations/{{invitationId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Cancel Invitation
+
+  Cancel a pending invitation.
+
+  **Permission Required:** Editor or higher
+
+  **Notes:**
+  - Only pending invitations can be cancelled
+  - Updates invitation status to "cancelled"
+  - The invitation link becomes invalid
+  - Does not delete the invitation record (for audit trail)
+  - Only the inviter or trip owners can cancel
+}

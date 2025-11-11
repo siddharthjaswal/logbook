@@ -1,0 +1,31 @@
+meta {
+  name: My Pending Invitations
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/users/me/invitations
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # My Pending Invitations
+
+  Get all pending invitations for the current user.
+
+  **Permission Required:** Authenticated user
+
+  **Notes:**
+  - Returns invitations sent to the user's email address
+  - Only shows pending invitations (not accepted/declined/expired)
+  - Includes trip details for each invitation
+  - Shows inviter information
+  - Displays invitation message and expiration date
+  - Useful for showing a user their pending trip invitations in the UI
+}

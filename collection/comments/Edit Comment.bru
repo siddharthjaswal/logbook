@@ -1,0 +1,39 @@
+meta {
+  name: Edit Comment
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/comments/{{commentId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "content": "Updated comment text with @alice mention"
+  }
+}
+
+docs {
+  # Edit Comment
+
+  Edit an existing comment's content.
+
+  **Permission Required:** Comment owner only (must be the user who created the comment)
+
+  **Request Body:**
+  - `content` (required): New comment text (supports @username mentions)
+
+  **Notes:**
+  - Only the comment author can edit their own comments
+  - Automatically re-extracts @username mentions from updated content
+  - Sets `is_edited` flag to true
+  - Updates `edited_at` timestamp
+  - Previous content is overwritten (no edit history)
+}

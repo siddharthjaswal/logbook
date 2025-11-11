@@ -1,0 +1,36 @@
+meta {
+  name: Accept Invitation
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/invitations/{{invitationToken}}/accept
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Accept Invitation
+
+  Accept an invitation to join a trip.
+
+  **Permission Required:** Authenticated user (must be logged in)
+
+  **URL Parameters:**
+  - `invitationToken`: The secure token from the invitation link
+
+  **Notes:**
+  - Requires authentication (user must be logged in)
+  - Validates the token and checks expiration
+  - Creates a new TripMember record with the specified role
+  - Updates invitation status to "accepted"
+  - Records the acceptance timestamp
+  - Creates an activity log entry
+  - Returns 404 if token is invalid
+  - Returns 400 if invitation is expired or already used
+}

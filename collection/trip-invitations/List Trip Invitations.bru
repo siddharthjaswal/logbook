@@ -1,0 +1,40 @@
+meta {
+  name: List Trip Invitations
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/trips/{{tripId}}/invitations
+  body: none
+  auth: bearer
+}
+
+params:query {
+  status: pending
+  skip: 0
+  limit: 100
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Invitations
+
+  Get all invitations for a specific trip.
+
+  **Permission Required:** Editor or higher
+
+  **Query Parameters:**
+  - `status` (optional): Filter by status (pending, accepted, declined, expired, cancelled)
+  - `skip` (optional): Number of records to skip (default: 0)
+  - `limit` (optional): Max records to return (default: 100)
+
+  **Response includes:**
+  - Invitation details (email, role, message)
+  - Status and timestamps
+  - Inviter information
+  - Invitation token (for generating links)
+}

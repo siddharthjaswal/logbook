@@ -1,0 +1,38 @@
+meta {
+  name: Update Member Role
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/trips/{{tripId}}/members/{{userId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "role": "viewer"
+  }
+}
+
+docs {
+  # Update Member Role
+
+  Change the role of an existing trip member.
+
+  **Permission Required:** Owner only
+
+  **Request Body:**
+  - `role` (required): New role ("owner", "editor", or "viewer")
+
+  **Notes:**
+  - Only owners can update member roles
+  - Can promote viewers to editors, editors to owners, etc.
+  - Role hierarchy: Owner > Editor > Viewer
+  - Creates an activity log entry
+}

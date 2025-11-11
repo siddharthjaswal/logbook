@@ -1,0 +1,30 @@
+meta {
+  name: Remove Trip Member
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/trips/{{tripId}}/members/{{userId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Remove Trip Member
+
+  Remove a member from a trip.
+
+  **Permission Required:** Owner only
+
+  **Notes:**
+  - Only owners can remove members
+  - Cannot remove the last owner (at least one owner must remain)
+  - Permanently deletes the membership record
+  - Creates an activity log entry
+  - The removed user loses all access to the trip
+}

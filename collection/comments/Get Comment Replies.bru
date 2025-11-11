@@ -1,0 +1,39 @@
+meta {
+  name: Get Comment Replies
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/comments/{{commentId}}/replies
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 50
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Comment Replies
+
+  Get all replies to a specific comment (nested comments).
+
+  **Permission Required:** Viewer or higher (for the trip)
+
+  **Query Parameters:**
+  - `skip` (optional): Number of records to skip (default: 0)
+  - `limit` (optional): Max records to return (default: 50)
+
+  **Notes:**
+  - Returns only direct replies to the specified comment
+  - Excludes soft-deleted replies
+  - Ordered by creation date (oldest first for better conversation flow)
+  - Includes user information for reply authors
+  - Supports infinite nesting (replies can have replies)
+}

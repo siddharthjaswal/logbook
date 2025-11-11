@@ -1,0 +1,58 @@
+meta {
+  name: Get Activity Feed
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/trips/{{tripId}}/activity
+  body: none
+  auth: bearer
+}
+
+params:query {
+  activity_type:
+  skip: 0
+  limit: 50
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Activity Feed
+
+  Get the activity log feed for a trip, showing all actions and changes.
+
+  **Permission Required:** Viewer or higher
+
+  **Query Parameters:**
+  - `activity_type` (optional): Filter by activity type (see Activity Types below)
+  - `skip` (optional): Number of records to skip (default: 0)
+  - `limit` (optional): Max records to return (default: 50)
+
+  **Activity Types:**
+  - `trip_created` - Trip was created
+  - `member_added` - Member added to trip
+  - `member_removed` - Member removed from trip
+  - `member_role_changed` - Member role was updated
+  - `expense_added` - Expense added
+  - `expense_updated` - Expense modified
+  - `expense_deleted` - Expense removed
+  - `day_added` - Trip day created
+  - `accommodation_added` - Accommodation added
+  - `activity_added` - Activity added to itinerary
+  - `booking_added` - Booking created
+  - `note_added` - Note/journal entry added
+  - `trip_updated` - Trip details updated
+  - `checklist_completed` - Checklist marked complete
+  - And more...
+
+  **Response includes:**
+  - Human-readable description of the activity
+  - User who performed the action
+  - Timestamp
+  - Entity type and ID (for linking)
+  - Additional metadata (JSONB)
+}

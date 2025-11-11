@@ -1,0 +1,40 @@
+meta {
+  name: Add Trip Member
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/trips/{{tripId}}/members
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "user_id": 2,
+    "role": "editor"
+  }
+}
+
+docs {
+  # Add Trip Member
+
+  Add a new member to a trip with a specific role.
+
+  **Permission Required:** Owner only
+
+  **Request Body:**
+  - `user_id` (required): ID of the user to add as a member
+  - `role` (required): Role to assign ("owner", "editor", or "viewer")
+
+  **Notes:**
+  - Only owners can add new members
+  - Cannot add the same user twice (unique constraint)
+  - The inviting user is automatically tracked
+  - Creates an activity log entry
+}

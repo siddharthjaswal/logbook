@@ -1,0 +1,39 @@
+meta {
+  name: List Trip Members
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/trips/{{tripId}}/members
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Members
+
+  Get all members of a trip with their roles and membership details.
+
+  **Permission Required:** Viewer or higher
+
+  **Response includes:**
+  - User information (id, email, name)
+  - Member role (owner, editor, viewer)
+  - Join date
+  - Who invited them (if applicable)
+
+  **Roles:**
+  - **Owner**: Full control, can manage all members and trip settings
+  - **Editor**: Can edit trip details and content, add/remove viewers
+  - **Viewer**: Read-only access to trip details
+}

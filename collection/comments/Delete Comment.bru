@@ -1,0 +1,32 @@
+meta {
+  name: Delete Comment
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/comments/{{commentId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete Comment
+
+  Soft delete a comment.
+
+  **Permission Required:** Comment owner OR trip owner
+
+  **Notes:**
+  - Soft delete (sets `deleted_at` timestamp, doesn't remove from database)
+  - Comment author can delete their own comments
+  - Trip owners can delete any comment on their trips
+  - Deleted comments are hidden from list/get endpoints
+  - Preserves comment for audit trail
+  - Replies to deleted comments are also hidden
+  - Cannot be undone via API (would require database access)
+}
