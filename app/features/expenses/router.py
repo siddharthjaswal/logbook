@@ -95,7 +95,7 @@ async def get_expense_summary(
 
 # BUDGET ENDPOINTS
 
-@router.post("/trips/{trip_id}/budget-categories", response_model=BudgetCategoryResponse)
+@router.post("/trips/{trip_id}/budget-categories", response_model=BudgetCategoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_budget_category(
     trip_id: int,
     budget_in: BudgetCategoryCreate,
@@ -128,7 +128,7 @@ async def get_budget_vs_actual(
 
 # EXPENSE SPLIT ENDPOINTS
 
-@router.post("/expenses/{expense_id}/splits", response_model=ExpenseSplitResponse)
+@router.post("/expenses/{expense_id}/splits", response_model=ExpenseSplitResponse, status_code=status.HTTP_201_CREATED)
 async def create_expense_split(
     expense_id: int,
     split_in: ExpenseSplitCreate,
@@ -137,3 +137,13 @@ async def create_expense_split(
 ):
     """Create an expense split."""
     return crud.create_expense_split(db, expense_id, split_in)
+
+
+@router.get("/expenses/{expense_id}/splits", response_model=List[ExpenseSplitResponse])
+async def get_expense_splits(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get all splits for an expense."""
+    return crud.get_expense_splits(db, expense_id)

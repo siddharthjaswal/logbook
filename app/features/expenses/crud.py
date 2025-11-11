@@ -19,6 +19,11 @@ from app.shared.enums import ExpenseCategory
 
 # EXPENSE CRUD
 
+def check_expense_ownership(expense: Expense, user_id: int) -> bool:
+    """Check if a user owns an expense."""
+    return expense.paid_by_user_id == user_id
+
+
 def create_expense(db: Session, expense_in: ExpenseCreate, user_id: int) -> Expense:
     """Create a new expense."""
     data = expense_in.model_dump(mode='python')
@@ -106,6 +111,24 @@ def create_expense_split(db: Session, expense_id: int, split_in: ExpenseSplitCre
     db.add(split)
     db.commit()
     db.refresh(split)
+    return split
+
+
+def get_expense_splits(db: Session, expense_id: int) -> List[ExpenseSplit]:
+    """Get all splits for an expense."""
+    return db.query(ExpenseSplit).filter(
+        ExpenseSplit.expense_id == expense_id
+    ).all()
+
+
+def settle_expense_split(db: Session, split_id: int) -> ExpenseSplit:
+    """Mark an expense split as settled."""
+    split = db.query(ExpenseSplit).filter(ExpenseSplit.id == split_id).first()
+    if split:
+        split.is_settled = True
+        split.settled_at = func.now()
+        db.commit()
+        db.refresh(split)
     return split
 
 

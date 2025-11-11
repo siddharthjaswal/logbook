@@ -1,0 +1,26 @@
+meta {
+  name: Toggle Complete Status
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/checklist-items/1/toggle-complete
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Toggle Complete Status
+
+  Toggles the completion status of a checklist item.
+
+  When completed:
+  - is_completed is set to true
+  - completed_at timestamp is recorded
+  - completed_by user is tracked
+}

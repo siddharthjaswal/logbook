@@ -1,0 +1,23 @@
+meta {
+  name: Toggle Pin Note
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/trip-notes/1/pin
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Toggle Pin Note
+
+  Toggles the pin status of a note.
+
+  Pinned notes appear at the top of the notes list, making important information easily accessible.
+}

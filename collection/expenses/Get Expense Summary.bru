@@ -1,0 +1,25 @@
+meta {
+  name: Get Expense Summary
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/trips/1/expenses/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Expense Summary
+
+  Returns a summary of all expenses for a trip including:
+  - total_expenses: Total amount spent
+  - count: Number of expenses
+  - by_category: Breakdown by expense category
+  - by_payment_method: Breakdown by payment method
+}

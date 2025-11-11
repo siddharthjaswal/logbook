@@ -1,0 +1,51 @@
+meta {
+  name: Create Expense
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/expenses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "description": "Sushi dinner at Tsukiji Market",
+    "category": "food_drink",
+    "amount": "120.50",
+    "currency": "USD",
+    "expense_date": "2025-11-11",
+    "payment_method": "credit_card",
+    "is_shared": false,
+    "notes": "Amazing omakase experience",
+    "location": "Tsukiji Market, Tokyo"
+  }
+}
+
+docs {
+  # Create Expense
+
+  Creates a new expense for a trip.
+
+  ## Categories
+  - food_drink
+  - accommodation
+  - transportation
+  - activities
+  - shopping
+  - other
+
+  ## Payment Methods
+  - cash
+  - credit_card
+  - debit_card
+  - mobile_payment
+  - other
+}

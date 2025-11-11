@@ -47,8 +47,8 @@ class TripNote(Base):
     deleted_at = Column(TIMESTAMP, nullable=True)  # Soft delete
 
     # Relationships
-    trip = relationship("Trip", back_populates="notes")
-    trip_day = relationship("TripDay", back_populates="notes")
+    trip = relationship("Trip", back_populates="trip_notes")
+    trip_day = relationship("TripDay", back_populates="trip_notes")
     author = relationship("User", foreign_keys=[created_by])
 
     def __repr__(self):

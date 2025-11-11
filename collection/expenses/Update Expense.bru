@@ -1,0 +1,29 @@
+meta {
+  name: Update Expense
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/expenses/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "description": "Updated dinner description",
+    "amount": "150.00",
+    "notes": "Added tip"
+  }
+}
+
+docs {
+  # Update Expense
+
+  Updates an existing expense. All fields are optional.
+}

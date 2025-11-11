@@ -1,0 +1,40 @@
+meta {
+  name: Create Packing Item
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/packing-lists/1/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "item_name": "Passport",
+    "quantity": 1,
+    "category": "documents",
+    "notes": "Check expiration date",
+    "is_packed": false
+  }
+}
+
+docs {
+  # Create Packing Item
+
+  Adds an item to a packing list.
+
+  ## Categories
+  - clothing
+  - toiletries
+  - electronics
+  - documents
+  - medications
+  - gear
+  - other
+}

@@ -1,0 +1,42 @@
+meta {
+  name: Create Trip Note
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/trip-notes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "title": "Best Ramen Spots",
+    "content": "1. Ichiran - best tonkotsu\n2. Ippudo - great atmosphere\n3. Tsuta - Michelin starred",
+    "note_type": "tip",
+    "color": "#FFD700",
+    "is_pinned": true
+  }
+}
+
+docs {
+  # Create Trip Note
+
+  Creates a new note for a trip.
+
+  ## Note Types
+  - general: General notes
+  - tip: Travel tips and recommendations
+  - warning: Important warnings or cautions
+  - reminder: Things to remember
+  - highlight: Trip highlights and memorable moments
+
+  ## Colors
+  Hex color code for visual organization (e.g., #FFD700)
+}

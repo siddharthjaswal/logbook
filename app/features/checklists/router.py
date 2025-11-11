@@ -2,7 +2,7 @@
 API routes for Checklist feature.
 """
 
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from app.core.deps import get_db, get_current_active_user
 from app.features.users.models import User
 from app.features.checklists import crud
 from app.features.checklists.schemas import *
+from app.shared.enums import ChecklistType
 
 router = APIRouter()
 
@@ -42,11 +43,12 @@ async def get_checklist(
 @router.get("/trips/{trip_id}/checklists", response_model=List[ChecklistResponse])
 async def get_trip_checklists(
     trip_id: int,
+    checklist_type: Optional[ChecklistType] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Get all checklists for a trip."""
-    return crud.get_checklists_by_trip(db, trip_id)
+    return crud.get_checklists_by_trip(db, trip_id, checklist_type=checklist_type)
 
 
 @router.delete("/checklists/{checklist_id}", status_code=status.HTTP_204_NO_CONTENT)

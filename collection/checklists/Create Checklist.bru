@@ -1,0 +1,36 @@
+meta {
+  name: Create Checklist
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/checklists
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "name": "Pre-Departure Checklist",
+    "description": "Things to do before leaving for Japan",
+    "checklist_type": "pre_departure"
+  }
+}
+
+docs {
+  # Create Checklist
+
+  Creates a new checklist for a trip.
+
+  ## Checklist Types
+  - general: General tasks
+  - pre_departure: Tasks before trip starts
+  - packing: Packing-related tasks
+  - post_trip: Tasks after returning
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Create Packing List
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/packing-lists
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "name": "Main Luggage",
+    "description": "Checked bag for 2-week trip"
+  }
+}
+
+docs {
+  # Create Packing List
+
+  Creates a new packing list for a trip.
+
+  You can create multiple packing lists per trip (e.g., carry-on, checked bag, day pack).
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Get Budget vs Actual
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/trips/1/budget/vs-actual
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Budget vs Actual
+
+  Compares budgeted amounts to actual spending for each category.
+
+  Returns for each category:
+  - category: Expense category
+  - budgeted: Budgeted amount
+  - actual: Actual amount spent
+  - difference: Remaining budget (positive) or overspending (negative)
+  - percentage_used: Percentage of budget used
+}

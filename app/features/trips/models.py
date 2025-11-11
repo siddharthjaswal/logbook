@@ -107,7 +107,7 @@ class Trip(Base):
     budget_categories = relationship("BudgetCategory", back_populates="trip", cascade="all, delete-orphan")
 
     # Notes & Packing relationships
-    notes = relationship("TripNote", back_populates="trip", cascade="all, delete-orphan")
+    trip_notes = relationship("TripNote", back_populates="trip", cascade="all, delete-orphan")
     packing_lists = relationship("PackingList", back_populates="trip", cascade="all, delete-orphan")
     checklists = relationship("Checklist", back_populates="trip", cascade="all, delete-orphan")
 

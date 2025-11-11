@@ -1,0 +1,32 @@
+meta {
+  name: Create Budget Category
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/trips/1/budget-categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "category": "food_drink",
+    "budgeted_amount": "500.00",
+    "currency": "USD",
+    "notes": "Daily budget of ~$50 for 10 days"
+  }
+}
+
+docs {
+  # Create Budget Category
+
+  Creates a budget for a specific expense category.
+
+  This allows you to set spending limits for different categories and track how much you've spent vs. your budget.
+}
