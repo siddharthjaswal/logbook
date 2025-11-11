@@ -66,6 +66,10 @@ from app.features.expenses import router as expenses_router
 from app.features.trip_notes import router as trip_notes_router
 from app.features.packing_lists import router as packing_lists_router
 from app.features.checklists import router as checklists_router
+from app.features.trip_members import router as trip_members_router
+from app.features.trip_invitations import router as trip_invitations_router
+from app.features.activity_logs import router as activity_logs_router
+from app.features.comments import router as comments_router
 
 app.include_router(
     auth_router.router,
@@ -143,4 +147,29 @@ app.include_router(
     checklists_router.router,
     prefix=settings.API_V1_PREFIX,
     tags=["checklists"]
+)
+
+# Phase 2: Collaboration routers
+app.include_router(
+    trip_members_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["collaboration", "trip-members"]
+)
+
+app.include_router(
+    trip_invitations_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["collaboration", "trip-invitations"]
+)
+
+app.include_router(
+    activity_logs_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["collaboration", "activity-logs"]
+)
+
+app.include_router(
+    comments_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["collaboration", "comments"]
 )

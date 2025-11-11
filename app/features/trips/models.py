@@ -100,7 +100,12 @@ class Trip(Base):
     # Relationships
     creator = relationship("User", back_populates="trips", foreign_keys=[created_by])
     trip_days = relationship("TripDay", back_populates="trip", cascade="all, delete-orphan")
-    # collaborators = relationship("TripCollaborator", back_populates="trip")  # Phase 2
+
+    # Collaboration relationships (Phase 2)
+    members = relationship("TripMember", back_populates="trip", cascade="all, delete-orphan")
+    invitations = relationship("TripInvitation", back_populates="trip", cascade="all, delete-orphan")
+    activity_logs = relationship("ActivityLog", back_populates="trip", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="trip", cascade="all, delete-orphan")
 
     # Expense & Budget relationships
     expenses = relationship("Expense", back_populates="trip", cascade="all, delete-orphan")

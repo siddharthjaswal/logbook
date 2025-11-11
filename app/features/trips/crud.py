@@ -9,7 +9,9 @@ from sqlalchemy import desc, and_, or_
 
 from app.features.trips.models import Trip
 from app.features.trips.schemas import TripCreate, TripUpdate
-from app.shared.enums import TripStatus, TripVisibility
+from app.shared.enums import TripStatus, TripVisibility, MemberRole
+from app.features.trip_members import crud as member_crud
+from app.features.activity_logs import crud as activity_crud
 
 
 def get_trip_by_id(db: Session, trip_id: int, user_id: Optional[int] = None) -> Optional[Trip]:
@@ -99,6 +101,13 @@ def create_trip(db: Session, trip_in: TripCreate, user_id: int) -> Trip:
     db.add(trip)
     db.commit()
     db.refresh(trip)
+
+    # Auto-create owner member for the trip creator
+    member_crud.create_member(db, trip.id, user_id, MemberRole.OWNER)
+
+    # Log trip creation activity
+    activity_crud.log_trip_created(db, trip.id, user_id, trip.name)
+
     return trip
 
 

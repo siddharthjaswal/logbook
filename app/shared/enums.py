@@ -197,3 +197,42 @@ class Priority(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+# Phase 2: Collaboration enums
+class MemberRole(str, Enum):
+    """Role of trip member."""
+    OWNER = "owner"
+    EDITOR = "editor"
+    VIEWER = "viewer"
+
+
+class InvitationStatus(str, Enum):
+    """Status of trip invitation."""
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class ActivityLogType(str, Enum):
+    """Type of activity in feed."""
+    TRIP_CREATED = "trip_created"
+    TRIP_UPDATED = "trip_updated"
+    TRIP_DELETED = "trip_deleted"
+    MEMBER_ADDED = "member_added"
+    MEMBER_REMOVED = "member_removed"
+    MEMBER_ROLE_CHANGED = "member_role_changed"
+    DAY_ADDED = "day_added"
+    DAY_UPDATED = "day_updated"
+    DAY_DELETED = "day_deleted"
+    ACCOMMODATION_ADDED = "accommodation_added"
+    ACCOMMODATION_UPDATED = "accommodation_updated"
+    TRANSIT_ADDED = "transit_added"
+    ACTIVITY_ADDED = "activity_added"
+    BOOKING_ADDED = "booking_added"
+    EXPENSE_ADDED = "expense_added"
+    NOTE_ADDED = "note_added"
+    CHECKLIST_COMPLETED = "checklist_completed"
+    COMMENT_ADDED = "comment_added"

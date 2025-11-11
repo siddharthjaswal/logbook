@@ -53,7 +53,7 @@ class User(Base):
 
     # Relationships
     trips = relationship("Trip", back_populates="creator", foreign_keys="[Trip.created_by]")
-    # trip_collaborations = relationship("TripCollaborator", back_populates="user")  # Phase 2
+    trip_memberships = relationship("TripMember", back_populates="user", foreign_keys="[TripMember.user_id]")  # Phase 2
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"
