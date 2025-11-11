@@ -1,0 +1,47 @@
+meta {
+  name: Create Accommodation - Checkout
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/accommodations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_day_id": 5,
+    "accommodation_type": "check_out",
+    "check_in_time": null,
+    "check_out_time": 1704441600,
+    "name": "Park Hyatt Tokyo",
+    "address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo 163-1055, Japan",
+    "latitude": 35.6852,
+    "longitude": 139.6917,
+    "confirmation_number": "HYATT123456",
+    "cost": 0,
+    "currency": "USD",
+    "contact_phone": "+81-3-5322-1234",
+    "notes": "Checking out and traveling to Kyoto",
+    "display_order": 0
+  }
+}
+
+docs {
+  # Create Accommodation - Checkout
+
+  Creates a checkout-only accommodation entry for departure day.
+
+  **Accommodation Type**: `check_out` - Departing and checking out (e.g., departure day)
+
+  This is useful when:
+  - You're leaving a hotel to travel to another city
+  - The day involves checking out but no new check-in
+  - You want to track which hotel you're leaving from
+}

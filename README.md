@@ -2,6 +2,23 @@
 
 Logbook is a comprehensive travel app backend that allows users to plan, track, and log their trips, including itinerary details, expenses, and memories.
 
+## 🚀 Recent Updates (November 2025)
+
+**New Features Released** - Major expansion of trip planning capabilities:
+- ✅ **Expense & Budget Tracking** - Track expenses with multi-currency support, budgets, and expense splitting
+- ✅ **Trip Notes** - Rich notes with types (tips, warnings, highlights), colors, and pinning
+- ✅ **Packing Lists** - Manage multiple packing lists with category organization and pack status tracking
+- ✅ **Checklists** - Task management with priorities, due dates, and completion tracking
+- ✅ **151 new tests** - Comprehensive test coverage for all new features
+- ✅ **35 Bruno API requests** - Complete manual testing collection
+
+**Previous Update (December 2024)** - Major API Refactoring:
+- ✅ **No more manual trip_day creation** - All entities (Accommodations, Transits, Activities, Bookings) now auto-create trip days
+- ✅ **Intuitive date-based API** - Use trip_id + dates instead of trip_day_id
+- ✅ **Multi-day accommodations** - Single API call for 3-night hotel stays
+
+📖 See [API Refactoring Guide](docs/API_REFACTORING_2024.md) for migration details
+
 ## Tech Stack
 
 *   **Framework:** FastAPI
@@ -27,13 +44,22 @@ Logbook is a comprehensive travel app backend that allows users to plan, track, 
 ### Test Coverage
 
 ```
-Total Tests: 80
-✅ Passing: 66 (82.5%)
-❌ Failing: 14 (minor assertion issues, not implementation)
+Total Tests: 313
+✅ Passing: 313 (100%)
 
-Auth Feature: 16/16 ✅
-Users Feature: 28/28 ✅
-Trips Feature: 22/36 (core functionality working)
+Auth Feature: 16 tests ✅
+Users Feature: 28 tests ✅
+Trips Feature: 36 tests ✅
+Trip Days Feature: 10 tests ✅
+Accommodations Feature: 15 tests ✅
+Transits Feature: 15 tests ✅
+Activities Feature: 5 tests ✅
+Bookings Feature: 5 tests ✅
+Timeline Feature: 22 tests ✅
+Expenses Feature: 35 tests ✅ (NEW)
+Trip Notes Feature: 43 tests ✅ (NEW)
+Packing Lists Feature: 37 tests ✅ (NEW)
+Checklists Feature: 36 tests ✅ (NEW)
 ```
 
 ### Data Models
@@ -83,11 +109,77 @@ Trips Feature: 22/36 (core functionality working)
 *   `GET /api/v1/trips/search?q={query}` - Search trips (authenticated includes private)
 *   `GET /api/v1/trips/stats/me` - Get my trip statistics
 
-### Coming Soon (Phase 3)
+### Timeline
 
-*   Trip Days & Itinerary Planning
-*   Daily activities, bookings, and accommodation
-*   Transit tracking with timezone support
+*   `GET /api/v1/trips/{id}/timeline` - Get unified timeline for a trip
+    *   Query params: `start_date`, `end_date`, `skip`, `limit`
+    *   Returns chronologically sorted events (accommodations, transits, activities, bookings)
+    *   Supports date range filtering and pagination
+
+### Expenses & Budget Tracking
+
+**Expense Management:**
+*   `POST /api/v1/expenses` - Create expense (supports multi-currency)
+*   `GET /api/v1/expenses/{id}` - Get expense details
+*   `PUT /api/v1/expenses/{id}` - Update expense
+*   `DELETE /api/v1/expenses/{id}` - Delete expense (soft delete)
+*   `GET /api/v1/trips/{trip_id}/expenses` - List trip expenses (filters: category, dates, pagination)
+*   `GET /api/v1/trips/{trip_id}/expenses/summary` - Get expense summary with category breakdown
+
+**Budget Management:**
+*   `POST /api/v1/trips/{trip_id}/budget-categories` - Create budget for a category
+*   `GET /api/v1/trips/{trip_id}/budget-categories` - List all budget categories
+*   `GET /api/v1/trips/{trip_id}/budget/vs-actual` - Compare budget vs actual spending
+
+**Expense Splitting:**
+*   `POST /api/v1/expenses/{expense_id}/splits` - Split expense between users
+*   `GET /api/v1/expenses/{expense_id}/splits` - Get all splits for an expense
+
+**Categories:** food_drink, accommodation, transportation, activities, shopping, other
+
+### Trip Notes
+
+*   `POST /api/v1/trip-notes` - Create note
+*   `GET /api/v1/trip-notes/{id}` - Get note
+*   `PUT /api/v1/trip-notes/{id}` - Update note
+*   `DELETE /api/v1/trip-notes/{id}` - Delete note (soft delete)
+*   `GET /api/v1/trips/{trip_id}/notes` - List trip notes (ordered by pinned, then date)
+*   `POST /api/v1/trip-notes/{id}/pin` - Toggle pin status
+
+**Note Types:** general, tip, warning, reminder, highlight
+
+### Packing Lists
+
+**List Management:**
+*   `POST /api/v1/packing-lists` - Create packing list
+*   `GET /api/v1/packing-lists/{id}` - Get packing list with items
+*   `GET /api/v1/trips/{trip_id}/packing-lists` - List trip packing lists
+*   `DELETE /api/v1/packing-lists/{id}` - Delete packing list (soft delete)
+*   `GET /api/v1/packing-lists/{id}/summary` - Get packing summary
+
+**Item Management:**
+*   `POST /api/v1/packing-lists/{list_id}/items` - Add item to list
+*   `PUT /api/v1/packing-items/{id}` - Update packing item
+*   `POST /api/v1/packing-items/{id}/toggle-pack` - Toggle packed status
+
+**Categories:** clothing, toiletries, electronics, documents, medications, gear, other
+
+### Checklists
+
+**Checklist Management:**
+*   `POST /api/v1/checklists` - Create checklist
+*   `GET /api/v1/checklists/{id}` - Get checklist with items
+*   `GET /api/v1/trips/{trip_id}/checklists` - List trip checklists (filter: checklist_type)
+*   `DELETE /api/v1/checklists/{id}` - Delete checklist (soft delete)
+*   `GET /api/v1/checklists/{id}/summary` - Get checklist summary with overdue tracking
+
+**Item Management:**
+*   `POST /api/v1/checklists/{checklist_id}/items` - Add item to checklist
+*   `PUT /api/v1/checklist-items/{id}` - Update checklist item
+*   `POST /api/v1/checklist-items/{id}/toggle-complete` - Toggle completion status
+
+**Types:** general, pre_departure, packing, post_trip
+**Priorities:** low, medium, high, critical
 
 ## API Documentation
 
@@ -132,13 +224,21 @@ logbook/
 │   ├── environments/                # Environment configs (local, production)
 │   ├── auth/                        # Auth API requests (4 files)
 │   ├── users/                       # User API requests (4 files)
-│   └── trips/                       # Trip API requests (8 files)
+│   ├── trips/                       # Trip API requests (8 files)
+│   ├── expenses/                    # Expense API requests (12 files)
+│   ├── trip-notes/                  # Trip notes API requests (6 files)
+│   ├── packing-lists/               # Packing list API requests (8 files)
+│   └── checklists/                  # Checklist API requests (9 files)
 ├── tests/                           # Pytest automated tests
 │   ├── conftest.py                  # Test fixtures
 │   └── features/
 │       ├── auth/                    # Auth tests (16 tests)
 │       ├── users/                   # User tests (28 tests)
-│       └── trips/                   # Trip tests (36 tests)
+│       ├── trips/                   # Trip tests (36 tests)
+│       ├── expenses/                # Expense tests (35 tests)
+│       ├── trip_notes/              # Trip notes tests (43 tests)
+│       ├── packing_lists/           # Packing list tests (37 tests)
+│       └── checklists/              # Checklist tests (36 tests)
 ├── docs/                            # Documentation
 │   ├── GOOGLE_OAUTH_SETUP.md        # OAuth setup guide
 │   ├── DEVELOPMENT_SETUP.md         # Development setup
@@ -256,7 +356,7 @@ Bruno is a fast, Git-friendly API client that we use for manual API testing. The
 
 5. **Refresh Expired Tokens**
 
-   Access tokens expire after 30 minutes. When you get a 401 error:
+   Access tokens expire after 7 days (10,080 minutes). When you get a 401 error after they lapse:
 
    **Method 1: Using Bruno (Recommended)**
    - Open `collection/auth/Refresh Token.bru`
@@ -287,6 +387,10 @@ Bruno is a fast, Git-friendly API client that we use for manual API testing. The
 - `collection/auth/` - 4 authentication requests
 - `collection/users/` - 4 user management requests
 - `collection/trips/` - 8 trip management requests
+- `collection/expenses/` - 12 expense & budget tracking requests
+- `collection/trip-notes/` - 6 trip notes requests
+- `collection/packing-lists/` - 8 packing list requests
+- `collection/checklists/` - 9 checklist requests
 
 ## Roadmap
 
@@ -295,16 +399,28 @@ Bruno is a fast, Git-friendly API client that we use for manual API testing. The
 - User management
 - Trip CRUD with advanced features
 
-**🚧 Next: Phase 3** - Trip Days & Itinerary Planning
+**✅ Phase 3: COMPLETED** - Trip Days & Itinerary Planning
 - Daily itinerary planning
 - Activities and bookings
 - Accommodation tracking
 - Transit details with timezone support
+- Unified timeline view
+
+**✅ Phase 4: COMPLETED** - Expenses & Budget Tracking
+- Expense tracking with multi-currency support
+- Budget management by category
+- Expense splitting for shared costs
+- Budget vs actual comparison
+- 35 comprehensive tests
+
+**✅ Phase 5: COMPLETED** - Notes & Packing Lists
+- Rich trip notes with types, colors, and pinning
+- Multiple packing lists per trip with categories
+- Checklist management with priorities and due dates
+- 116 comprehensive tests
 
 **📋 Future Phases:**
 - Phase 2: Trip Collaboration & Sharing
-- Phase 4: Expenses & Budget Tracking
-- Phase 5: Notes, Packing Lists
 - Phase 6: Media Storage (photos, receipts)
 
 See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for detailed roadmap and task breakdown.

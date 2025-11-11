@@ -1,0 +1,25 @@
+meta {
+  name: List Trip Notes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/trips/1/notes
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Notes
+
+  Retrieves all notes for a trip.
+
+  Notes are returned ordered by:
+  1. Pinned status (pinned notes first)
+  2. Creation date (newest first)
+}

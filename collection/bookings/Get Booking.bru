@@ -1,0 +1,70 @@
+meta {
+  name: Get Booking
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/bookings/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Booking by ID
+
+  Retrieves a specific booking by its ID.
+
+  ## URL Parameters
+  - `booking_id`: The ID of the booking to retrieve
+
+  ## Response
+  Returns full BookingResponse object with all fields including:
+  - Association (trip_day_id, activity_id)
+  - Booking type and name
+  - Provider information
+  - Confirmation details
+  - Cost and currency
+  - Date and time
+  - Location information
+  - Contact details
+  - Status and notes
+  - Timestamps (created_at, updated_at as Unix timestamps)
+
+  ## Example Response
+  ```json
+  {
+    "id": 1,
+    "trip_day_id": 1,
+    "activity_id": null,
+    "booking_type": "accommodation",
+    "name": "Park Hyatt Tokyo",
+    "provider": "Hyatt Hotels Corporation",
+    "confirmation_number": "PH2025010104",
+    "booking_reference": "HYATT-JP-001",
+    "cost": 45000.0,
+    "currency": "JPY",
+    "booking_date": "2025-01-01",
+    "booking_time": "15:00",
+    "location": "Park Hyatt Tokyo",
+    "location_address": "3-7-1-2 Nishi Shinjuku...",
+    "contact_phone": "+81-3-5322-1234",
+    "contact_email": "tokyo.park@hyatt.com",
+    "booking_url": "https://...",
+    "status": "confirmed",
+    "notes": "Check-in: 3:00 PM...",
+    "created_at": 1704672000,
+    "updated_at": 1704672000
+  }
+  ```
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip
+  - Returns 403 Forbidden if unauthorized
+  - Returns 404 Not Found if booking doesn't exist
+}

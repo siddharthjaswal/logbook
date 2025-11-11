@@ -150,7 +150,7 @@ GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback
 # JWT
 SECRET_KEY=your_secret_key_from_openssl
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # CORS
@@ -188,7 +188,7 @@ API_V1_PREFIX=/api/v1
      "access_token": "eyJhbGc...",
      "refresh_token": "eyJhbGc...",
      "token_type": "bearer",
-     "expires_in": 1800,
+     "expires_in": 604800,
      "user": {
        "id": 1,
        "email": "your.email@gmail.com",
@@ -268,7 +268,7 @@ Test the following endpoints in Bruno:
 
 ### Error: "Token has been expired or revoked"
 
-**Problem**: Access token expired (after 30 minutes) or was invalidated
+**Problem**: Access token expired (after 7 days) or was invalidated
 
 **Solution**:
 1. Use the refresh token to get a new access token

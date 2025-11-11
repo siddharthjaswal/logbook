@@ -1,0 +1,65 @@
+meta {
+  name: Create Accommodation - Park Hyatt Tokyo
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/accommodations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "check_in_date": "2024-06-01",
+    "check_out_date": "2024-06-03",
+    "check_in_time": 1717257600,
+    "check_out_time": 1717430400,
+    "name": "Park Hyatt Tokyo",
+    "address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo 163-1055, Japan",
+    "latitude": 35.6852,
+    "longitude": 139.6917,
+    "confirmation_number": "HYATT123456",
+    "booking_url": "https://www.hyatt.com/en-US/hotel/japan/park-hyatt-tokyo/tyoph",
+    "cost": 450.00,
+    "currency": "USD",
+    "contact_phone": "+81-3-5322-1234",
+    "contact_email": "tokyo.park@hyatt.com",
+    "room_type": "Deluxe King Room",
+    "notes": "Request high floor with city view. Late checkout if possible."
+  }
+}
+
+docs {
+  # Create Accommodation - Park Hyatt Tokyo
+
+  Creates accommodation records for a multi-night stay at Park Hyatt Tokyo.
+
+  **NEW API**: Automatically creates trip days and multiple accommodation records:
+  - Day 1 (2024-06-01): CHECK_IN
+  - Day 2 (2024-06-02): WHOLE_DAY
+  - Day 3 (2024-06-03): CHECK_OUT
+
+  **Required Fields**:
+  - `trip_id`: ID of the trip (trip days are auto-created)
+  - `check_in_date`: Check-in date (YYYY-MM-DD format)
+  - `check_out_date`: Check-out date (YYYY-MM-DD format)
+  - `name`: Hotel/accommodation name
+
+  **Optional Fields**:
+  - `check_in_time`/`check_out_time`: Unix timestamps for specific times
+  - `address`: Full address
+  - `latitude`/`longitude`: GPS coordinates
+  - `confirmation_number`: Booking confirmation
+  - `cost`: Per night cost
+  - `currency`: ISO currency code (USD, JPY, etc.)
+  - `room_type`, `contact_phone`, `contact_email`, etc.
+
+  **Response**: Returns array of accommodation records (one per night)
+}

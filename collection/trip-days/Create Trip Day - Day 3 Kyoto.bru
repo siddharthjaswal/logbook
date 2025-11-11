@@ -1,0 +1,147 @@
+meta {
+  name: Create Trip Day - Day 3 Kyoto
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/trip-days/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "date": "2025-01-03",
+    "day_number": 3,
+    "day_type": "cultural",
+    "title": "Kyoto Day Trip - Temples & Gardens",
+    "place": "Kyoto",
+    "place_city": "Kyoto",
+    "place_country": "Japan",
+    "timezone": "Asia/Tokyo",
+    "transit_mode": "train",
+    "transit_details": {
+      "carrier": "JR Tokaido Shinkansen (Hikari)",
+      "route": "Tokyo Station → Kyoto Station (Round Trip)",
+      "outbound_departure": "06:30",
+      "outbound_arrival": "08:45",
+      "return_departure": "20:15",
+      "return_arrival": "22:30",
+      "duration_minutes": 135,
+      "cost": 28000.00,
+      "ticket_type": "Reserved seat (Round trip)",
+      "confirmation_number": "JR20250103",
+      "notes": "Using JR Pass - already purchased"
+    },
+    "arrival_time": 1735861500,
+    "departure_time": 1735902900,
+    "activities": [
+      {
+        "name": "Fushimi Inari Shrine",
+        "time": "09:30",
+        "duration": 2,
+        "location": "68 Fukakusa Yabunouchicho, Fushimi Ward, Kyoto",
+        "notes": "Famous for thousands of vermillion torii gates. Free entry. Wear comfortable shoes for hiking.",
+        "cost": 0.00,
+        "booking_required": false
+      },
+      {
+        "name": "Kiyomizu-dera Temple",
+        "time": "12:00",
+        "duration": 1.5,
+        "location": "1-294 Kiyomizu, Higashiyama Ward, Kyoto",
+        "notes": "UNESCO World Heritage site with stunning wooden terrace",
+        "cost": 400.00,
+        "booking_required": false
+      },
+      {
+        "name": "Lunch - Nishiki Market",
+        "time": "13:45",
+        "duration": 1,
+        "location": "Nishikikoji Street, Nakagyo Ward, Kyoto",
+        "notes": "Kyoto's 400-year-old food market - try local specialties",
+        "cost": 2000.00
+      },
+      {
+        "name": "Arashiyama Bamboo Grove",
+        "time": "15:30",
+        "duration": 2,
+        "location": "Arashiyama, Ukyo Ward, Kyoto",
+        "notes": "Walk through towering bamboo forest. Best in late afternoon light.",
+        "cost": 0.00,
+        "booking_required": false
+      },
+      {
+        "name": "Tenryu-ji Temple & Garden",
+        "time": "17:30",
+        "duration": 1,
+        "location": "68 Susukinobaba-cho, Saga-Tenryu-ji, Ukyo Ward, Kyoto",
+        "notes": "UNESCO site with beautiful garden. Closes at 17:30, enter by 17:00",
+        "cost": 500.00,
+        "booking_required": false
+      }
+    ],
+    "bookings": [
+      {
+        "type": "transport",
+        "name": "Kyoto Bus Day Pass",
+        "cost": 700.00,
+        "notes": "Unlimited bus rides in Kyoto for the day",
+        "purchase_location": "Kyoto Station"
+      }
+    ],
+    "notes": "Long but rewarding day trip. Bring cash for smaller temples and market purchases. Return to Tokyo late evening on Shinkansen. Pack light - just a day bag."
+  }
+}
+
+docs {
+  # Create Trip Day - Day 3 (Kyoto Cultural Day Trip)
+
+  Example of a CULTURAL type day showing a day trip from Tokyo to Kyoto.
+
+  ## Trip Timeline
+  - 06:30: Depart Tokyo on Shinkansen
+  - 08:45: Arrive Kyoto (arrival_time: 1735861500)
+  - 09:30-18:30: Sightseeing activities in Kyoto
+  - 20:15: Depart Kyoto on Shinkansen (departure_time: 1735902900)
+  - 22:30: Arrive back in Tokyo
+
+  ## Day Types
+  This uses `cultural` type which is ideal for:
+  - Temple and shrine visits
+  - Historical site tours
+  - Museum days
+  - Traditional experience days
+  - Heritage site exploration
+
+  ## Transit Details for Round Trips
+  For round-trip transit, include both outbound and return info:
+  - outbound_departure / outbound_arrival
+  - return_departure / return_arrival
+  - Total cost includes round trip
+  - confirmation_number covers both directions
+
+  ## Cost Breakdown
+  | Item | Cost (¥) |
+  |------|----------|
+  | Shinkansen (covered by JR Pass) | ¥0* |
+  | Kyoto Bus Day Pass | ¥700 |
+  | Fushimi Inari | ¥0 |
+  | Kiyomizu-dera | ¥400 |
+  | Lunch at Nishiki Market | ¥2,000 |
+  | Arashiyama Bamboo | ¥0 |
+  | Tenryu-ji Temple | ¥500 |
+  | **Total** | **¥3,600** (~$24) |
+
+  *JR Pass pre-purchased, normal cost would be ¥28,000 round trip
+
+  ## Timestamps
+  - arrival_time: 1735861500 = 2025-01-03 08:45 JST (arrive in Kyoto)
+  - departure_time: 1735902900 = 2025-01-03 20:15 JST (depart Kyoto)
+}

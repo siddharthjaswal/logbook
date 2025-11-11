@@ -1,0 +1,49 @@
+meta {
+  name: Get Trip Summary
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/trip-days/trip/1/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Trip Summary
+
+  Get a statistical summary of all trip days for a trip.
+
+  ## URL Params
+  - `{trip_id}`: ID of the trip to summarize
+
+  ## Response
+  Returns comprehensive statistics:
+  - `trip_id`: ID of the trip
+  - `total_days`: Total number of days in the trip
+  - `countries`: Array of countries visited
+  - `countries_count`: Number of unique countries
+  - `cities`: Array of cities visited
+  - `cities_count`: Number of unique cities
+  - `day_types_breakdown`: Object with count of each day type
+    - Example: `{"sightseeing": 5, "transit": 2, "leisure": 3}`
+  - `total_activities`: Total number of planned activities
+  - `total_bookings`: Total number of bookings
+  - `total_accommodations`: Number of days with accommodation
+  - `first_day`: Date of first day
+  - `last_day`: Date of last day
+
+  ## Use Cases
+  - Dashboard overview
+  - Trip planning insights
+  - Checking trip coverage (days with activities, accommodations, etc.)
+  - Understanding trip composition (mostly sightseeing vs leisure vs adventure)
+
+  ## Access Control
+  - Must have access to the parent trip
+}

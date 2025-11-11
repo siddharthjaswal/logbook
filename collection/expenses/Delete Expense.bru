@@ -1,0 +1,21 @@
+meta {
+  name: Delete Expense
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/expenses/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete Expense
+
+  Soft deletes an expense. The expense will be marked as deleted but not removed from the database.
+}

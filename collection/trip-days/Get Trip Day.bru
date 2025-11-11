@@ -1,0 +1,39 @@
+meta {
+  name: Get Trip Day
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/trip-days/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Trip Day
+
+  Get detailed information about a specific trip day.
+
+  ## URL Params
+  - `{trip_day_id}`: ID of the trip day to retrieve
+
+  ## Response
+  Returns full trip day details including:
+  - Basic info (id, date, day_number, day_type, title)
+  - Location details (place, city, country, timezone)
+  - Transit information (mode, details, arrival/departure times)
+  - Accommodation details (name, address, checkin/checkout, confirmation)
+  - Activities array (full details for each activity)
+  - Bookings array (full details for each booking)
+  - Weather forecast (if available)
+  - Notes
+  - Timestamps (created_at, updated_at)
+
+  ## Access Control
+  - Must have access to the parent trip (owner or collaborator in Phase 2)
+}

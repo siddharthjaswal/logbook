@@ -1,0 +1,36 @@
+meta {
+  name: List Trip Expenses
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/trips/1/expenses?category=food_drink&skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  category: food_drink
+  skip: 0
+  limit: 100
+  ~start_date: 2025-11-01
+  ~end_date: 2025-11-30
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Expenses
+
+  Retrieves all expenses for a trip with optional filtering.
+
+  ## Query Parameters
+  - category: Filter by expense category (optional)
+  - start_date: Filter expenses from this date (optional)
+  - end_date: Filter expenses until this date (optional)
+  - skip: Pagination offset (default: 0)
+  - limit: Maximum results (default: 100)
+}

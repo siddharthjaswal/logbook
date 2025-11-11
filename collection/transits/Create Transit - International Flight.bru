@@ -1,0 +1,66 @@
+meta {
+  name: Create Transit - International Flight
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/transits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "transit_date": "2024-06-01",
+    "transit_mode": "flight",
+    "carrier": "United Airlines",
+    "flight_number": "UA838",
+    "from_location": "San Francisco International Airport (SFO)",
+    "to_location": "Tokyo Narita Airport (NRT)",
+    "from_latitude": 37.6213,
+    "from_longitude": -122.3790,
+    "to_latitude": 35.7720,
+    "to_longitude": 140.3929,
+    "departure_time": 1717200000,
+    "arrival_time": 1717243200,
+    "departure_timezone": "America/Los_Angeles",
+    "arrival_timezone": "Asia/Tokyo",
+    "duration_minutes": 660,
+    "confirmation_number": "UA456ABC",
+    "ticket_number": "UA016-9876543210",
+    "seat": "32K",
+    "gate": "G92",
+    "terminal": "Terminal 3",
+    "booking_class": "Economy",
+    "cost": 850.00,
+    "currency": "USD",
+    "notes": "International flight crosses date line. Remember passport and customs forms."
+  }
+}
+
+docs {
+  # Create Transit - International Flight
+
+  Creates a transit record for an international flight.
+
+  **NEW API**: Trip day is automatically created if it doesn't exist for the date.
+
+  **Required Fields**:
+  - `trip_id`: ID of the trip (trip day is auto-created)
+  - `transit_date`: Date of transit (YYYY-MM-DD format)
+  - `transit_mode`: Type of transit (flight, train, bus, car, etc.)
+
+  **Timezone Handling**:
+  - `departure_timezone`: "America/Los_Angeles" (UTC-8)
+  - `arrival_timezone`: "Asia/Tokyo" (UTC+9)
+  - Times are stored as Unix timestamps (UTC)
+  - Client can convert using timezone info
+
+  This is why having separate timezone fields is critical for international travel!
+}

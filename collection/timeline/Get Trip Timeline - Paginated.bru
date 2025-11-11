@@ -1,0 +1,39 @@
+meta {
+  name: Get Trip Timeline - Paginated
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/trips/1/timeline?skip=0&limit=20
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Get timeline with pagination.
+
+  **Query Parameters:**
+  - `skip`: Number of records to skip (default: 0)
+  - `limit`: Maximum records to return (default: 1000, max: 1000)
+
+  **Pagination pattern:**
+  - First page: skip=0, limit=20
+  - Second page: skip=20, limit=20
+  - Third page: skip=40, limit=20
+  - etc.
+
+  Replace '1' in URL with actual trip ID.
+
+  **Note:** `total_items` in response shows total count across all pages,
+  while `timeline` array contains only the paginated subset.
+
+  **Useful for:**
+  - Loading timeline in chunks for better performance
+  - Infinite scroll implementation
+  - Reducing initial load time for trips with many events
+}

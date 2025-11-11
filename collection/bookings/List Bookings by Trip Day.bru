@@ -1,0 +1,68 @@
+meta {
+  name: List Bookings by Trip Day
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/bookings/trip-day/1?skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+  ~booking_type: accommodation
+  ~booking_status: confirmed
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Bookings by Trip Day
+
+  Retrieves all bookings for a specific trip day with optional filtering.
+
+  ## Query Parameters
+  - `skip` (optional): Number of records to skip (default: 0)
+  - `limit` (optional): Max records to return (default: 100, max: 100)
+  - `booking_type` (optional): Filter by type
+    - accommodation, restaurant, tour, transportation, entertainment, attraction, service, rental, other
+  - `booking_status` (optional): Filter by status
+    - pending, confirmed, completed, cancelled
+
+  ## Example Filters
+
+  **Get only accommodation bookings:**
+  ```
+  GET /api/v1/bookings/trip-day/1?booking_type=accommodation
+  ```
+
+  **Get only confirmed bookings:**
+  ```
+  GET /api/v1/bookings/trip-day/1?booking_status=confirmed
+  ```
+
+  **Get pending restaurant reservations:**
+  ```
+  GET /api/v1/bookings/trip-day/3?booking_type=restaurant&booking_status=pending
+  ```
+
+  ## Response
+  Returns array of BookingListResponse objects ordered by:
+  1. booking_date
+  2. booking_time
+
+  ## Use Cases
+  - View all reservations for a day
+  - Check confirmation status
+  - Find pending bookings that need follow-up
+  - Filter by type for specific planning (e.g., all restaurants)
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip
+}

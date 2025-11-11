@@ -82,7 +82,7 @@ def test_generate_tokens_for_user(test_user):
     assert "access_token" in tokens
     assert "refresh_token" in tokens
     assert tokens["token_type"] == "bearer"
-    assert tokens["expires_in"] == 1800  # 30 minutes * 60 seconds
+    assert tokens["expires_in"] == 604800  # 7 days * 24h * 60m * 60s
 
     # Tokens should be non-empty strings
     assert isinstance(tokens["access_token"], str)
@@ -99,7 +99,7 @@ def test_create_auth_response(test_user):
     assert response.access_token == tokens["access_token"]
     assert response.refresh_token == tokens["refresh_token"]
     assert response.token_type == "bearer"
-    assert response.expires_in == 1800
+    assert response.expires_in == 604800
 
     # User data should be included
     assert response.user["id"] == test_user.id

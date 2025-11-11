@@ -1,0 +1,39 @@
+meta {
+  name: Create Expense Split
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/expenses/1/splits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "user_id": 1,
+    "amount": "60.25",
+    "percentage": "50.00",
+    "notes": "Split dinner with travel companion"
+  }
+}
+
+docs {
+  # Create Expense Split
+
+  Splits an expense between multiple users.
+
+  Useful for shared expenses like:
+  - Group dinners
+  - Shared accommodation
+  - Split taxi rides
+
+  You can specify either:
+  - amount: Fixed amount for this person
+  - percentage: Percentage of total expense
+}

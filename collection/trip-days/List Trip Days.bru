@@ -1,0 +1,50 @@
+meta {
+  name: List Trip Days
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/trip-days/?trip_id=1&skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  trip_id: 1
+  skip: 0
+  limit: 100
+  ~day_type: sightseeing
+  ~start_date: 2025-07-15
+  ~end_date: 2025-07-20
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Days
+
+  Get all trip days for a specific trip, with optional filters.
+
+  ## Required Query Params
+  - `trip_id`: ID of the trip to list days for
+
+  ## Optional Query Params
+  - `day_type`: Filter by day type (transit, sightseeing, leisure, etc.)
+  - `start_date`: Filter by start date (YYYY-MM-DD)
+  - `end_date`: Filter by end date (YYYY-MM-DD)
+  - `skip`: Pagination offset (default: 0)
+  - `limit`: Pagination limit (default: 100, max: 100)
+
+  ## Response
+  Returns simplified list of trip days showing:
+  - Basic info (id, date, day_number, day_type, title)
+  - Location (place, city, country)
+  - Boolean flags (has_activities, has_bookings, has_accommodation)
+
+  ## Notes
+  - Days are ordered by day_number
+  - Uncomment query params with `~` to use them
+}

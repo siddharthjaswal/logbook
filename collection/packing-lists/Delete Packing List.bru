@@ -1,0 +1,21 @@
+meta {
+  name: Delete Packing List
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/packing-lists/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete Packing List
+
+  Soft deletes a packing list and all its items.
+}

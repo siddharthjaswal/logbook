@@ -6,8 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
-from app.core.deps import get_current_active_user
+from app.core.deps import get_db, get_current_active_user, get_current_active_user_optional
 from app.features.users.models import User
 from app.features.trips import crud
 from app.features.trips.schemas import (
@@ -100,7 +99,7 @@ async def search_trips(
 async def get_trip(
     trip_id: int,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_active_user)
+    current_user: Optional[User] = Depends(get_current_active_user_optional)
 ):
     """
     Get trip by ID.
@@ -153,7 +152,7 @@ async def update_trip(
     return trip
 
 
-@router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{trip_id}", response_model=dict)
 async def delete_trip(
     trip_id: int,
     db: Session = Depends(get_db),
@@ -174,8 +173,16 @@ async def delete_trip(
             detail="You don't have permission to delete this trip"
         )
 
+    # Store info for response
+    trip_name = trip.name
+
     crud.delete_trip(db, trip)
-    return None
+
+    return {
+        "message": "Trip deleted successfully",
+        "trip_id": trip_id,
+        "trip_name": trip_name
+    }
 
 
 @router.get("/stats/me")

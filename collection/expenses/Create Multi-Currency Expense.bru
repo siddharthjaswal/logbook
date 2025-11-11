@@ -1,0 +1,44 @@
+meta {
+  name: Create Multi-Currency Expense
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/expenses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "description": "Ramen in Shibuya",
+    "category": "food_drink",
+    "amount": "9.10",
+    "currency": "USD",
+    "original_amount": "1000",
+    "original_currency": "JPY",
+    "exchange_rate": "0.0091",
+    "expense_date": "2025-11-11",
+    "payment_method": "cash",
+    "is_shared": false
+  }
+}
+
+docs {
+  # Create Multi-Currency Expense
+
+  Creates an expense with multi-currency support.
+
+  When paying in a foreign currency, you can track:
+  - original_amount: Amount in the local currency
+  - original_currency: The local currency code (e.g., JPY)
+  - exchange_rate: The conversion rate used
+  - amount: Converted amount in trip's base currency
+  - currency: Trip's base currency
+}

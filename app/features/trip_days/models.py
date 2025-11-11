@@ -5,13 +5,13 @@ Each day includes location details, activities, accommodations,
 transit information, and can be categorized by type.
 """
 
-from sqlalchemy import Column, BigInteger, String, Text, Integer, Date, TIMESTAMP, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, Date, TIMESTAMP, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import ENUM, JSONB
+from sqlalchemy.dialects.postgresql import ENUM
 
 from app.core.database import Base
-from app.shared.enums import TripDayType, TransitMode
+from app.shared.enums import TripDayType
 
 
 class TripDay(Base):
@@ -20,10 +20,10 @@ class TripDay(Base):
     __tablename__ = "trip_days"
 
     # Primary Key
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
     # Foreign Key to Trip (CASCADE delete)
-    trip_id = Column(BigInteger, ForeignKey("trips.id", ondelete="CASCADE"), nullable=False, index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Day Info
     date = Column(Date, nullable=False, index=True)
@@ -43,26 +43,8 @@ class TripDay(Base):
     timezone = Column(String(50), nullable=False)
     # coordinates = Column(POINT, nullable=True)  # Add PostGIS later
 
-    # Transit (Travel TO this location)
-    transit_mode = Column(
-        ENUM(TransitMode, name="transit_mode", create_type=True),
-        nullable=True
-    )
-    transit_details = Column(JSONB, default={}, nullable=False)
-    arrival_time = Column(BigInteger, nullable=True)
-    departure_time = Column(BigInteger, nullable=True)
-
-    # Accommodation
-    accommodation_name = Column(String(200), nullable=True)
-    accommodation_address = Column(Text, nullable=True)
-    accommodation_checkin = Column(BigInteger, nullable=True)
-    accommodation_checkout = Column(BigInteger, nullable=True)
-    accommodation_confirmation = Column(String(100), nullable=True)
-
     # Planning
-    activities = Column(JSONB, default=[], nullable=False)
-    bookings = Column(JSONB, default=[], nullable=False)
-    weather_forecast = Column(JSONB, nullable=True)
+    weather_forecast = Column(Text, nullable=True)
 
     # Notes
     notes = Column(Text, nullable=True)
@@ -78,6 +60,12 @@ class TripDay(Base):
 
     # Relationships
     trip = relationship("Trip", back_populates="trip_days")
+    activities = relationship("Activity", back_populates="trip_day", cascade="all, delete-orphan")
+    bookings = relationship("Booking", back_populates="trip_day", cascade="all, delete-orphan")
+    accommodations = relationship("Accommodation", back_populates="trip_day", cascade="all, delete-orphan")
+    transits = relationship("Transit", back_populates="trip_day", cascade="all, delete-orphan")
+    expenses = relationship("Expense", back_populates="trip_day", cascade="all, delete-orphan")
+    trip_notes = relationship("TripNote", back_populates="trip_day", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<TripDay(id={self.id}, trip_id={self.trip_id}, date='{self.date}', day_type='{self.day_type}')>"

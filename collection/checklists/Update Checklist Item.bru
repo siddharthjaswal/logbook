@@ -1,0 +1,29 @@
+meta {
+  name: Update Checklist Item
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/checklist-items/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "Book flight tickets - UPDATED",
+    "priority": "critical",
+    "due_date": "2025-11-15"
+  }
+}
+
+docs {
+  # Update Checklist Item
+
+  Updates a checklist item. All fields are optional.
+}

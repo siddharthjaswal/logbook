@@ -39,11 +39,13 @@ collection/
 │   ├── update-trip.bru            # PUT /trips/{id}
 │   └── delete-trip.bru            # DELETE /trips/{id}
 └── trip-days/
-    ├── create-trip-day.bru        # POST /trip_days/
-    ├── list-trip-days.bru         # GET /trip_days/
-    ├── get-trip-day.bru           # GET /trip_days/{id}
-    ├── update-trip-day.bru        # PUT /trip_days/{id}
-    └── delete-trip-day.bru        # DELETE /trip_days/{id}
+    ├── Create Trip Day - Day 1 Arrival.bru
+    ├── Create Trip Day - Day 2 Tokyo.bru
+    ├── Create Trip Day - Day 3 Kyoto.bru
+    ├── List Trip Days.bru         # GET /trip_days/
+    ├── Get Trip Day.bru           # GET /trip_days/{id}
+    ├── Update Trip Day.bru        # PUT /trip_days/{id}
+    └── Delete Trip Day.bru        # DELETE /trip_days/{id}
 ```
 
 ## Usage

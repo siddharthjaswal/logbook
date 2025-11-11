@@ -1,0 +1,29 @@
+meta {
+  name: Update Packing Item
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/packing-items/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "item_name": "Passport",
+    "quantity": 2,
+    "notes": "Bring both passports"
+  }
+}
+
+docs {
+  # Update Packing Item
+
+  Updates a packing item. All fields are optional.
+}

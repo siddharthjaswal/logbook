@@ -1,0 +1,21 @@
+meta {
+  name: Get Packing List
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/packing-lists/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Packing List
+
+  Retrieves a single packing list by ID, including all its items.
+}

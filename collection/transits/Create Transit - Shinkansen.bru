@@ -1,0 +1,54 @@
+meta {
+  name: Create Transit - Shinkansen
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/transits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_day_id": 5,
+    "transit_mode": "train",
+    "carrier": "JR Central",
+    "flight_number": "Nozomi 225",
+    "from_location": "Tokyo Station",
+    "to_location": "Kyoto Station",
+    "from_latitude": 35.6812,
+    "from_longitude": 139.7671,
+    "to_latitude": 34.9859,
+    "to_longitude": 135.7581,
+    "departure_time": 1704441600,
+    "arrival_time": 1704450000,
+    "departure_timezone": "Asia/Tokyo",
+    "arrival_timezone": "Asia/Tokyo",
+    "duration_minutes": 140,
+    "confirmation_number": "JR789DEF",
+    "seat": "Car 7, Seat 11D",
+    "booking_class": "Ordinary Reserved",
+    "cost": 140.00,
+    "currency": "USD",
+    "notes": "Shinkansen bullet train. Reserved seat. JR Pass valid.",
+    "display_order": 1
+  }
+}
+
+docs {
+  # Create Transit - Shinkansen Train
+
+  High-speed rail transit example.
+
+  **For Trains**:
+  - `flight_number`: Can be used for train number/name
+  - `carrier`: Railway company (JR, Amtrak, Eurostar, etc.)
+  - `seat`: Car and seat assignment
+  - `booking_class`: Green Car, Ordinary, First Class, etc.
+}

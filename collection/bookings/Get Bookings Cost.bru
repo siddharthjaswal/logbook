@@ -1,0 +1,84 @@
+meta {
+  name: Get Bookings Cost
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/bookings/trip-day/1/cost?currency=JPY
+  body: none
+  auth: bearer
+}
+
+params:query {
+  currency: JPY
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Bookings Total Cost
+
+  Calculates the total cost of all bookings for a trip day in a specific currency.
+
+  ## URL Parameters
+  - `trip_day_id`: The trip day to calculate costs for
+
+  ## Query Parameters
+  - `currency`: ISO currency code (default: USD)
+    - Examples: JPY, USD, EUR, GBP, CNY
+
+  ## Response
+  ```json
+  {
+    "trip_day_id": 1,
+    "currency": "JPY",
+    "total_cost": 85000.0
+  }
+  ```
+
+  ## Calculation Logic
+  - Sums `cost` field from all bookings where `currency` matches
+  - Bookings with NULL cost are treated as 0
+  - Bookings with different currencies are excluded
+  - Includes bookings associated via trip_day_id OR activity_id
+
+  ## Example Scenario
+
+  Trip Day 1 bookings:
+  - Hotel: ¥45,000 (via trip_day_id)
+  - Airport Transfer: ¥3,250 (via trip_day_id)
+  - Dinner Reservation: ¥4,000 (via activity_id → activity → trip_day)
+
+  Total: ¥52,250
+
+  ## Multi-Currency Handling
+  If you have bookings in different currencies for the same day:
+  ```
+  GET /cost?currency=JPY  → ¥52,250
+  GET /cost?currency=USD  → $150.00
+  ```
+
+  Convert manually based on exchange rates and add together.
+
+  ## Combined with Activities Cost
+  For complete day budget:
+  ```javascript
+  const activityCost = await GET('/activities/trip-day/1/cost?currency=JPY');
+  const bookingCost = await GET('/bookings/trip-day/1/cost?currency=JPY');
+  const totalDayCost = activityCost.total_cost + bookingCost.total_cost;
+  ```
+
+  ## Use Cases
+  - Budget tracking per day
+  - Separate confirmed bookings cost from planned activities
+  - Track prepaid vs pay-on-arrival expenses
+  - Identify most expensive booking days
+  - Verify total against credit card statements
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip
+}

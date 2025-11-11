@@ -1,0 +1,25 @@
+meta {
+  name: Get List Summary
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/packing-lists/1/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get List Summary
+
+  Returns a summary of a packing list including:
+  - total_items: Total number of items
+  - packed_items: Number of items packed
+  - percentage_packed: Percentage of items packed
+  - by_category: Breakdown by category
+}

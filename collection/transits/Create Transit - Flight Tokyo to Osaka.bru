@@ -1,0 +1,67 @@
+meta {
+  name: Create Transit - Flight Tokyo to Osaka
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/transits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "trip_day_id": 3,
+    "transit_mode": "flight",
+    "carrier": "All Nippon Airways (ANA)",
+    "flight_number": "NH21",
+    "from_location": "Tokyo Haneda Airport (HND)",
+    "to_location": "Osaka Itami Airport (ITM)",
+    "from_latitude": 35.5494,
+    "from_longitude": 139.7798,
+    "to_latitude": 34.7855,
+    "to_longitude": 135.4384,
+    "departure_time": 1704268800,
+    "arrival_time": 1704273000,
+    "departure_timezone": "Asia/Tokyo",
+    "arrival_timezone": "Asia/Tokyo",
+    "duration_minutes": 70,
+    "confirmation_number": "ANA123XYZ",
+    "ticket_number": "NH205-1234567890",
+    "seat": "14A",
+    "gate": "G12",
+    "terminal": "Terminal 2",
+    "booking_class": "Economy",
+    "cost": 180.00,
+    "currency": "USD",
+    "notes": "Domestic flight. Check-in opens 2 hours before departure.",
+    "display_order": 0
+  }
+}
+
+docs {
+  # Create Transit - Flight Tokyo to Osaka
+
+  Creates a flight transit with complete timezone information.
+
+  **Key Fields for International Travel**:
+  - `departure_timezone`: Timezone at departure location (e.g., "Asia/Tokyo")
+  - `arrival_timezone`: Timezone at arrival location (e.g., "America/Los_Angeles")
+  - Both use IANA timezone names
+
+  **Transit Mode Options**:
+  - `flight`, `train`, `bus`, `car`, `boat`, `ferry`, `bike`, `walk`, `other`
+
+  **Booking Details**:
+  - `confirmation_number`: Airline confirmation
+  - `ticket_number`: E-ticket number
+  - `seat`: Seat assignment
+  - `gate`: Departure gate
+  - `terminal`: Airport terminal
+  - `booking_class`: Economy, Business, First, etc.
+}

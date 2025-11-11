@@ -1,0 +1,21 @@
+meta {
+  name: List Budget Categories
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/trips/1/budget-categories
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Budget Categories
+
+  Retrieves all budget categories for a trip.
+}

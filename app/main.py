@@ -56,6 +56,16 @@ async def health_check():
 from app.features.auth import router as auth_router
 from app.features.users import router as users_router
 from app.features.trips import router as trips_router
+from app.features.trip_days import router as trip_days_router
+from app.features.activities import router as activities_router
+from app.features.bookings import router as bookings_router
+from app.features.accommodations import router as accommodations_router
+from app.features.transits import router as transits_router
+from app.features.timeline import router as timeline_router
+from app.features.expenses import router as expenses_router
+from app.features.trip_notes import router as trip_notes_router
+from app.features.packing_lists import router as packing_lists_router
+from app.features.checklists import router as checklists_router
 
 app.include_router(
     auth_router.router,
@@ -75,6 +85,62 @@ app.include_router(
     tags=["trips"]
 )
 
-# TODO: Register remaining routers
-# from app.features.trip_days import router as trip_days_router
-# app.include_router(trip_days_router.router, prefix=f"{settings.API_V1_PREFIX}/trip_days", tags=["trip_days"])
+app.include_router(
+    trip_days_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/trip-days",
+    tags=["trip-days"]
+)
+
+app.include_router(
+    activities_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/activities",
+    tags=["activities"]
+)
+
+app.include_router(
+    bookings_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/bookings",
+    tags=["bookings"]
+)
+
+app.include_router(
+    accommodations_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/accommodations",
+    tags=["accommodations"]
+)
+
+app.include_router(
+    transits_router.router,
+    prefix=f"{settings.API_V1_PREFIX}/transits",
+    tags=["transits"]
+)
+
+app.include_router(
+    timeline_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["timeline"]
+)
+
+app.include_router(
+    expenses_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["expenses"]
+)
+
+app.include_router(
+    trip_notes_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["trip-notes"]
+)
+
+app.include_router(
+    packing_lists_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["packing-lists"]
+)
+
+app.include_router(
+    checklists_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["checklists"]
+)

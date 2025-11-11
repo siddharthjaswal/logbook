@@ -1,0 +1,72 @@
+meta {
+  name: Get Booking by Confirmation
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/bookings/confirmation/PH2025010104
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Booking by Confirmation Number
+
+  Quick lookup for a booking using its confirmation number. Extremely useful for finding reservations during a trip!
+
+  ## URL Parameters
+  - `confirmation_number`: The confirmation/reservation number
+
+  ## Response
+  Returns full BookingResponse object (same as Get Booking by ID)
+
+  ## Use Cases
+
+  **Quick Reference During Trip:**
+  "What's the hotel confirmation number?"
+  ```
+  GET /bookings/confirmation/PH2025010104
+  → Returns: Park Hyatt Tokyo booking with all details
+  ```
+
+  **Customer Service Call:**
+  Hotel asks for confirmation number:
+  ```
+  GET /bookings/confirmation/JIRO20250103-1800
+  → Returns: Restaurant reservation details
+  ```
+
+  **Email Confirmation Lookup:**
+  Received email with confirmation but forgot which day:
+  ```
+  GET /bookings/confirmation/TDS20250105
+  → Returns: DisneySea tickets linked to Day 5
+  ```
+
+  ## Advantages Over ID Lookup
+  - Don't need to remember booking ID
+  - Confirmation number is on paper confirmations
+  - Easier to search when traveling
+  - Natural way to organize bookings
+
+  ## Example Confirmations
+  - Hotels: `PH2025010104`, `HYATT-JP-001`
+  - Restaurants: `JIRO20250103-1800`, `RES-2025-001`
+  - Tours: `TOUR-KYOTO-20250106`
+  - Trains: `NEX20250101`
+  - Attractions: `TDS20250105-ADULT2`
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip containing this booking
+  - Returns 404 if not found or not owned by user
+
+  ## Performance
+  - Indexed on confirmation_number for fast lookup
+  - No difference in performance vs ID lookup
+}

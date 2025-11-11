@@ -1,0 +1,62 @@
+meta {
+  name: Get Activity
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/activities/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Activity by ID
+
+  Retrieves a specific activity by its ID.
+
+  ## URL Parameters
+  - `activity_id`: The ID of the activity to retrieve
+
+  ## Response
+  Returns full ActivityResponse object with all fields including:
+  - Basic info (name, type, time, duration)
+  - Location (address, coordinates)
+  - Cost details
+  - Booking information
+  - Status and notes
+  - Timestamps (created_at, updated_at as Unix timestamps)
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip containing this activity's trip day
+  - Returns 403 Forbidden if user doesn't own the trip
+  - Returns 404 Not Found if activity doesn't exist
+
+  ## Example Usage
+  ```
+  GET /api/v1/activities/5
+  ```
+
+  Response:
+  ```json
+  {
+    "id": 5,
+    "trip_day_id": 3,
+    "name": "Meiji Shrine Visit",
+    "activity_type": "cultural",
+    "time": "09:00",
+    "duration": 2.0,
+    "location": "Meiji Shrine",
+    "cost": 0.0,
+    "currency": "JPY",
+    "status": "planned",
+    "created_at": 1704672000,
+    "updated_at": 1704672000
+  }
+  ```
+}

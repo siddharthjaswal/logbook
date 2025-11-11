@@ -1,0 +1,94 @@
+meta {
+  name: Update Trip Day
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/trip-days/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "Exploring Tokyo - Updated",
+    "notes": "Don't forget to try the famous Shibuya toast at breakfast! Cash is still common in Japan.",
+    "activities": [
+      {
+        "name": "Meiji Shrine Visit",
+        "time": "09:00",
+        "duration": 2,
+        "location": "1-1 Yoyogikamizonocho, Shibuya City, Tokyo",
+        "notes": "Peaceful shrine in the forest, free entry",
+        "cost": 0.00,
+        "booking_required": false
+      },
+      {
+        "name": "Shibuya Crossing & Shopping",
+        "time": "12:00",
+        "duration": 3,
+        "location": "Shibuya Scramble Crossing, Tokyo",
+        "notes": "Visit the famous crossing and explore shopping district",
+        "cost": 0.00,
+        "booking_required": false
+      },
+      {
+        "name": "teamLab Borderless",
+        "time": "16:00",
+        "duration": 2.5,
+        "location": "Azabudai Hills, Minato City, Tokyo",
+        "notes": "Digital art museum - book tickets in advance",
+        "cost": 3800.00,
+        "booking_required": true,
+        "confirmation_number": "TLB20250103"
+      },
+      {
+        "name": "Tokyo Tower Night View",
+        "time": "21:00",
+        "duration": 1.5,
+        "location": "4-2-8 Shibakoen, Minato City, Tokyo",
+        "cost": 1200.00,
+        "notes": "Added - Beautiful night view of Tokyo skyline"
+      }
+    ]
+  }
+}
+
+docs {
+  # Update Trip Day
+
+  Update any field of an existing trip day.
+
+  ## URL Params
+  - `{trip_day_id}`: ID of the trip day to update
+
+  ## Request Body
+  All fields are optional - only include fields you want to update:
+  - `date`: Change the calendar date
+  - `day_number`: Change the sequential day number
+  - `day_type`: Change the day type
+  - `title`: Update the day title
+  - `place`, `place_city`, `place_country`, `timezone`: Update location
+  - `transit_mode`, `transit_details`: Update transit information
+  - `arrival_time`, `departure_time`: Update arrival/departure timestamps
+  - `accommodation_*`: Update accommodation details
+  - `activities`: Replace entire activities array
+  - `bookings`: Replace entire bookings array
+  - `notes`: Update notes
+
+  ## Important Notes
+  - Only trip owner can update (for now)
+  - If changing date, new date must be unique for the trip
+  - Activities and bookings are REPLACED (not merged) when updated
+  - Auto-updates trip destinations if location changed
+
+  ## Example Usage
+  - Update just the title: `{"title": "New Title"}`
+  - Add more activities: Send full array with old + new activities
+  - Change location: `{"place_city": "London", "place_country": "UK", "timezone": "Europe/London"}`
+}

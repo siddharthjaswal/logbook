@@ -1,0 +1,37 @@
+meta {
+  name: Create Checklist Item
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/checklists/1/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "Book flight tickets",
+    "description": "Round-trip to Tokyo Narita",
+    "due_date": "2025-11-20",
+    "priority": "high",
+    "notes": "Check baggage allowance"
+  }
+}
+
+docs {
+  # Create Checklist Item
+
+  Adds an item to a checklist.
+
+  ## Priority Levels
+  - low
+  - medium
+  - high
+  - critical
+}

@@ -94,7 +94,7 @@ def get_public_trips(
 
 def create_trip(db: Session, trip_in: TripCreate, user_id: int) -> Trip:
     """Create a new trip."""
-    trip_data = trip_in.model_dump()
+    trip_data = trip_in.model_dump(mode='python')
     trip = Trip(**trip_data, created_by=user_id)
     db.add(trip)
     db.commit()
@@ -104,7 +104,7 @@ def create_trip(db: Session, trip_in: TripCreate, user_id: int) -> Trip:
 
 def update_trip(db: Session, trip: Trip, trip_in: TripUpdate) -> Trip:
     """Update a trip."""
-    update_data = trip_in.model_dump(exclude_unset=True)
+    update_data = trip_in.model_dump(exclude_unset=True, mode='python')
 
     for field, value in update_data.items():
         setattr(trip, field, value)

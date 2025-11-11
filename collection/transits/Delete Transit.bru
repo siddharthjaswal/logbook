@@ -1,0 +1,25 @@
+meta {
+  name: Delete Transit
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{base_url}}/transits/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Delete Transit
+
+  Permanently delete a transit.
+
+  Replace `1` with the transit ID to delete.
+
+  **Returns**: 204 No Content on success
+}

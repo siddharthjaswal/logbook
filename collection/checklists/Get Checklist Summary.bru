@@ -1,0 +1,26 @@
+meta {
+  name: Get Checklist Summary
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/checklists/1/summary
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Checklist Summary
+
+  Returns a summary of a checklist including:
+  - total_items: Total number of items
+  - completed_items: Number of completed items
+  - percentage_completed: Percentage of items completed
+  - overdue_items: Number of overdue items (past due date and not completed)
+  - by_priority: Breakdown by priority level
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Toggle Pack Status
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/packing-items/1/toggle-pack
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Toggle Pack Status
+
+  Toggles the packed status of an item.
+
+  Use this to check items off as you pack them.
+}

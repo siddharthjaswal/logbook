@@ -1,0 +1,77 @@
+meta {
+  name: Create Booking - Hotel
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/bookings/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "event_date": "2024-06-01",
+    "booking_type": "accommodation",
+    "name": "Park Hyatt Tokyo",
+    "provider": "Hyatt Hotels Corporation",
+    "confirmation_number": "PH2025010104",
+    "booking_reference": "HYATT-JP-001",
+    "cost": 45000,
+    "currency": "JPY",
+    "booking_date": "2024-06-01",
+    "booking_time": "15:00",
+    "location": "Park Hyatt Tokyo",
+    "location_address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo 163-1055, Japan",
+    "contact_phone": "+81-3-5322-1234",
+    "contact_email": "tokyo.park@hyatt.com",
+    "booking_url": "https://www.hyatt.com/en-US/hotel/japan/park-hyatt-tokyo/tyoph",
+    "status": "confirmed",
+    "notes": "Check-in: 3:00 PM. Check-out: 12:00 PM. Late checkout requested. Room: Deluxe King with Park View (Floor 41-47). Breakfast included."
+  }
+}
+
+docs {
+  # Create Booking - Hotel Accommodation
+
+  Creates an accommodation booking for Park Hyatt Tokyo.
+
+  **NEW API**: Trip day is automatically created if it doesn't exist for the date.
+
+  ## Required Fields
+  - `trip_id`: ID of the trip (trip day is auto-created)
+  - `event_date`: Date of the booking event (YYYY-MM-DD format)
+  - `name`: Booking name
+
+  ## Booking Details
+  - **Type**: Accommodation (hotel)
+  - **Provider**: Hyatt Hotels Corporation
+  - **Check-in**: 3:00 PM, June 1, 2024
+  - **Cost**: ¥45,000 per night (~$310 USD)
+  - **Status**: Confirmed
+
+  ## Hotel Information
+  - **Name**: Park Hyatt Tokyo (パークハイアット東京)
+  - **Location**: Shinjuku, Tokyo (floors 39-52 of Shinjuku Park Tower)
+  - **Famous for**: Lost in Translation movie filming location
+  - **Amenities**: Sky-high views, New York Grill restaurant, excellent service
+
+  ## Confirmation Details
+  - Confirmation #: PH2025010104
+  - Booking Reference: HYATT-JP-001
+  - Contact: +81-3-5322-1234
+
+  ## Optional Fields
+  - `activity_id`: Link to specific activity (if applicable)
+  - `booking_date`, `booking_time`: When the booking was made
+  - Various contact and location details
+
+  ## Booking URL
+  Direct link to manage reservation online
+}

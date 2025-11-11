@@ -1,0 +1,40 @@
+meta {
+  name: List Transits by Trip Day
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/transits/trip-day/5?skip=0&limit=100
+  body: none
+  auth: bearer
+}
+
+params:query {
+  skip: 0
+  limit: 100
+  ~transit_mode: flight
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # List Transits by Trip Day
+
+  Get all transits for a specific trip day, ordered by display_order and departure_time.
+
+  **Query Parameters**:
+  - `skip`: Number of records to skip (pagination)
+  - `limit`: Maximum records to return (max 100)
+  - `transit_mode`: Filter by mode (flight, train, bus, car, etc.)
+
+  **Multi-Transit Day Example**:
+  A day traveling from Tokyo to Kyoto might have:
+  1. Taxi from hotel to Tokyo Station
+  2. Shinkansen from Tokyo to Kyoto
+  3. Walk from station to hotel
+
+  All three transits ordered by `display_order` and `departure_time`.
+}

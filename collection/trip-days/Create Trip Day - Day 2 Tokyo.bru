@@ -1,0 +1,93 @@
+meta {
+  name: Create Trip Day - Day 2 Tokyo
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/trip-days/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "trip_id": 1,
+    "date": "2025-01-02",
+    "day_number": 2,
+    "day_type": "sightseeing",
+    "title": "Exploring Tokyo",
+    "place": "Shibuya & Harajuku",
+    "place_city": "Tokyo",
+    "place_country": "Japan",
+    "timezone": "Asia/Tokyo",
+    "accommodation_name": "Park Hyatt Tokyo",
+    "accommodation_address": "3-7-1-2 Nishi Shinjuku, Shinjuku-ku, Tokyo",
+    "accommodation_checkin": 1735826400,
+    "accommodation_checkout": 1735999200,
+    "accommodation_confirmation": "PH2025010202",
+    "activities": [
+      {
+        "name": "Meiji Shrine Visit",
+        "time": "09:00",
+        "duration": 2,
+        "location": "1-1 Yoyogikamizonocho, Shibuya City, Tokyo",
+        "notes": "Peaceful shrine in the forest, free entry",
+        "cost": 0.00,
+        "booking_required": false
+      },
+      {
+        "name": "Shibuya Crossing & Shopping",
+        "time": "12:00",
+        "duration": 3,
+        "location": "Shibuya Scramble Crossing, Tokyo",
+        "notes": "Visit the famous crossing and explore shopping district",
+        "cost": 0.00,
+        "booking_required": false
+      },
+      {
+        "name": "teamLab Borderless",
+        "time": "16:00",
+        "duration": 2.5,
+        "location": "Azabudai Hills, Minato City, Tokyo",
+        "notes": "Digital art museum - book tickets in advance",
+        "cost": 3800.00,
+        "booking_required": true,
+        "confirmation_number": "TLB20250103"
+      }
+    ],
+    "bookings": [
+      {
+        "type": "restaurant",
+        "name": "Sukiyabashi Jiro",
+        "confirmation_number": "JIRO20250103",
+        "cost": 40000.00,
+        "time": "19:00",
+        "location": "Tsukamoto Sogyo Building B1F, 2-15 Ginza 4-chome, Chuo-ku, Tokyo",
+        "notes": "Famous sushi restaurant, reservations required months in advance",
+        "contact": "+81-3-3535-3600"
+      }
+    ],
+    "notes": "Wear comfortable shoes for lots of walking. Cash is still common in Japan, so carry some yen."
+  }
+}
+
+docs {
+  # Create Trip Day - Day 2 (Tokyo Immersion)
+
+  Example SIGHTSEEING day focused on central Tokyo.
+
+  ## Day Outline
+  - Morning: Meiji Shrine + Harajuku exploration
+  - Afternoon: Shibuya Crossing + shopping districts
+  - Evening: teamLab Borderless + sushi dinner reservation
+
+  ## Tips
+  - Times are local to `Asia/Tokyo`
+  - `trip_id` is set to 1 for sample data – update to match your database
+  - Keep activities array ordered chronologically for easier UI rendering
+}

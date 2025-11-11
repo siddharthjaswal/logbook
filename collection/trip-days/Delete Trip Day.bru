@@ -1,0 +1,40 @@
+meta {
+  name: Delete Trip Day
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/trip-days/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete Trip Day
+
+  Delete a trip day from the itinerary.
+
+  ## URL Params
+  - `{trip_day_id}`: ID of the trip day to delete
+
+  ## Response
+  - Success: 204 No Content
+  - Not found: 404
+  - No permission: 403
+
+  ## Important Notes
+  - Only trip owner can delete (for now)
+  - This is a **hard delete** (permanent, not soft delete)
+  - All associated data (activities, bookings, etc.) are deleted
+  - Auto-updates trip destinations after deletion
+  - Cannot be undone!
+
+  ## Access Control
+  - Must be trip owner
+  - Cannot delete if not authorized
+}

@@ -1,0 +1,24 @@
+meta {
+  name: List Trip Checklists
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/trips/1/checklists
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Checklists
+
+  Retrieves all checklists for a trip.
+
+  You can optionally filter by checklist type using the query parameter:
+  - ?checklist_type=pre_departure
+}

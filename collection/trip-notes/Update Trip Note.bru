@@ -1,0 +1,29 @@
+meta {
+  name: Update Trip Note
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/trip-notes/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "Updated Ramen Spots",
+    "content": "Added new spot: Afuri - yuzu shio ramen",
+    "color": "#FF6347"
+  }
+}
+
+docs {
+  # Update Trip Note
+
+  Updates an existing trip note. All fields are optional.
+}

@@ -22,7 +22,7 @@ docs {
   Get a new access token using the refresh token.
 
   ## When to Use
-  - When your access token expires (after 30 minutes)
+  - When your access token expires (after 7 days / 10,080 minutes)
   - To get a new token without re-authenticating with Google
 
   ## Request Body
@@ -37,7 +37,7 @@ docs {
   {
     "access_token": "new_access_token",
     "token_type": "bearer",
-    "expires_in": 1800
+    "expires_in": 604800
   }
   ```
 

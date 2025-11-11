@@ -430,7 +430,7 @@ GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
 # JWT
 SECRET_KEY=your_secret_key
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
 # Application
@@ -454,7 +454,7 @@ class Settings(BaseSettings):
     # JWT
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
 
     class Config:
         env_file = ".env"

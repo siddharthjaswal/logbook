@@ -1,0 +1,21 @@
+meta {
+  name: List Trip Packing Lists
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/trips/1/packing-lists
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # List Trip Packing Lists
+
+  Retrieves all packing lists for a trip.
+}

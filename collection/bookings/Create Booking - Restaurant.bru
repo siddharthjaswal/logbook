@@ -1,0 +1,78 @@
+meta {
+  name: Create Booking - Restaurant
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/bookings/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "activity_id": 2,
+    "booking_type": "restaurant",
+    "name": "Sukiyabashi Jiro Honten",
+    "provider": "Jiro Ono",
+    "confirmation_number": "JIRO20250103-1800",
+    "cost": 40000,
+    "currency": "JPY",
+    "booking_date": "2025-01-03",
+    "booking_time": "18:00",
+    "location": "Sukiyabashi Jiro",
+    "location_address": "Tsukamoto Sogyo Building B1F, 2-15, Ginza 4-chome, Chuo-ku, Tokyo",
+    "contact_phone": "+81-3-3535-3600",
+    "booking_url": null,
+    "status": "confirmed",
+    "notes": "3-Michelin star sushi restaurant. Omakase course only. No photos allowed. Arrive 5 minutes early. Cash only (confirmed via concierge)."
+  }
+}
+
+docs {
+  # Create Booking - Restaurant (Sukiyabashi Jiro)
+
+  Creates a restaurant booking for the world-famous Sukiyabashi Jiro.
+
+  ## Restaurant Details
+  - **Type**: Restaurant (fine dining sushi)
+  - **Stars**: 3 Michelin stars
+  - **Chef**: Jiro Ono (featured in "Jiro Dreams of Sushi" documentary)
+  - **Style**: Omakase (chef's choice) only
+  - **Cost**: ¥40,000 per person (~$275 USD)
+
+  ## Booking Information
+  - Confirmation: JIRO20250103-1800
+  - Date: January 3, 2025
+  - Time: 6:00 PM seating
+  - Location: Ginza, Tokyo (basement level)
+
+  ## Important Notes
+  - **No photos** allowed during meal
+  - **Cash only** payment
+  - Arrive **5 minutes early**
+  - Omakase course takes ~30-45 minutes
+  - Extremely difficult to book (often requires concierge)
+  - No substitutions or special requests
+  - Children under 10 not recommended
+
+  ## Association
+  - Linked to `activity_id: 2` (assuming this is the dining activity)
+  - NOT linked to trip_day_id directly (activity handles the day association)
+  - This demonstrates activity-level booking
+
+  ## Contact
+  - Phone: +81-3-3535-3600
+  - No website (bookings through hotel concierge typically)
+
+  ## Expected Experience
+  - 15-20 pieces of sushi
+  - Seasonal fish selection
+  - Served by Jiro or his son
+  - Counter seating only (10 seats)
+}

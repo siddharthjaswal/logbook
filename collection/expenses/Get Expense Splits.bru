@@ -1,0 +1,21 @@
+meta {
+  name: Get Expense Splits
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/expenses/1/splits
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Expense Splits
+
+  Retrieves all splits for an expense, showing how the cost was divided.
+}

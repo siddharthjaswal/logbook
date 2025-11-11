@@ -1,0 +1,36 @@
+meta {
+  name: Reorder Accommodations
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/accommodations/trip-day/5/reorder
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  [1, 3, 2]
+}
+
+docs {
+  # Reorder Accommodations
+
+  Reorder accommodations for a trip day by providing IDs in desired sequence.
+
+  **Example Scenario - Day 5 with Hotel Change**:
+  - Morning: Check out from Park Hyatt Tokyo (ID: 1) → display_order: 0
+  - Evening: Check in to Ritz-Carlton Kyoto (ID: 3) → display_order: 1
+  - Cancelled booking (ID: 2) → display_order: 2
+
+  The order in the array determines the `display_order` value.
+
+  **Request Body**: Array of accommodation IDs in desired order
+
+  **Returns**: Updated accommodations with new display_order values
+}

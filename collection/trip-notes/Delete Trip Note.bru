@@ -1,0 +1,21 @@
+meta {
+  name: Delete Trip Note
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/trip-notes/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Delete Trip Note
+
+  Soft deletes a trip note. The note will be marked as deleted but not removed from the database.
+}

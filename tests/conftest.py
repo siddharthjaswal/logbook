@@ -13,6 +13,19 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.main import app
 
+# Import all models to register them with Base
+from app.features.users.models import User
+from app.features.trips.models import Trip
+from app.features.trip_days.models import TripDay
+from app.features.activities.models import Activity
+from app.features.bookings.models import Booking
+from app.features.accommodations.models import Accommodation
+from app.features.transits.models import Transit
+from app.features.expenses.models import Expense, ExpenseSplit, BudgetCategory
+from app.features.trip_notes.models import TripNote
+from app.features.packing_lists.models import PackingList, PackingItem
+from app.features.checklists.models import Checklist, ChecklistItem
+
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -55,7 +68,8 @@ def client(db):
     Yields:
         FastAPI test client
     """
-    from app.core.deps import get_db
+    # Import the actual get_db dependency used in the app
+    from app.core.deps import get_db as get_db_dependency
 
     def override_get_db():
         try:
@@ -63,9 +77,13 @@ def client(db):
         finally:
             pass
 
-    app.dependency_overrides[get_db] = override_get_db
+    # Override the dependency
+    app.dependency_overrides[get_db_dependency] = override_get_db
+
     with TestClient(app) as test_client:
         yield test_client
+
+    # Clean up overrides
     app.dependency_overrides.clear()
 
 
@@ -142,6 +160,62 @@ def auth_headers(test_user):
     return {"Authorization": f"Bearer {access_token}"}
 
 
-# TODO: Add fixtures for:
-# - test_trip (created trip in database)
-# - test_trip_day (created trip day in database)
+@pytest.fixture
+def test_trip(db, test_user, test_trip_data):
+    """Create a test trip in the database owned by test_user."""
+    from app.features.trips.crud import create_trip
+    from app.features.trips.schemas import TripCreate
+
+    trip_create = TripCreate(**test_trip_data)
+    trip = create_trip(db, trip_create, user_id=test_user.id)
+    return trip
+
+
+@pytest.fixture
+def test_other_user(db):
+    """Create another test user in the database."""
+    from app.features.users.crud import create_user
+    from app.features.users.schemas import UserCreate
+
+    user_create = UserCreate(
+        google_id="other_google_id_456",
+        email="other@example.com",
+        first_name="Other",
+        last_name="User",
+        email_verified=True
+    )
+    user = create_user(db, user_create)
+    return user
+
+
+@pytest.fixture
+def test_trip_other_user(db, test_other_user, test_trip_data):
+    """Create a test trip owned by test_other_user."""
+    from app.features.trips.crud import create_trip
+    from app.features.trips.schemas import TripCreate
+
+    trip_create = TripCreate(**test_trip_data)
+    trip = create_trip(db, trip_create, user_id=test_other_user.id)
+    return trip
+
+
+@pytest.fixture
+def test_trip_other_user_with_day(db, test_other_user, test_trip_other_user):
+    """Create a test trip owned by test_other_user with a trip day."""
+    from app.features.trip_days.crud import create_trip_day
+    from app.features.trip_days.schemas import TripDayCreate
+    from datetime import date
+
+    trip_day_create = TripDayCreate(
+        trip_id=test_trip_other_user.id,
+        date=date(2025, 7, 15),
+        day_number=1,
+        place="Paris",
+        timezone="UTC"
+    )
+    trip_day = create_trip_day(db, trip_day_create)
+
+    return {
+        "trip_id": test_trip_other_user.id,
+        "day_id": trip_day.id
+    }

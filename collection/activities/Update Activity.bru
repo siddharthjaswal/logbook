@@ -1,0 +1,84 @@
+meta {
+  name: Update Activity
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/activities/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "booked",
+    "confirmation_number": "MEIJI2025010301",
+    "booking_url": "https://example.com/booking/MEIJI2025010301",
+    "notes": "Confirmed booking for guided tour. Meet at main entrance at 09:00."
+  }
+}
+
+docs {
+  # Update Activity
+
+  Updates an existing activity. All fields are optional - only send fields you want to change.
+
+  ## URL Parameters
+  - `activity_id`: The ID of the activity to update
+
+  ## Updatable Fields
+  All fields from ActivityUpdate schema are optional:
+  - `name`: Activity name
+  - `activity_type`: Type enum
+  - `time`: Start time (HH:MM format)
+  - `duration`: Duration in hours (decimal)
+  - `location`: Location name
+  - `location_address`: Full address
+  - `latitude`: GPS latitude
+  - `longitude`: GPS longitude
+  - `cost`: Cost amount
+  - `currency`: ISO currency code
+  - `booking_required`: Boolean
+  - `confirmation_number`: Booking confirmation
+  - `booking_url`: URL to booking
+  - `contact_phone`: Contact phone
+  - `contact_email`: Contact email
+  - `status`: Status enum (planned, booked, completed, cancelled)
+  - `notes`: Additional notes
+
+  ## Common Use Cases
+
+  **Mark as booked:**
+  ```json
+  {
+    "status": "booked",
+    "confirmation_number": "ABC123"
+  }
+  ```
+
+  **Update time:**
+  ```json
+  {
+    "time": "10:30",
+    "notes": "Time changed from 09:00 to 10:30"
+  }
+  ```
+
+  **Mark as completed:**
+  ```json
+  {
+    "status": "completed",
+    "notes": "Great experience! Highly recommend."
+  }
+  ```
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip
+  - Returns 403 if unauthorized
+}

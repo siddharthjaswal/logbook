@@ -1,0 +1,77 @@
+meta {
+  name: Get Activities Cost
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/activities/trip-day/3/cost?currency=JPY
+  body: none
+  auth: bearer
+}
+
+params:query {
+  currency: JPY
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  # Get Activities Total Cost
+
+  Calculates the total cost of all activities for a trip day in a specific currency.
+
+  ## URL Parameters
+  - `trip_day_id`: The trip day to calculate costs for
+
+  ## Query Parameters
+  - `currency`: ISO currency code (default: USD)
+    - Examples: JPY, USD, EUR, GBP, CNY
+
+  ## Response
+  ```json
+  {
+    "trip_day_id": 3,
+    "currency": "JPY",
+    "total_cost": 15750.0
+  }
+  ```
+
+  ## Calculation Logic
+  - Sums `cost` field from all activities where `currency` matches
+  - Activities with NULL cost are treated as 0
+  - Activities with different currencies are excluded
+  - Free activities (cost = 0) are included in sum
+
+  ## Example Scenario
+
+  Trip Day 3 activities:
+  - Meiji Shrine: ¥0 (free)
+  - Lunch: ¥3,500
+  - Shopping: ¥8,000
+  - Dinner: ¥4,250
+
+  Total: ¥15,750
+
+  ## Use Cases
+  - Budget tracking per day
+  - Compare daily spending across trip
+  - Identify most expensive days
+  - Currency-specific cost analysis
+
+  ## Multi-Currency Handling
+  If you have activities in different currencies:
+  - Query once per currency
+  - Convert manually based on exchange rates
+  - Example:
+    ```
+    GET /cost?currency=JPY  → ¥15,750
+    GET /cost?currency=USD  → $45.00
+    ```
+
+  ## Access Control
+  - Requires authentication
+  - User must own the trip
+}
