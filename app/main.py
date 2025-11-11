@@ -62,6 +62,10 @@ from app.features.bookings import router as bookings_router
 from app.features.accommodations import router as accommodations_router
 from app.features.transits import router as transits_router
 from app.features.timeline import router as timeline_router
+from app.features.expenses import router as expenses_router
+from app.features.trip_notes import router as trip_notes_router
+from app.features.packing_lists import router as packing_lists_router
+from app.features.checklists import router as checklists_router
 
 app.include_router(
     auth_router.router,
@@ -115,4 +119,28 @@ app.include_router(
     timeline_router.router,
     prefix=settings.API_V1_PREFIX,
     tags=["timeline"]
+)
+
+app.include_router(
+    expenses_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["expenses"]
+)
+
+app.include_router(
+    trip_notes_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["trip-notes"]
+)
+
+app.include_router(
+    packing_lists_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["packing-lists"]
+)
+
+app.include_router(
+    checklists_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["checklists"]
 )
