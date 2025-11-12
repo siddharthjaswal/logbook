@@ -1,10 +1,27 @@
 # Logbook Backend API
 
-Logbook is a comprehensive travel app backend that allows users to plan, track, and log their trips, including itinerary details, expenses, and memories.
+🚀 **Production**: https://api.travlogue.in
+📖 **API Docs**: https://api.travlogue.in/docs
+
+Logbook is a comprehensive travel app backend that allows users to plan, track, and log their trips, including itinerary details, collaboration, expenses, and memories.
 
 ## 🚀 Recent Updates (November 2025)
 
-**New Features Released** - Major expansion of trip planning capabilities:
+**🎉 Production Deployment Complete** - Logbook API is now live!
+- ✅ **Production URL**: https://api.travlogue.in
+- ✅ **Auto-Deployment**: GitHub Actions CI/CD pipeline
+- ✅ **SSL/HTTPS**: Let's Encrypt certificates with auto-renewal
+- ✅ **Infrastructure**: Hetzner VPS with Nginx, PostgreSQL, systemd
+
+**Phase 2: Trip Collaboration & Sharing** - Complete team collaboration features:
+- ✅ **Trip Members** - Add collaborators with role-based access (Owner, Editor, Viewer)
+- ✅ **Trip Invitations** - Invite users via email with customizable permissions
+- ✅ **Activity Logs** - Automatic tracking of all trip changes and activities
+- ✅ **Comments** - Threaded comments on trips and entities with @mentions
+- ✅ **20 new tests** - Comprehensive test coverage for collaboration features
+- ✅ **17 Bruno API requests** - Complete manual testing collection
+
+**Phases 4-5: Expense Tracking & Planning Tools** - Major expansion of trip planning capabilities:
 - ✅ **Expense & Budget Tracking** - Track expenses with multi-currency support, budgets, and expense splitting
 - ✅ **Trip Notes** - Rich notes with types (tips, warnings, highlights), colors, and pinning
 - ✅ **Packing Lists** - Manage multiple packing lists with category organization and pack status tracking
@@ -44,22 +61,23 @@ Logbook is a comprehensive travel app backend that allows users to plan, track, 
 ### Test Coverage
 
 ```
-Total Tests: 313
-✅ Passing: 313 (100%)
+Total Tests: 333
+✅ Passing: 333 (100%)
 
 Auth Feature: 16 tests ✅
 Users Feature: 28 tests ✅
-Trips Feature: 36 tests ✅
+Trips Feature: 38 tests ✅ (includes auto-owner tests)
 Trip Days Feature: 10 tests ✅
+Trip Members Feature: 20 tests ✅ (Phase 2 - NEW)
 Accommodations Feature: 15 tests ✅
 Transits Feature: 15 tests ✅
 Activities Feature: 5 tests ✅
 Bookings Feature: 5 tests ✅
 Timeline Feature: 22 tests ✅
-Expenses Feature: 35 tests ✅ (NEW)
-Trip Notes Feature: 43 tests ✅ (NEW)
-Packing Lists Feature: 37 tests ✅ (NEW)
-Checklists Feature: 36 tests ✅ (NEW)
+Expenses Feature: 35 tests ✅
+Trip Notes Feature: 43 tests ✅
+Packing Lists Feature: 37 tests ✅
+Checklists Feature: 36 tests ✅
 ```
 
 ### Data Models
@@ -183,8 +201,11 @@ Checklists Feature: 36 tests ✅ (NEW)
 
 ## API Documentation
 
-You can access the interactive API documentation when the server is running:
+**Production:**
+*   **Swagger UI:** [https://api.travlogue.in/docs](https://api.travlogue.in/docs)
+*   **ReDoc:** [https://api.travlogue.in/redoc](https://api.travlogue.in/redoc)
 
+**Local Development:**
 *   **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 *   **ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
@@ -419,8 +440,39 @@ Bruno is a fast, Git-friendly API client that we use for manual API testing. The
 - Checklist management with priorities and due dates
 - 116 comprehensive tests
 
+**✅ Phase 2: COMPLETED** - Trip Collaboration & Sharing
+- Trip members with role-based access control
+- Trip invitations via email
+- Activity logs for trip changes
+- Threaded comments with @mentions
+- 20 comprehensive tests
+
 **📋 Future Phases:**
-- Phase 2: Trip Collaboration & Sharing
 - Phase 6: Media Storage (photos, receipts)
+- Phase 7: Social Features (following, trip cloning)
+- Phase 8: Recommendations & Insights
 
 See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for detailed roadmap and task breakdown.
+
+## Production Deployment
+
+The Logbook API is deployed on **Hetzner VPS** with automatic deployments via GitHub Actions.
+
+**Infrastructure:**
+- **Server**: Hetzner Cloud (Ubuntu 22.04)
+- **Web Server**: Nginx with reverse proxy
+- **Application**: FastAPI with Uvicorn (4 workers)
+- **Database**: PostgreSQL 15
+- **SSL**: Let's Encrypt (auto-renewal)
+- **Process Manager**: systemd service
+- **CI/CD**: GitHub Actions
+
+**Auto-Deployment:**
+Every push to `main` branch automatically:
+1. Pulls latest code from GitHub
+2. Installs/updates dependencies
+3. Runs database migrations (Alembic)
+4. Restarts the application service
+5. Verifies health check
+
+See [docs/DEPLOYMENT_PLAN.md](./docs/DEPLOYMENT_PLAN.md) for complete deployment guide.
