@@ -40,7 +40,9 @@ from app.features.checklists.models import Checklist, ChecklistItem  # noqa: F40
 config = context.config
 
 # Override sqlalchemy.url with value from settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Escape % characters for configparser (% must be %% in configparser)
+database_url = str(settings.DATABASE_URL).replace('%', '%%')
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
