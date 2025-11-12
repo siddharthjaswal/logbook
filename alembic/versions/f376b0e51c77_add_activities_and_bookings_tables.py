@@ -1,7 +1,7 @@
 """Add activities and bookings tables
 
 Revision ID: f376b0e51c77
-Revises: c28f7ce7a720
+Revises: de62e79151a2
 Create Date: 2025-11-09 09:30:03.111794
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'f376b0e51c77'
-down_revision: Union[str, None] = 'c28f7ce7a720'
+down_revision: Union[str, None] = 'de62e79151a2'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
