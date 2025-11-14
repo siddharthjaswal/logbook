@@ -5,6 +5,8 @@ Handles Google OAuth login, token refresh, and logout.
 """
 
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -35,6 +37,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Thread pool for running blocking Google API calls asynchronously
+executor = ThreadPoolExecutor(max_workers=4)
+
 
 @router.post("/google", response_model=AuthUserResponse)
 async def google_id_token_login(
@@ -61,12 +66,16 @@ async def google_id_token_login(
     logger.info(f"📝 ID Token (first 50 chars): {token_request.idToken[:50]}...")
 
     try:
-        # Verify the ID token with Google
+        # Verify the ID token with Google (run in thread pool to avoid blocking)
         logger.info("🔍 Verifying ID token with Google...")
-        idinfo = id_token.verify_oauth2_token(
-            token_request.idToken,
-            google_requests.Request(),
-            settings.GOOGLE_OAUTH_CLIENT_ID
+        loop = asyncio.get_event_loop()
+        idinfo = await loop.run_in_executor(
+            executor,
+            lambda: id_token.verify_oauth2_token(
+                token_request.idToken,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID
+            )
         )
 
         logger.info(f"✅ ID token verified successfully")
