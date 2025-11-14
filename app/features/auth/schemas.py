@@ -44,6 +44,12 @@ class GoogleUserInfo(BaseModel):
     locale: Optional[str] = None
 
 
+class GoogleIdTokenRequest(BaseModel):
+    """Request body for Google ID token authentication (Android/iOS)."""
+
+    idToken: str  # Google ID token from Android/iOS app
+
+
 class AuthUserResponse(BaseModel):
     """
     Combined response after successful authentication.

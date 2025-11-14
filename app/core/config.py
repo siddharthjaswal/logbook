@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
 
+    # Google OAuth for Mobile Apps (Android/iOS ID token verification)
+    GOOGLE_OAUTH_CLIENT_ID: Optional[str] = None  # Web client ID for ID token verification
+    GOOGLE_OAUTH_WEB_CLIENT_ID: Optional[str] = None  # Alternative web client ID
+
     # JWT
     SECRET_KEY: str  # Generate with: openssl rand -hex 32
     ALGORITHM: str = "HS256"
