@@ -12,6 +12,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+import requests as http_requests
 
 from app.core.deps import get_db, get_current_active_user
 from app.core.security import decode_refresh_token, create_access_token
@@ -39,6 +40,24 @@ router = APIRouter()
 
 # Thread pool for running blocking Google API calls asynchronously
 executor = ThreadPoolExecutor(max_workers=4)
+
+# Custom Request class with timeouts to prevent hanging
+class TimeoutRequest(google_requests.Request):
+    """Custom Request class that sets timeouts on all HTTP calls."""
+    def __init__(self, timeout=10):
+        super().__init__()
+        self.timeout = timeout
+        # Configure session with timeout
+        self.session = http_requests.Session()
+        # Set timeout for all requests
+        adapter = http_requests.adapters.HTTPAdapter()
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+
+    def __call__(self, url, method='GET', body=None, headers=None, **kwargs):
+        """Override to add timeout to all requests."""
+        kwargs['timeout'] = self.timeout
+        return super().__call__(url, method, body, headers, **kwargs)
 
 
 @router.post("/google", response_model=AuthUserResponse)
@@ -77,11 +96,11 @@ async def google_id_token_login(
                     executor,
                     lambda: id_token.verify_oauth2_token(
                         token_request.idToken,
-                        google_requests.Request(),
+                        TimeoutRequest(timeout=10),  # Use custom Request with 10s timeout
                         settings.GOOGLE_OAUTH_CLIENT_ID
                     )
                 ),
-                timeout=10.0  # 10 second timeout for Google verification
+                timeout=15.0  # 15 second overall timeout (gives Request 10s + 5s buffer)
             )
         except asyncio.TimeoutError:
             logger.error("❌ Google token verification timed out after 10 seconds")
