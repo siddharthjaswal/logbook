@@ -41,23 +41,28 @@ router = APIRouter()
 # Thread pool for running blocking Google API calls asynchronously
 executor = ThreadPoolExecutor(max_workers=4)
 
-# Custom Request class with timeouts to prevent hanging
-class TimeoutRequest(google_requests.Request):
-    """Custom Request class that sets timeouts on all HTTP calls."""
-    def __init__(self, timeout=10):
-        super().__init__()
+# Custom HTTPAdapter that enforces timeouts
+class TimeoutHTTPAdapter(http_requests.adapters.HTTPAdapter):
+    """HTTPAdapter that sets default timeout for all requests."""
+    def __init__(self, timeout=10, *args, **kwargs):
         self.timeout = timeout
-        # Configure session with timeout
-        self.session = http_requests.Session()
-        # Set timeout for all requests
-        adapter = http_requests.adapters.HTTPAdapter()
-        self.session.mount("https://", adapter)
-        self.session.mount("http://", adapter)
+        super().__init__(*args, **kwargs)
 
-    def __call__(self, url, method='GET', body=None, headers=None, **kwargs):
-        """Override to add timeout to all requests."""
-        kwargs['timeout'] = self.timeout
-        return super().__call__(url, method, body, headers, **kwargs)
+    def send(self, request, **kwargs):
+        """Override send to add timeout if not specified."""
+        if 'timeout' not in kwargs or kwargs['timeout'] is None:
+            kwargs['timeout'] = self.timeout
+        return super().send(request, **kwargs)
+
+
+def create_timeout_request(timeout=10):
+    """Create a Request object with enforced timeout."""
+    request = google_requests.Request()
+    # Replace adapters with timeout-enforcing versions
+    adapter = TimeoutHTTPAdapter(timeout=timeout)
+    request.session.mount("https://", adapter)
+    request.session.mount("http://", adapter)
+    return request
 
 
 @router.post("/google", response_model=AuthUserResponse)
@@ -96,7 +101,7 @@ async def google_id_token_login(
                     executor,
                     lambda: id_token.verify_oauth2_token(
                         token_request.idToken,
-                        TimeoutRequest(timeout=10),  # Use custom Request with 10s timeout
+                        create_timeout_request(timeout=10),  # Use custom Request with 10s timeout
                         settings.GOOGLE_OAUTH_CLIENT_ID
                     )
                 ),
