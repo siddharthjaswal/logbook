@@ -90,25 +90,38 @@ async def google_id_token_login(
     logger.info(f"📝 ID Token (first 50 chars): {token_request.idToken[:50]}...")
 
     try:
-        # Verify the ID token with Google (run in thread pool to avoid blocking)
-        logger.info("🔍 Verifying ID token with Google...")
+        # Verify the ID token with Google using tokeninfo API (more reliable than google-auth library)
+        logger.info("🔍 Verifying ID token with Google tokeninfo API...")
+
+        # Use requests library directly with timeout (google-auth library has timeout issues)
         loop = asyncio.get_event_loop()
 
-        # Add timeout to prevent hanging indefinitely
-        try:
-            idinfo = await asyncio.wait_for(
-                loop.run_in_executor(
-                    executor,
-                    lambda: id_token.verify_oauth2_token(
-                        token_request.idToken,
-                        create_timeout_request(timeout=10),  # Use custom Request with 10s timeout
-                        settings.GOOGLE_OAUTH_CLIENT_ID
-                    )
-                ),
-                timeout=15.0  # 15 second overall timeout (gives Request 10s + 5s buffer)
+        async def verify_token_with_google():
+            """Verify ID token using Google's tokeninfo endpoint with proper timeout."""
+            response = await loop.run_in_executor(
+                executor,
+                lambda: http_requests.get(
+                    f"https://oauth2.googleapis.com/tokeninfo?id_token={token_request.idToken}",
+                    timeout=10  # 10 second timeout
+                )
             )
+
+            if response.status_code != 200:
+                error_data = response.json() if response.headers.get('content-type') == 'application/json' else {}
+                raise ValueError(f"Token verification failed: {error_data.get('error_description', response.text)}")
+
+            return response.json()
+
+        try:
+            idinfo = await asyncio.wait_for(verify_token_with_google(), timeout=15.0)
         except asyncio.TimeoutError:
-            logger.error("❌ Google token verification timed out after 10 seconds")
+            logger.error("❌ Google token verification timed out after 15 seconds")
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="Google authentication service timed out. Please try again."
+            )
+        except http_requests.exceptions.Timeout:
+            logger.error("❌ HTTP request to Google timed out")
             raise HTTPException(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                 detail="Google authentication service timed out. Please try again."
