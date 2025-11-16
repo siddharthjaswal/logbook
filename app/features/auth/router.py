@@ -69,14 +69,26 @@ async def google_id_token_login(
         # Verify the ID token with Google (run in thread pool to avoid blocking)
         logger.info("🔍 Verifying ID token with Google...")
         loop = asyncio.get_event_loop()
-        idinfo = await loop.run_in_executor(
-            executor,
-            lambda: id_token.verify_oauth2_token(
-                token_request.idToken,
-                google_requests.Request(),
-                settings.GOOGLE_OAUTH_CLIENT_ID
+
+        # Add timeout to prevent hanging indefinitely
+        try:
+            idinfo = await asyncio.wait_for(
+                loop.run_in_executor(
+                    executor,
+                    lambda: id_token.verify_oauth2_token(
+                        token_request.idToken,
+                        google_requests.Request(),
+                        settings.GOOGLE_OAUTH_CLIENT_ID
+                    )
+                ),
+                timeout=10.0  # 10 second timeout for Google verification
             )
-        )
+        except asyncio.TimeoutError:
+            logger.error("❌ Google token verification timed out after 10 seconds")
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="Google authentication service timed out. Please try again."
+            )
 
         logger.info(f"✅ ID token verified successfully")
         logger.info(f"👤 User email: {idinfo.get('email')}")
