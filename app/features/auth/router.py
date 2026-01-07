@@ -259,7 +259,14 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     tokens = generate_tokens_for_user(user)
 
     # Create response with tokens and user data
-    return create_auth_response(user, tokens)
+    auth_response = create_auth_response(user, tokens)
+    
+    # Redirect to frontend with tokens
+    redirect_url = f"{settings.FRONTEND_URL}/auth/callback"
+    redirect_url += f"?access_token={auth_response.access_token}"
+    redirect_url += f"&refresh_token={auth_response.refresh_token}"
+    
+    return RedirectResponse(url=redirect_url)
 
 
 @router.post("/refresh", response_model=TokenRefreshResponse)

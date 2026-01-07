@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]  # Frontend URLs
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # API
     API_V1_PREFIX: str = "/api/v1"
