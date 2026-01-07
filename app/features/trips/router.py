@@ -46,8 +46,17 @@ async def create_trip(
     current_user: User = Depends(get_current_active_user)
 ):
     """Create a new trip."""
-    trip = crud.create_trip(db, trip_in, user_id=current_user.id)
-    return trip
+    try:
+        trip = crud.create_trip(db, trip_in, user_id=current_user.id)
+        # Force serialization to check for errors
+        return TripResponse.from_orm(trip)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Serialization Error: {str(e)}"
+        )
 
 
 @router.get("/public", response_model=List[TripListResponse])
