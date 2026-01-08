@@ -8,6 +8,8 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator
 
 from app.shared.enums import TripStatus, TripVisibility, TripType, DateFlexibility
+from app.features.trip_days.schemas import TripDayResponse
+from app.features.activities.schemas import ActivityListResponse
 
 
 class TripBase(BaseModel):
@@ -171,6 +173,23 @@ class TripListResponse(BaseModel):
     # Metadata
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TripDayTimeline(TripDayResponse):
+    """Trip Day schema with eager loaded activities for timeline."""
+    activities: List[ActivityListResponse] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class TripTimelineResponse(BaseModel):
+    """Aggregate response for trip timeline."""
+    trip_id: int
+    days: List[TripDayTimeline]
 
     class Config:
         from_attributes = True

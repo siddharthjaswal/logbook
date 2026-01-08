@@ -13,7 +13,8 @@ from app.features.trips.schemas import (
     TripCreate,
     TripUpdate,
     TripResponse,
-    TripListResponse
+    TripListResponse,
+    TripTimelineResponse
 )
 from app.shared.enums import TripStatus
 
@@ -133,6 +134,31 @@ async def get_trip(
         crud.increment_trip_views(db, trip)
 
     return trip
+
+
+@router.get("/{trip_id}/timeline", response_model=TripTimelineResponse)
+async def get_trip_timeline(
+    trip_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_active_user_optional)
+):
+    """
+    Get full timeline for a trip (Days + Activities).
+    """
+    # Check access
+    trip = crud.get_trip_by_id(db, trip_id, user_id=current_user.id if current_user else None)
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found or access denied"
+        )
+
+    days = crud.get_trip_timeline(db, trip_id)
+    
+    return {
+        "trip_id": trip_id,
+        "days": days
+    }
 
 
 @router.put("/{trip_id}", response_model=TripResponse)

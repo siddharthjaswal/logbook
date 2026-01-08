@@ -44,7 +44,32 @@ def create_activity(db: Session, activity_in: ActivityCreate) -> Activity:
         trip_day = trip_days_crud.create_trip_day(db, trip_day_in)
 
     # Create activity with trip_day_id
+    # Use mode='json' to get primitive types (strings for enums usually)
+    data = activity_in.model_dump(mode='json', exclude={'trip_id', 'activity_date'})
+    
+    # Check explicitly if we still have uppercase keys/values for some reason or just standard dict cleaning
+    # If mode='json', date objects become strings, so we might need to be careful if Activity model expects date objects.
+    # But Activity model fields are:
+    # time: str
+    # duration: Decimal (json mode might make it float or str?)
+    # latitude/longitude: Decimal
+    # cost: Decimal
+    
+    # Actually, let's stick to python mode but force handle the enums
     data = activity_in.model_dump(mode='python', exclude={'trip_id', 'activity_date'})
+
+    if 'activity_type' in data:
+        val = data['activity_type']
+        if hasattr(val, 'value'):
+            val = val.value
+        data['activity_type'] = str(val).lower()
+
+    if 'status' in data:
+        val = data['status']
+        if hasattr(val, 'value'):
+            val = val.value
+        data['status'] = str(val).lower()
+
     activity = Activity(trip_day_id=trip_day.id, **data)
     db.add(activity)
     db.commit()

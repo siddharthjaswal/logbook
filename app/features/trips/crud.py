@@ -12,6 +12,8 @@ from app.features.trips.schemas import TripCreate, TripUpdate
 from app.shared.enums import TripStatus, TripVisibility, MemberRole
 from app.features.trip_members import crud as member_crud
 from app.features.activity_logs import crud as activity_crud
+from app.features.trip_days.models import TripDay
+from sqlalchemy.orm import joinedload
 
 
 def get_trip_by_id(db: Session, trip_id: int, user_id: Optional[int] = None) -> Optional[Trip]:
@@ -195,3 +197,15 @@ def search_trips(
         )
 
     return query.order_by(desc(Trip.created_at)).offset(skip).limit(limit).all()
+
+
+def get_trip_timeline(db: Session, trip_id: int) -> List[TripDay]:
+    """
+    Get all trip days with activities eager loaded for a trip.
+    Ordered by day_number.
+    """
+    return db.query(TripDay).options(
+        joinedload(TripDay.activities)
+    ).filter(
+        TripDay.trip_id == trip_id
+    ).order_by(TripDay.day_number).all()

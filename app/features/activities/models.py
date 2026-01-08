@@ -28,8 +28,8 @@ class Activity(Base):
     # Basic Info
     name = Column(String(200), nullable=False)
     activity_type = Column(
-        ENUM(ActivityType, name="activity_type", create_type=True),
-        default=ActivityType.OTHER,
+        String,
+        default="other",
         nullable=False,
         index=True
     )
@@ -59,8 +59,8 @@ class Activity(Base):
 
     # Status
     status = Column(
-        ENUM(ActivityStatus, name="activity_status", create_type=True),
-        default=ActivityStatus.PLANNED,
+        String,
+        default="planned",
         nullable=False,
         index=True
     )
