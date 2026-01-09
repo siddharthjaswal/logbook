@@ -60,7 +60,7 @@ class TripDay(Base):
 
     # Relationships
     trip = relationship("Trip", back_populates="trip_days")
-    activities = relationship("Activity", back_populates="trip_day", cascade="all, delete-orphan")
+    activities = relationship("Activity", back_populates="trip_day", cascade="all, delete-orphan", order_by="[Activity.display_order, Activity.time]")
     bookings = relationship("Booking", back_populates="trip_day", cascade="all, delete-orphan")
     accommodations = relationship("Accommodation", back_populates="trip_day", cascade="all, delete-orphan")
     transits = relationship("Transit", back_populates="trip_day", cascade="all, delete-orphan")

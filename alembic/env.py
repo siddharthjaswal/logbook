@@ -34,6 +34,11 @@ from app.features.expenses.models import Expense, ExpenseSplit, BudgetCategory  
 from app.features.trip_notes.models import TripNote  # noqa: F401
 from app.features.packing_lists.models import PackingList, PackingItem  # noqa: F401
 from app.features.checklists.models import Checklist, ChecklistItem  # noqa: F401
+# Collaboration models
+from app.features.trip_members.models import TripMember  # noqa: F401
+from app.features.trip_invitations.models import TripInvitation  # noqa: F401
+from app.features.activity_logs.models import ActivityLog  # noqa: F401
+from app.features.comments.models import Comment  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
