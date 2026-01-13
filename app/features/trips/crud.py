@@ -2,7 +2,7 @@
 CRUD operations for Trip model.
 """
 
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_, or_
@@ -13,6 +13,8 @@ from app.shared.enums import TripStatus, TripVisibility, MemberRole
 from app.features.trip_members import crud as member_crud
 from app.features.activity_logs import crud as activity_crud
 from app.features.trip_days.models import TripDay
+from app.features.trip_days import crud as days_crud
+from app.features.trip_days.schemas import TripDayCreate, TripDayType
 from sqlalchemy.orm import joinedload
 
 
@@ -109,6 +111,47 @@ def create_trip(db: Session, trip_in: TripCreate, user_id: int) -> Trip:
 
     # Log trip creation activity
     activity_crud.log_trip_created(db, trip.id, user_id, trip.name)
+
+    # Auto-generate days if dates are provided
+    if trip.start_date_timestamp and trip.end_date_timestamp:
+        # Handle milliseconds if timestamp is too large (e.g., > year 3000)
+        start_ts = trip.start_date_timestamp
+        end_ts = trip.end_date_timestamp
+        
+        # 32503680000 is year 3000 in seconds. 
+        # If larger, assume milliseconds.
+        if start_ts > 32503680000:
+            start_ts = start_ts / 1000
+        if end_ts > 32503680000:
+            end_ts = end_ts / 1000
+
+        start_date = datetime.fromtimestamp(start_ts).date()
+        end_date = datetime.fromtimestamp(end_ts).date()
+        
+        # Determine total days (inclusive)
+        delta = end_date - start_date
+        total_days = delta.days + 1
+        
+        current_date = start_date
+        for i in range(total_days):
+            day_number = i + 1
+            
+            # Create trip day
+            day_in = TripDayCreate(
+                trip_id=trip.id,
+                date=current_date,
+                day_number=day_number,
+                place=trip.primary_destination_city or trip.primary_destination_country or "Unknown",
+                place_city=trip.primary_destination_city,
+                place_country=trip.primary_destination_country,
+                day_type=TripDayType.MIXED
+            )
+            days_crud.create_trip_day(db, day_in)
+            
+            current_date += timedelta(days=1)
+            
+        # Update destination stats after day creation
+        days_crud.update_trip_destinations(db, trip.id)
 
     return trip
 
