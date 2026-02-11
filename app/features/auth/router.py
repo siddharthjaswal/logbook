@@ -199,8 +199,9 @@ async def google_login(request: Request):
         Redirect to Google OAuth
     """
     # Build redirect URI for OAuth callback
-    redirect_uri = request.url_for("google_callback")
-
+    # Use the configured redirect URI from settings to ensure consistency (HTTPS/Proxy issues)
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
+    
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
@@ -225,8 +226,10 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     """
     try:
         # Exchange authorization code for access token
+        # Authlib retrieves the redirect_uri from session state automatically
         token = await oauth.google.authorize_access_token(request)
     except Exception as e:
+        logger.error(f"Google OAuth callback failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to authenticate with Google: {str(e)}"
