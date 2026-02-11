@@ -1,0 +1,10 @@
+# Temp config for domain validation
+server {
+    listen 80;
+    server_name travlogue.in;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+    }
+}

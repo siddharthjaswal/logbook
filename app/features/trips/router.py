@@ -16,6 +16,7 @@ from app.features.trips.schemas import (
     TripListResponse,
     TripTimelineResponse
 )
+from app.features.trips.unsplash import get_random_travel_photo
 from app.shared.enums import TripStatus
 
 router = APIRouter()
@@ -48,6 +49,17 @@ async def create_trip(
 ):
     """Create a new trip."""
     try:
+        # Auto-generate cover image if not provided
+        if not trip_in.cover_photo_url:
+            search_query = trip_in.primary_destination_city or trip_in.primary_destination_country or trip_in.name
+            try:
+                # Fetch image (async)
+                image_url = await get_random_travel_photo(search_query)
+                trip_in.cover_photo_url = image_url
+            except Exception as e:
+                # Fallback or ignore error to not block trip creation
+                print(f"Failed to auto-generate cover image: {e}")
+
         trip = crud.create_trip(db, trip_in, user_id=current_user.id)
         # Force serialization to check for errors
         return TripResponse.from_orm(trip)
@@ -232,3 +244,40 @@ async def get_my_trip_stats(
         "total_trips": total_trips,
         "user_id": current_user.id
     }
+
+
+@router.patch("/{trip_id}/cover", response_model=TripResponse)
+async def regenerate_trip_cover(
+    trip_id: int,
+    query: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Regenerate trip cover image using Unsplash API.
+    """
+    trip = crud.get_trip_by_id(db, trip_id, user_id=current_user.id)
+    
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+        
+    if not crud.check_trip_ownership(trip, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to update this trip"
+        )
+        
+    # Use provided query or trip destination/title
+    search_query = query or trip.primary_destination_city or trip.primary_destination_country or trip.name
+    
+    # Get image
+    image_url = await get_random_travel_photo(search_query)
+    
+    # Update trip
+    trip_update = TripUpdate(cover_photo_url=image_url)
+    updated_trip = crud.update_trip(db, trip, trip_update)
+    
+    return updated_trip
