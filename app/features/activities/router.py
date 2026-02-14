@@ -17,6 +17,7 @@ from app.features.activities.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
+from app.features.trips.unsplash import get_random_travel_photo
 from app.shared.enums import ActivityType, ActivityStatus
 
 router = APIRouter()
@@ -227,3 +228,14 @@ async def get_trip_day_activities_cost(
         "currency": currency,
         "total_cost": total_cost
     }
+
+
+@router.get("/place-photo", response_model=dict)
+async def get_activity_place_photo(
+    query: str = Query(..., min_length=2, max_length=120),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get a place photo for an activity using Unsplash."""
+    # Auth already enforced by dependency
+    photo_url = await get_random_travel_photo(query)
+    return {"url": photo_url}
