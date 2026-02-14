@@ -120,12 +120,14 @@ class ActivityListResponse(BaseModel):
     time: Optional[str]
     duration: Optional[Decimal]
     location: Optional[str]
+    latitude: Optional[Decimal]
+    longitude: Optional[Decimal]
     cost: Optional[Decimal]
     currency: str
     status: ActivityStatus
     display_order: int
 
-    @field_serializer('duration', 'cost')
+    @field_serializer('duration', 'cost', 'latitude', 'longitude')
     def serialize_decimal(self, value: Optional[Decimal], _info) -> Optional[float]:
         """Convert Decimal to float for JSON serialization."""
         return float(value) if value is not None else None
