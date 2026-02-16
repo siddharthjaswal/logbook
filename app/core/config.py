@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     # Unsplash (Cover Images)
     UNSPLASH_ACCESS_KEY: Optional[str] = None
 
+    # Google Maps / Places
+    GOOGLE_MAPS_API_KEY: Optional[str] = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
