@@ -67,7 +67,6 @@ class Activity(Base):
 
     # Notes & Ordering
     notes = Column(Text, nullable=True)
-    photo_url = Column(Text, nullable=True)
     display_order = Column(Integer, default=0, nullable=False)  # For ordering activities in a day
 
     # Timestamps

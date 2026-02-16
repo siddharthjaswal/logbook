@@ -175,25 +175,7 @@ async def resolve_map_link(
 
         display_name = (place.get("displayName") or {}).get("text")
         location = place.get("location") or {}
-
-        photo_url = None
-        photos = place.get("photos") or []
-        if photos:
-            photo_name = photos[0].get("name")
-            if photo_name:
-                try:
-                    media_url = f"https://places.googleapis.com/v1/{photo_name}/media"
-                    params = {"maxHeightPx": 800, "maxWidthPx": 800, "skipHttpRedirect": "true", "key": settings.GOOGLE_MAPS_API_KEY}
-                    resp = await client.get(media_url, params=params)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        photo_url = data.get("photoUri")
-                    elif resp.status_code in (301, 302) and resp.headers.get("location"):
-                        photo_url = resp.headers.get("location")
-                except Exception:
-                    photo_url = None
-
-        return {
+return {
             "expanded_url": expanded_url,
             "name": display_name or name,
             "address": place.get("formattedAddress"),

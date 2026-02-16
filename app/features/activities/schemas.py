@@ -31,7 +31,6 @@ class ActivityBase(BaseModel):
     contact_email: Optional[str] = Field(None, max_length=255)
     status: ActivityStatus = ActivityStatus.PLANNED
     notes: Optional[str] = None
-    photo_url: Optional[str] = None
     display_order: int = Field(default=0, ge=0)
 
     class Config:
@@ -86,7 +85,6 @@ class ActivityUpdate(BaseModel):
     contact_email: Optional[str] = Field(None, max_length=255)
     status: Optional[ActivityStatus] = None
     notes: Optional[str] = None
-    photo_url: Optional[str] = None
     display_order: Optional[int] = Field(None, ge=0)
 
     class Config:
@@ -128,7 +126,6 @@ class ActivityListResponse(BaseModel):
     cost: Optional[Decimal]
     currency: str
     status: ActivityStatus
-    photo_url: Optional[str]
     display_order: int
 
     @field_serializer('duration', 'cost', 'latitude', 'longitude')

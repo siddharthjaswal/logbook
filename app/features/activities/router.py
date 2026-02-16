@@ -86,15 +86,6 @@ async def list_activities_by_trip_day(
     return activities
 
 
-@router.get("/place-photo", response_model=dict)
-async def get_activity_place_photo(
-    query: str = Query(..., min_length=2, max_length=120),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Get a place photo for an activity using Unsplash."""
-    # Auth already enforced by dependency
-    photo_url = await get_random_travel_photo(query)
-    return {"url": photo_url}
 
 @router.get("/{activity_id}", response_model=ActivityResponse)
 async def get_activity(
