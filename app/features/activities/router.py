@@ -17,7 +17,9 @@ from app.features.activities.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
-from app.shared.enums import ActivityType, ActivityStatus
+from app.shared.enums import ActivityType, ActivityStatus, ExpenseCategory
+from app.features.expenses.models import Expense
+from sqlalchemy.sql import func
 
 router = APIRouter()
 
@@ -45,6 +47,25 @@ async def create_activity(
         )
 
     activity = crud.create_activity(db, activity_in)
+
+    # Auto-sync activity cost to expenses
+    if activity.cost is not None:
+        expense = db.query(Expense).filter(Expense.activity_id == activity.id, Expense.deleted_at.is_(None)).first()
+        if not expense:
+            expense = Expense(
+                trip_id=activity.trip_day.trip_id,
+                trip_day_id=activity.trip_day_id,
+                activity_id=activity.id,
+                category=ExpenseCategory.ACTIVITIES,
+                description=activity.name,
+                amount=activity.cost,
+                currency=activity.currency,
+                expense_date=activity_in.activity_date,
+                expense_time=activity.time,
+                paid_by_user_id=current_user.id,
+            )
+            db.add(expense)
+            db.commit()
     return activity
 
 
@@ -133,6 +154,36 @@ async def update_activity(
         )
 
     activity = crud.update_activity(db, activity, activity_update)
+
+    # Auto-sync activity cost to expenses
+    expense = db.query(Expense).filter(Expense.activity_id == activity.id, Expense.deleted_at.is_(None)).first()
+    if activity.cost is None:
+        if expense:
+            expense.deleted_at = func.now()
+            db.commit()
+    else:
+        if not expense:
+            expense = Expense(
+                trip_id=activity.trip_day.trip_id,
+                trip_day_id=activity.trip_day_id,
+                activity_id=activity.id,
+                category=ExpenseCategory.ACTIVITIES,
+                description=activity.name,
+                amount=activity.cost,
+                currency=activity.currency,
+                expense_date=activity.trip_day.date,
+                expense_time=activity.time,
+                paid_by_user_id=current_user.id,
+            )
+            db.add(expense)
+        else:
+            expense.description = activity.name
+            expense.amount = activity.cost
+            expense.currency = activity.currency
+            expense.expense_date = activity.trip_day.date
+            expense.expense_time = activity.time
+        db.commit()
+
     return activity
 
 
@@ -160,6 +211,12 @@ async def delete_activity(
     # Store info for response
     activity_name = activity.name
     trip_day_id = activity.trip_day_id
+
+    # Auto-remove linked expense
+    expense = db.query(Expense).filter(Expense.activity_id == activity.id, Expense.deleted_at.is_(None)).first()
+    if expense:
+        expense.deleted_at = func.now()
+        db.commit()
 
     crud.delete_activity(db, activity)
 
