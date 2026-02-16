@@ -63,7 +63,6 @@ class ActivityCreate(BaseModel):
     contact_email: Optional[str] = Field(None, max_length=255)
     status: ActivityStatus = ActivityStatus.PLANNED
     notes: Optional[str] = None
-    photo_url: Optional[str] = None
 
 
 class ActivityUpdate(BaseModel):

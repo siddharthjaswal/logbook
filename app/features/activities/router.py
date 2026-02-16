@@ -17,7 +17,6 @@ from app.features.activities.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
-from app.features.trips.unsplash import get_random_travel_photo
 from app.shared.enums import ActivityType, ActivityStatus
 
 router = APIRouter()

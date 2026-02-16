@@ -118,11 +118,11 @@ async def resolve_map_link(
 
         headers = {
             "X-Goog-Api-Key": settings.GOOGLE_MAPS_API_KEY,
-            "X-Goog-FieldMask": "id,displayName,formattedAddress,location,photos,regularOpeningHours,types,rating",
+            "X-Goog-FieldMask": "id,displayName,formattedAddress,location,regularOpeningHours,types,rating",
         }
         headers_search = {
             "X-Goog-Api-Key": settings.GOOGLE_MAPS_API_KEY,
-            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.photos,places.types,places.rating",
+            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types,places.rating",
         }
 
         async with httpx.AsyncClient(timeout=8.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
@@ -175,7 +175,7 @@ async def resolve_map_link(
 
         display_name = (place.get("displayName") or {}).get("text")
         location = place.get("location") or {}
-return {
+        return {
             "expanded_url": expanded_url,
             "name": display_name or name,
             "address": place.get("formattedAddress"),
@@ -184,7 +184,6 @@ return {
             "place_id": place.get("id"),
             "types": place.get("types"),
             "rating": place.get("rating"),
-            "photo_url": photo_url,
         }
 
     except HTTPException:
