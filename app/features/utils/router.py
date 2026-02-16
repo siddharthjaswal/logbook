@@ -131,7 +131,9 @@ async def resolve_map_link(
                 if resp.status_code == 200:
                     place = resp.json()
 
-            if not place and name:
+            if not place:
+                if not name:
+                    name = expanded_url
                 body = {"textQuery": name}
                 if lat is not None and lng is not None:
                     body["locationBias"] = {
@@ -152,6 +154,10 @@ async def resolve_map_link(
                 "name": name,
                 "lat": lat,
                 "lng": lng,
+                "debug": {
+                    "place_id": place_id,
+                    "query": name,
+                }
             }
 
         display_name = (place.get("displayName") or {}).get("text")
