@@ -69,6 +69,15 @@ async def resolve_map_link(
         u = urlparse(expanded_url)
         qs = parse_qs(u.query)
 
+        # Handle consent.google.* redirect wrapper
+        if u.hostname and u.hostname.startswith('consent.google.') and 'continue' in qs and qs['continue']:
+            try:
+                expanded_url = qs['continue'][0]
+                u = urlparse(expanded_url)
+                qs = parse_qs(u.query)
+            except Exception:
+                pass
+
         # Some links embed a nested `link=` param
         if 'link' in qs and qs['link']:
             try:
