@@ -47,7 +47,7 @@ async def create_accommodation(
         )
 
     # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip, current_user.id):
+    if not trips_crud.trips_crud.check_trip_ownership(trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to add accommodations to this trip"
@@ -61,6 +61,25 @@ async def create_accommodation(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+
+
+@router.get("/trip/{trip_id}", response_model=List[AccommodationResponse])
+async def list_accommodations_by_trip(
+    trip_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=500),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    trip = trips_crud.get_trip_by_id(db, trip_id, current_user.id)
+    if not trip:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+
+    if not trips_crud.trips_crud.check_trip_ownership(trip, current_user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
+    accommodations = crud.get_accommodations_by_trip(db, trip_id, skip, limit)
+    return accommodations
 
 
 @router.get("/trip-day/{trip_day_id}", response_model=List[AccommodationResponse])
@@ -82,7 +101,7 @@ async def list_accommodations_by_trip_day(
         )
 
     # Check trip ownership (or public access)
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view accommodations for this trip"
@@ -112,7 +131,7 @@ async def get_accommodation_by_confirmation(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(accommodation.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this accommodation"
@@ -136,7 +155,7 @@ async def get_accommodation(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(accommodation.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this accommodation"
@@ -161,7 +180,7 @@ async def update_accommodation(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(accommodation.trip_day.trip, current_user.id):
+    if not trips_crud.trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this accommodation"
@@ -186,7 +205,7 @@ async def delete_accommodation(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(accommodation.trip_day.trip, current_user.id):
+    if not trips_crud.trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this accommodation"
@@ -223,7 +242,7 @@ async def reorder_accommodations(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to reorder accommodations for this trip"
@@ -250,7 +269,7 @@ async def get_trip_day_accommodations_cost(
         )
 
     # Check trip ownership
-    if not check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view cost for this trip"
