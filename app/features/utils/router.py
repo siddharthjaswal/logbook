@@ -69,6 +69,15 @@ async def resolve_map_link(
         u = urlparse(expanded_url)
         qs = parse_qs(u.query)
 
+        # Some links embed a nested `link=` param
+        if 'link' in qs and qs['link']:
+            try:
+                expanded_url = qs['link'][0]
+                u = urlparse(expanded_url)
+                qs = parse_qs(u.query)
+            except Exception:
+                pass
+
         place_id = None
         for key in ["place_id", "query_place_id", "destination_place_id"]:
             if key in qs and qs[key]:
@@ -84,6 +93,13 @@ async def resolve_map_link(
         if not name and place_match:
             name = place_match.group(1).replace("+", " ")
 
+        # Try place_id from !1s segment in data param
+        data_match = re.search(r"!1s([^!]+)", u.path + ("?" + u.query if u.query else ""))
+        if not place_id and data_match:
+            candidate = data_match.group(1)
+            if candidate.startswith("ChI"):
+                place_id = candidate
+
         # Extract lat/lng from @lat,lng
         lat = lng = None
         at_match = re.search(r"@(-?\d+\.\d+),(-?\d+\.\d+)", u.path)
@@ -98,6 +114,17 @@ async def resolve_map_link(
 
         async with httpx.AsyncClient(timeout=8.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
             place = None
+
+            # If no name, try scraping og:title from expanded URL
+            if not name:
+                try:
+                    html_resp = await client.get(expanded_url)
+                    if html_resp.status_code == 200:
+                        m = re.search(r"<meta property=\"og:title\" content=\"([^\"]+)\"", html_resp.text)
+                        if m:
+                            name = m.group(1)
+                except Exception:
+                    pass
 
             if place_id:
                 resp = await client.get(f"https://places.googleapis.com/v1/places/{place_id}", headers=headers)
