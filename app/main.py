@@ -70,6 +70,7 @@ from app.features.trip_members import router as trip_members_router
 from app.features.trip_invitations import router as trip_invitations_router
 from app.features.activity_logs import router as activity_logs_router
 from app.features.comments import router as comments_router
+from app.features.utils import router as utils_router
 
 app.include_router(
     auth_router.router,
@@ -172,4 +173,10 @@ app.include_router(
     comments_router.router,
     prefix=settings.API_V1_PREFIX,
     tags=["collaboration", "comments"]
+)
+
+app.include_router(
+    utils_router.router,
+    prefix=settings.API_V1_PREFIX,
+    tags=["utils"]
 )
