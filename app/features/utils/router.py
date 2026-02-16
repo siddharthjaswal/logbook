@@ -58,9 +58,12 @@ async def resolve_map_link(
         expanded_url = url
 
         if host in {"maps.app.goo.gl", "goo.gl"}:
-            async with httpx.AsyncClient(follow_redirects=True, timeout=5.0) as client:
-                resp = await client.get(url)
-                expanded_url = str(resp.url)
+            try:
+                async with httpx.AsyncClient(follow_redirects=True, timeout=10.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
+                    resp = await client.get(url)
+                    expanded_url = str(resp.url)
+            except Exception:
+                expanded_url = url
 
         # Parse expanded URL
         u = urlparse(expanded_url)
@@ -90,10 +93,10 @@ async def resolve_map_link(
 
         headers = {
             "X-Goog-Api-Key": settings.GOOGLE_MAPS_API_KEY,
-            "X-Goog-FieldMask": "id,displayName,formattedAddress,location,photos,regularOpeningHours",
+            "X-Goog-FieldMask": "id,displayName,formattedAddress,location,photos,regularOpeningHours,types,rating",
         }
 
-        async with httpx.AsyncClient(timeout=6.0) as client:
+        async with httpx.AsyncClient(timeout=8.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
             place = None
 
             if place_id:
@@ -117,20 +120,27 @@ async def resolve_map_link(
                     place = places[0] if places else None
 
         if not place:
-            return {"expanded_url": expanded_url}
+            return {
+                "expanded_url": expanded_url,
+                "name": name,
+                "lat": lat,
+                "lng": lng,
+            }
 
         display_name = (place.get("displayName") or {}).get("text")
         location = place.get("location") or {}
         return {
             "expanded_url": expanded_url,
-            "name": display_name,
+            "name": display_name or name,
             "address": place.get("formattedAddress"),
-            "lat": location.get("latitude"),
-            "lng": location.get("longitude"),
+            "lat": location.get("latitude") or lat,
+            "lng": location.get("longitude") or lng,
             "place_id": place.get("id"),
+            "types": place.get("types"),
+            "rating": place.get("rating"),
         }
 
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=400, detail="Failed to resolve map link")
+        return {"expanded_url": url, "error": "Failed to resolve map link"}
