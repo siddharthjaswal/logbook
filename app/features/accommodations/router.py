@@ -47,7 +47,7 @@ async def create_accommodation(
         )
 
     # Check trip ownership
-    if not trips_crud.trips_crud.check_trip_ownership(trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to add accommodations to this trip"
@@ -75,7 +75,7 @@ async def list_accommodations_by_trip(
     if not trip:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
 
-    if not trips_crud.trips_crud.check_trip_ownership(trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     accommodations = crud.get_accommodations_by_trip(db, trip_id, skip, limit)
@@ -101,7 +101,7 @@ async def list_accommodations_by_trip_day(
         )
 
     # Check trip ownership (or public access)
-    if not trips_crud.trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view accommodations for this trip"
@@ -180,7 +180,7 @@ async def update_accommodation(
         )
 
     # Check trip ownership
-    if not trips_crud.trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this accommodation"
@@ -205,7 +205,7 @@ async def delete_accommodation(
         )
 
     # Check trip ownership
-    if not trips_crud.trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
+    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this accommodation"
