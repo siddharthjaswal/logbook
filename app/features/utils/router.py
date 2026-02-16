@@ -120,6 +120,10 @@ async def resolve_map_link(
             "X-Goog-Api-Key": settings.GOOGLE_MAPS_API_KEY,
             "X-Goog-FieldMask": "id,displayName,formattedAddress,location,photos,regularOpeningHours,types,rating",
         }
+        headers_search = {
+            "X-Goog-Api-Key": settings.GOOGLE_MAPS_API_KEY,
+            "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.photos,places.types,places.rating",
+        }
 
         async with httpx.AsyncClient(timeout=8.0, headers={"User-Agent": "Mozilla/5.0"}) as client:
             place = None
@@ -151,7 +155,7 @@ async def resolve_map_link(
                             "radius": 50000,
                         }
                     }
-                resp = await client.post("https://places.googleapis.com/v1/places:searchText", json=body, headers=headers)
+                resp = await client.post("https://places.googleapis.com/v1/places:searchText", json=body, headers=headers_search)
                 if resp.status_code == 200:
                     data = resp.json()
                     places = data.get("places") or []
