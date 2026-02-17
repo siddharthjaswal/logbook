@@ -22,6 +22,18 @@ class ActivityBase(BaseModel):
     location_address: Optional[str] = None
     latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
     longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    start_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    start_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    end_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    end_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    start_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    start_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    end_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    end_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    start_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    start_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    end_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    end_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
     cost: Optional[Decimal] = Field(None, ge=0)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     booking_required: bool = False
@@ -102,7 +114,7 @@ class ActivityResponse(ActivityBase):
         """Convert datetime to Unix timestamp."""
         return int(dt.timestamp())
 
-    @field_serializer('duration', 'latitude', 'longitude', 'cost')
+    @field_serializer('duration', 'latitude', 'longitude', 'start_latitude', 'start_longitude', 'end_latitude', 'end_longitude', 'cost')
     def serialize_decimal(self, value: Optional[Decimal], _info) -> Optional[float]:
         """Convert Decimal to float for JSON serialization."""
         return float(value) if value is not None else None
@@ -122,12 +134,16 @@ class ActivityListResponse(BaseModel):
     location: Optional[str]
     latitude: Optional[Decimal]
     longitude: Optional[Decimal]
+    start_latitude: Optional[Decimal]
+    start_longitude: Optional[Decimal]
+    end_latitude: Optional[Decimal]
+    end_longitude: Optional[Decimal]
     cost: Optional[Decimal]
     currency: str
     status: ActivityStatus
     display_order: int
 
-    @field_serializer('duration', 'cost', 'latitude', 'longitude')
+    @field_serializer('duration', 'cost', 'latitude', 'longitude', 'start_latitude', 'start_longitude', 'end_latitude', 'end_longitude')
     def serialize_decimal(self, value: Optional[Decimal], _info) -> Optional[float]:
         """Convert Decimal to float for JSON serialization."""
         return float(value) if value is not None else None

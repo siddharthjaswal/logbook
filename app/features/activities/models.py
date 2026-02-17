@@ -43,6 +43,10 @@ class Activity(Base):
     location_address = Column(Text, nullable=True)
     latitude = Column(DECIMAL(10, 8), nullable=True)
     longitude = Column(DECIMAL(11, 8), nullable=True)
+    start_latitude = Column(DECIMAL(10, 8), nullable=True)
+    start_longitude = Column(DECIMAL(11, 8), nullable=True)
+    end_latitude = Column(DECIMAL(10, 8), nullable=True)
+    end_longitude = Column(DECIMAL(11, 8), nullable=True)
 
     # Cost
     cost = Column(DECIMAL(10, 2), nullable=True)
