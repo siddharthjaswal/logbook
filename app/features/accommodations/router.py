@@ -17,7 +17,9 @@ from app.features.accommodations.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
-from app.shared.enums import AccommodationType
+from app.shared.enums import AccommodationType, ExpenseCategory
+from app.features.expenses.models import Expense
+from sqlalchemy.sql import func
 
 router = APIRouter()
 
@@ -55,6 +57,28 @@ async def create_accommodation(
 
     try:
         accommodations = crud.create_accommodation(db, accommodation_in)
+
+        # Auto-sync accommodation cost to expenses (use first record with cost)
+        cost_record = next((a for a in accommodations if a.cost is not None), None)
+        if cost_record:
+            expense = db.query(Expense).filter(
+                Expense.accommodation_id == cost_record.id,
+                Expense.deleted_at.is_(None)
+            ).first()
+            if not expense:
+                expense = Expense(
+                    trip_id=cost_record.trip_day.trip_id,
+                    trip_day_id=cost_record.trip_day_id,
+                    accommodation_id=cost_record.id,
+                    category=ExpenseCategory.ACCOMMODATION,
+                    description=cost_record.name,
+                    amount=cost_record.cost,
+                    currency=cost_record.currency,
+                    expense_date=cost_record.trip_day.date,
+                    paid_by_user_id=current_user.id,
+                )
+                db.add(expense)
+                db.commit()
         return accommodations
     except ValueError as e:
         raise HTTPException(
@@ -187,6 +211,37 @@ async def update_accommodation(
         )
 
     accommodation = crud.update_accommodation(db, accommodation, accommodation_update)
+
+    # Auto-sync accommodation cost to expenses
+    expense = db.query(Expense).filter(
+        Expense.accommodation_id == accommodation.id,
+        Expense.deleted_at.is_(None)
+    ).first()
+    if accommodation.cost is None:
+        if expense:
+            expense.deleted_at = func.now()
+            db.commit()
+    else:
+        if not expense:
+            expense = Expense(
+                trip_id=accommodation.trip_day.trip_id,
+                trip_day_id=accommodation.trip_day_id,
+                accommodation_id=accommodation.id,
+                category=ExpenseCategory.ACCOMMODATION,
+                description=accommodation.name,
+                amount=accommodation.cost,
+                currency=accommodation.currency,
+                expense_date=accommodation.trip_day.date,
+                paid_by_user_id=current_user.id,
+            )
+            db.add(expense)
+        else:
+            expense.description = accommodation.name
+            expense.amount = accommodation.cost
+            expense.currency = accommodation.currency
+            expense.expense_date = accommodation.trip_day.date
+        db.commit()
+
     return accommodation
 
 
@@ -214,6 +269,15 @@ async def delete_accommodation(
     # Store info for response
     accommodation_name = accommodation.name
     trip_day_id = accommodation.trip_day_id
+
+    # Auto-remove linked expense
+    expense = db.query(Expense).filter(
+        Expense.accommodation_id == accommodation.id,
+        Expense.deleted_at.is_(None)
+    ).first()
+    if expense:
+        expense.deleted_at = func.now()
+        db.commit()
 
     crud.delete_accommodation(db, accommodation)
 
