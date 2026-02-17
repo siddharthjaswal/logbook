@@ -36,6 +36,7 @@ class Activity(Base):
 
     # Timing
     time = Column(String(5), nullable=True)  # HH:MM format
+    end_time = Column(String(5), nullable=True)  # HH:MM format
     duration = Column(DECIMAL(4, 2), nullable=True)  # Hours (can be decimal)
 
     # Location

@@ -17,6 +17,7 @@ class ActivityBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     activity_type: ActivityType = ActivityType.OTHER
     time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
+    end_time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
     duration: Optional[Decimal] = Field(None, ge=0, le=99.99, description="Duration in hours")
     location: Optional[str] = Field(None, max_length=200)
     location_address: Optional[str] = None
@@ -61,6 +62,7 @@ class ActivityCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     activity_type: ActivityType = ActivityType.OTHER
     time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
+    end_time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
     duration: Optional[Decimal] = Field(None, ge=0, le=99.99, description="Duration in hours")
     location: Optional[str] = Field(None, max_length=200)
     location_address: Optional[str] = None
@@ -82,6 +84,7 @@ class ActivityUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     activity_type: Optional[ActivityType] = None
     time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
+    end_time: Optional[str] = Field(None, pattern=r"^([0-1][0-9]|2[0-3]):[0-5][0-9]$", description="Time in HH:MM format")
     duration: Optional[Decimal] = Field(None, ge=0, le=99.99)
     location: Optional[str] = Field(None, max_length=200)
     location_address: Optional[str] = None
