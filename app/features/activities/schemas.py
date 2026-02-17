@@ -133,6 +133,7 @@ class ActivityListResponse(BaseModel):
     name: str
     activity_type: ActivityType
     time: Optional[str]
+    end_time: Optional[str]
     duration: Optional[Decimal]
     location: Optional[str]
     latitude: Optional[Decimal]
