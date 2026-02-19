@@ -281,3 +281,38 @@ async def regenerate_trip_cover(
     updated_trip = crud.update_trip(db, trip, trip_update)
     
     return updated_trip
+
+@router.patch("/{trip_id}/banner", response_model=TripResponse)
+async def regenerate_trip_banner(
+    trip_id: int,
+    query: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Regenerate trip banner image using Unsplash API.
+    """
+    trip = crud.get_trip_by_id(db, trip_id, user_id=current_user.id)
+
+    if not trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Trip not found"
+        )
+
+    if not crud.check_trip_ownership(trip, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to update this trip"
+        )
+
+    search_query = query or trip.primary_destination_city or trip.primary_destination_country or trip.name
+    search_query = f"{search_query} scenic wide landscape"
+
+    image_url = await get_random_travel_photo(search_query)
+
+    trip_update = TripUpdate(banner_photo_url=image_url)
+    updated_trip = crud.update_trip(db, trip, trip_update)
+
+    return updated_trip
+

@@ -18,6 +18,7 @@ class TripBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     cover_photo_url: Optional[str] = None
+    banner_photo_url: Optional[str] = None
 
     # Dates - Exact dates
     start_date_timestamp: Optional[int] = None
@@ -147,6 +148,7 @@ class TripListResponse(BaseModel):
     name: str
     description: Optional[str]
     cover_photo_url: Optional[str]
+    banner_photo_url: Optional[str]
 
     # Dates
     start_date_timestamp: Optional[int]

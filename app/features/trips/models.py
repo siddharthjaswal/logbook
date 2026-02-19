@@ -30,6 +30,7 @@ class Trip(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     cover_photo_url = Column(Text, nullable=True)
+    banner_photo_url = Column(Text, nullable=True)
 
     # Dates - Exact dates (optional for flexible planning)
     start_date_timestamp = Column(Integer, nullable=True, index=True)
