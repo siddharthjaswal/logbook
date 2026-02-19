@@ -25,7 +25,18 @@ async def list_trip_members(
 ):
     """List all members of a trip."""
     check_trip_permission(db, trip_id, current_user.id, MemberRole.VIEWER)
-    return crud.get_trip_members(db, trip_id, skip, limit)
+    members = crud.get_trip_members_with_users(db, trip_id, skip, limit)
+    for m in members:
+        if m.user:
+            name = None
+            if getattr(m.user, 'first_name', None):
+                name = f"{m.user.first_name} {m.user.last_name or ''}".strip()
+            if not name:
+                name = getattr(m.user, 'username', None)
+            m.user_email = getattr(m.user, 'email', None)
+            m.user_name = name
+            m.user_avatar = getattr(m.user, 'profile_photo_url', None)
+    return members
 
 
 @router.post("/trips/{trip_id}/members", response_model=schemas.TripMemberResponse, status_code=status.HTTP_201_CREATED)

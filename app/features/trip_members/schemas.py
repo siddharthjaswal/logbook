@@ -46,6 +46,7 @@ class TripMemberResponse(TripMemberBase):
     # Nested user information (from relationships)
     user_email: Optional[str] = Field(None, description="Email of the member")
     user_name: Optional[str] = Field(None, description="Full name of the member")
+    user_avatar: Optional[str] = Field(None, description="Avatar URL of the member")
 
     class Config:
         from_attributes = True
