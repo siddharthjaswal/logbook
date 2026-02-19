@@ -13,6 +13,8 @@ from app.features.trip_members import crud as member_crud
 from app.features.activity_logs import crud as activity_crud
 from app.core.permissions import check_trip_permission
 from app.shared.enums import MemberRole, InvitationStatus, ActivityLogType
+from app.shared.email import send_email
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -33,14 +35,34 @@ async def create_invitation(
         invitation_data.role,
         invitation_data.message
     )
-    
+
     # Log activity
     activity_crud.log_member_added(
         db, trip_id, current_user.id,
         invitation_data.invitee_email,
         invitation_data.role.value
     )
-    
+
+    # Send invite email (best effort)
+    try:
+        invite_link = f"{settings.FRONTEND_URL}/dashboard/trips/{trip_id}?invite={invitation.token}"
+        inviter_name = current_user.email
+        subject = f"You're invited to join {invitation.trip_name or 'a trip'}"
+        message = invitation_data.message or ""
+        html = f"""
+        <div style='font-family:Inter,system-ui;line-height:1.5;'>
+            <h2 style='margin:0 0 8px 0;'>You're invited to collaborate</h2>
+            <p><strong>{inviter_name}</strong> invited you to join <strong>{invitation.trip_name or 'a trip'}</strong>.</p>
+            <p>Role: <strong>{invitation_data.role.value}</strong></p>
+            {f"<p>Message: {message}</p>" if message else ""}
+            <p><a href='{invite_link}'>Accept invitation</a></p>
+            <p style='color:#6b7280;font-size:12px;'>If you didn't request this, you can ignore this email.</p>
+        </div>
+        """
+        await send_email(invitation_data.invitee_email, subject, html)
+    except Exception:
+        pass
+
     return invitation
 
 
