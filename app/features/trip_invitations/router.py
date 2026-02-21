@@ -28,10 +28,10 @@ async def create_invitation(
 ):
     """Send an invitation to join a trip (owner/editor only)."""
     check_trip_permission(db, trip_id, current_user.id, MemberRole.EDITOR)
-    
+
     invitation = crud.create_invitation(
-        db, trip_id, current_user.id, 
-        invitation_data.invitee_email, 
+        db, trip_id, current_user.id,
+        invitation_data.invitee_email,
         invitation_data.role,
         invitation_data.message
     )
@@ -80,6 +80,40 @@ async def list_trip_invitations(
     return crud.get_trip_invitations(db, trip_id, status, skip, limit)
 
 
+@router.post("/trips/{trip_id}/invitations/{invitation_id}/resend", response_model=schemas.TripInvitationResponse)
+async def resend_invitation(
+    trip_id: int,
+    invitation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Resend an invitation email (owner/editor only)."""
+    check_trip_permission(db, trip_id, current_user.id, MemberRole.EDITOR)
+
+    invitation = crud.get_invitation_by_id(db, invitation_id)
+    if not invitation or invitation.trip_id != trip_id:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    try:
+        invite_link = f"{settings.FRONTEND_URL}/dashboard/trips/{trip_id}?invite={invitation.token}"
+        inviter_name = current_user.email
+        subject = f"You're invited to join {invitation.trip_name or 'a trip'}"
+        html = f"""
+        <div style='font-family:Inter,system-ui;line-height:1.5;'>
+            <h2 style='margin:0 0 8px 0;'>You're invited to collaborate</h2>
+            <p><strong>{inviter_name}</strong> invited you to join <strong>{invitation.trip_name or 'a trip'}</strong>.</p>
+            <p>Role: <strong>{invitation.role.value}</strong></p>
+            <p><a href='{invite_link}'>Accept invitation</a></p>
+            <p style='color:#6b7280;font-size:12px;'>If you didn't request this, you can ignore this email.</p>
+        </div>
+        """
+        await send_email(invitation.invitee_email, subject, html)
+    except Exception:
+        pass
+
+    return invitation
+
+
 @router.delete("/trips/{trip_id}/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_invitation(
     trip_id: int,
@@ -89,11 +123,11 @@ async def cancel_invitation(
 ):
     """Cancel an invitation (owner/editor only)."""
     check_trip_permission(db, trip_id, current_user.id, MemberRole.EDITOR)
-    
+
     invitation = crud.get_invitation_by_id(db, invitation_id)
     if not invitation or invitation.trip_id != trip_id:
         raise HTTPException(status_code=404, detail="Invitation not found")
-    
+
     try:
         crud.cancel_invitation(db, invitation)
     except ValueError as e:
@@ -110,16 +144,16 @@ async def accept_invitation(
     invitation = crud.get_invitation_by_token(db, token)
     if not invitation:
         raise HTTPException(status_code=404, detail="Invitation not found")
-    
+
     try:
         invitation = crud.accept_invitation(db, invitation, current_user.id)
-        
+
         # Log activity
         activity_crud.log_member_added(
             db, invitation.trip_id, current_user.id,
             current_user.email, invitation.role.value
         )
-        
+
         return invitation
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -134,7 +168,7 @@ async def decline_invitation(
     invitation = crud.get_invitation_by_token(db, token)
     if not invitation:
         raise HTTPException(status_code=404, detail="Invitation not found")
-    
+
     try:
         return crud.decline_invitation(db, invitation)
     except ValueError as e:
