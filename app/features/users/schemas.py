@@ -20,6 +20,7 @@ class UserBase(BaseModel):
 
     # Preferences
     default_currency: str = Field(default="USD", min_length=3, max_length=3)
+    unit_system: str = Field(default="metric", max_length=10)  # metric | imperial
     date_format: str = Field(default="YYYY-MM-DD", max_length=20)
     timezone: str = Field(default="UTC", max_length=50)
     language: str = Field(default="en", max_length=10)
@@ -43,6 +44,7 @@ class UserUpdate(BaseModel):
 
     # Preferences
     default_currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    unit_system: Optional[str] = Field(None, max_length=10)  # metric | imperial
     date_format: Optional[str] = Field(None, max_length=20)
     timezone: Optional[str] = Field(None, max_length=50)
     language: Optional[str] = Field(None, max_length=10)

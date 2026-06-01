@@ -36,6 +36,7 @@ class User(Base):
 
     # Preferences
     default_currency = Column(String(3), default="USD", nullable=False)
+    unit_system = Column(String(10), default="metric", nullable=False)  # metric | imperial
     date_format = Column(String(20), default="YYYY-MM-DD", nullable=False)
     timezone = Column(String(50), default="UTC", nullable=False)
     language = Column(String(10), default="en", nullable=False)
