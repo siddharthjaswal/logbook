@@ -40,7 +40,7 @@ def test_get_timeline_success(client, auth_headers, db, test_trip):
     activities_crud.create_activity(db, activity_in)
 
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline",
+        f"/api/v1/trips/{test_trip.id}/timeline/events",
         headers=auth_headers
     )
 
@@ -67,7 +67,7 @@ def test_get_timeline_success(client, auth_headers, db, test_trip):
 def test_get_timeline_empty(client, auth_headers, test_trip):
     """Test getting timeline for trip with no events."""
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline",
+        f"/api/v1/trips/{test_trip.id}/timeline/events",
         headers=auth_headers
     )
 
@@ -81,7 +81,7 @@ def test_get_timeline_empty(client, auth_headers, test_trip):
 
 def test_get_timeline_unauthorized(client, test_trip):
     """Test getting timeline without authentication."""
-    response = client.get(f"/api/v1/trips/{test_trip.id}/timeline")
+    response = client.get(f"/api/v1/trips/{test_trip.id}/timeline/events")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -98,7 +98,7 @@ def test_get_timeline_forbidden(client, db, test_trip, test_other_user):
     headers = {"Authorization": f"Bearer {auth_token}"}
 
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline",
+        f"/api/v1/trips/{test_trip.id}/timeline/events",
         headers=headers
     )
 
@@ -108,7 +108,7 @@ def test_get_timeline_forbidden(client, db, test_trip, test_other_user):
 def test_get_timeline_not_found(client, auth_headers):
     """Test getting timeline for non-existent trip."""
     response = client.get(
-        "/api/v1/trips/99999/timeline",
+        "/api/v1/trips/99999/timeline/events",
         headers=auth_headers
     )
 
@@ -132,7 +132,7 @@ def test_get_timeline_with_start_date_filter(client, auth_headers, db, test_trip
 
     # Filter from June 3 onwards
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline?start_date=2024-06-03",
+        f"/api/v1/trips/{test_trip.id}/timeline/events?start_date=2024-06-03",
         headers=auth_headers
     )
 
@@ -161,7 +161,7 @@ def test_get_timeline_with_end_date_filter(client, auth_headers, db, test_trip):
 
     # Filter up to June 3
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline?end_date=2024-06-03",
+        f"/api/v1/trips/{test_trip.id}/timeline/events?end_date=2024-06-03",
         headers=auth_headers
     )
 
@@ -190,7 +190,7 @@ def test_get_timeline_with_date_range_filter(client, auth_headers, db, test_trip
 
     # Filter to June 2-4
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline?start_date=2024-06-02&end_date=2024-06-04",
+        f"/api/v1/trips/{test_trip.id}/timeline/events?start_date=2024-06-02&end_date=2024-06-04",
         headers=auth_headers
     )
 
@@ -219,7 +219,7 @@ def test_get_timeline_with_pagination(client, auth_headers, db, test_trip):
 
     # Get first 5 items
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline?skip=0&limit=5",
+        f"/api/v1/trips/{test_trip.id}/timeline/events?skip=0&limit=5",
         headers=auth_headers
     )
 
@@ -232,7 +232,7 @@ def test_get_timeline_with_pagination(client, auth_headers, db, test_trip):
 
     # Get next 5 items
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline?skip=5&limit=5",
+        f"/api/v1/trips/{test_trip.id}/timeline/events?skip=5&limit=5",
         headers=auth_headers
     )
 
@@ -259,7 +259,7 @@ def test_get_timeline_chronological_order(client, auth_headers, db, test_trip):
         activities_crud.create_activity(db, activity_in)
 
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline",
+        f"/api/v1/trips/{test_trip.id}/timeline/events",
         headers=auth_headers
     )
 
@@ -320,7 +320,7 @@ def test_get_timeline_with_all_event_types(client, auth_headers, db, test_trip):
     activities_crud.create_activity(db, activity_in)
 
     response = client.get(
-        f"/api/v1/trips/{test_trip.id}/timeline",
+        f"/api/v1/trips/{test_trip.id}/timeline/events",
         headers=auth_headers
     )
 

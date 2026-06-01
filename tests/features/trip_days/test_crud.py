@@ -71,8 +71,9 @@ def test_get_trip_day_by_id_not_found(db: Session):
     assert trip_day is None
 
 
-def test_get_trip_days_by_trip_id(db: Session, test_user, test_trip):
+def test_get_trip_days_by_trip_id(db: Session, test_user, test_trip_no_dates):
     """Test getting all trip days for a trip."""
+    test_trip = test_trip_no_dates
     # Create multiple trip days
     for i in range(3):
         trip_day_in = TripDayCreate(
@@ -182,8 +183,9 @@ def test_delete_trip_day(db: Session, test_user, test_trip):
     assert deleted is None
 
 
-def test_get_trip_day_count(db: Session, test_user, test_trip):
+def test_get_trip_day_count(db: Session, test_user, test_trip_no_dates):
     """Test getting the count of trip days."""
+    test_trip = test_trip_no_dates
     # Create multiple trip days
     for i in range(5):
         trip_day_in = TripDayCreate(

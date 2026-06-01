@@ -18,7 +18,7 @@ from app.shared.enums import MemberRole
 router = APIRouter()
 
 
-@router.get("/trips/{trip_id}/timeline", response_model=TimelineResponse)
+@router.get("/trips/{trip_id}/timeline/events", response_model=TimelineResponse)
 def get_trip_timeline(
     trip_id: int,
     start_date: Optional[date] = Query(None, description="Filter events from this date (YYYY-MM-DD)"),

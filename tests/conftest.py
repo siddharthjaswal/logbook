@@ -172,6 +172,18 @@ def test_trip(db, test_user, test_trip_data):
 
 
 @pytest.fixture
+def test_trip_no_dates(db, test_user, test_trip_data):
+    """A trip created without date timestamps, so create_trip does NOT
+    auto-generate trip days. Use this when a test needs an empty trip."""
+    from app.features.trips.crud import create_trip
+    from app.features.trips.schemas import TripCreate
+
+    data = {k: v for k, v in test_trip_data.items() if "timestamp" not in k}
+    trip_create = TripCreate(**data)
+    return create_trip(db, trip_create, user_id=test_user.id)
+
+
+@pytest.fixture
 def test_other_user(db):
     """Create another test user in the database."""
     from app.features.users.crud import create_user

@@ -90,8 +90,9 @@ def test_create_trip_day_duplicate_date(client: TestClient, auth_headers, test_t
     assert "already exists" in response2.json()["detail"]
 
 
-def test_list_trip_days(client: TestClient, auth_headers, test_trip):
+def test_list_trip_days(client: TestClient, auth_headers, test_trip_no_dates):
     """Test listing trip days for a trip."""
+    test_trip = test_trip_no_dates
     # Create multiple trip days
     for i in range(3):
         payload = {
@@ -307,8 +308,9 @@ def test_delete_trip_day_not_owner(client: TestClient, auth_headers, test_trip_o
     assert response.status_code == 404  # Trip not found (access control)
 
 
-def test_get_trip_summary(client: TestClient, auth_headers, test_trip):
+def test_get_trip_summary(client: TestClient, auth_headers, test_trip_no_dates):
     """Test getting trip summary."""
+    test_trip = test_trip_no_dates
     # Create trip days in different countries
     trip_days_data = [
         ("Paris", "France", "sightseeing"),

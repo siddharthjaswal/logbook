@@ -67,7 +67,7 @@ def get_trip_timeline(
                 "data": {
                     "id": acc.id,
                     "trip_day_id": acc.trip_day_id,
-                    "accommodation_type": acc.accommodation_type.value,
+                    "accommodation_type": _enum_value(acc.accommodation_type),
                     "check_in_time": acc.check_in_time,
                     "check_out_time": acc.check_out_time,
                     "name": acc.name,
@@ -103,7 +103,7 @@ def get_trip_timeline(
                 "data": {
                     "id": transit.id,
                     "trip_day_id": transit.trip_day_id,
-                    "transit_mode": transit.transit_mode.value,
+                    "transit_mode": _enum_value(transit.transit_mode),
                     "carrier": transit.carrier,
                     "flight_number": transit.flight_number,
                     "from_location": transit.from_location,
@@ -147,7 +147,7 @@ def get_trip_timeline(
                     "id": activity.id,
                     "trip_day_id": activity.trip_day_id,
                     "name": activity.name,
-                    "activity_type": activity.activity_type.value,
+                    "activity_type": _enum_value(activity.activity_type),
                     "time": activity.time,
                     "duration": float(activity.duration) if activity.duration else None,
                     "location": activity.location,
@@ -161,7 +161,7 @@ def get_trip_timeline(
                     "booking_url": activity.booking_url,
                     "contact_phone": activity.contact_phone,
                     "contact_email": activity.contact_email,
-                    "status": activity.status.value,
+                    "status": _enum_value(activity.status),
                     "notes": activity.notes,
                 }
             })
@@ -184,7 +184,7 @@ def get_trip_timeline(
                     "id": booking.id,
                     "trip_day_id": booking.trip_day_id,
                     "activity_id": booking.activity_id,
-                    "booking_type": booking.booking_type.value,
+                    "booking_type": _enum_value(booking.booking_type),
                     "name": booking.name,
                     "provider": booking.provider,
                     "confirmation_number": booking.confirmation_number,
@@ -198,7 +198,7 @@ def get_trip_timeline(
                     "contact_phone": booking.contact_phone,
                     "contact_email": booking.contact_email,
                     "booking_url": booking.booking_url,
-                    "status": booking.status.value,
+                    "status": _enum_value(booking.status),
                     "notes": booking.notes,
                 }
             })
@@ -216,6 +216,13 @@ def get_trip_timeline(
     paginated_items = timeline_items[skip:skip + limit]
 
     return paginated_items, total_count
+
+
+def _enum_value(v):
+    """Return the .value of an enum, or the value itself if it's already a
+    plain string. Postgres returns Python enums; SQLite (tests) returns the
+    raw string — this keeps serialization working in both."""
+    return v.value if hasattr(v, "value") else v
 
 
 def _timestamp_to_time(timestamp: int) -> str:
