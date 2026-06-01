@@ -17,6 +17,7 @@ from app.features.trips.schemas import (
     TripTimelineResponse
 )
 from app.features.trips.unsplash import get_random_travel_photo
+from app.features.destination_photos import crud as destination_photos_crud
 from app.shared.enums import TripStatus
 
 router = APIRouter()
@@ -49,15 +50,22 @@ async def create_trip(
 ):
     """Create a new trip."""
     try:
-        # Auto-generate cover image if not provided
+        # Auto-generate cover image if not provided.
+        # Uses the destination-level photo cache: reuses a pooled photo for the
+        # same city/country across trips, only calling Unsplash when the pool
+        # is still thin. Drastically cuts third-party API calls.
         if not trip_in.cover_photo_url:
-            search_query = trip_in.primary_destination_city or trip_in.primary_destination_country or trip_in.name
             try:
-                # Fetch image (async)
-                image_url = await get_random_travel_photo(search_query)
-                trip_in.cover_photo_url = image_url
+                image_url = await destination_photos_crud.resolve_destination_photo(
+                    db,
+                    city=trip_in.primary_destination_city,
+                    country=trip_in.primary_destination_country,
+                    fallback_query=trip_in.name,
+                )
+                if image_url:
+                    trip_in.cover_photo_url = image_url
             except Exception as e:
-                # Fallback or ignore error to not block trip creation
+                # Never block trip creation on photo resolution.
                 print(f"Failed to auto-generate cover image: {e}")
 
         trip = crud.create_trip(db, trip_in, user_id=current_user.id)

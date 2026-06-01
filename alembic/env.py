@@ -39,6 +39,8 @@ from app.features.trip_members.models import TripMember  # noqa: F401
 from app.features.trip_invitations.models import TripInvitation  # noqa: F401
 from app.features.activity_logs.models import ActivityLog  # noqa: F401
 from app.features.comments.models import Comment  # noqa: F401
+# External-data caches
+from app.features.destination_photos.models import DestinationPhoto  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
