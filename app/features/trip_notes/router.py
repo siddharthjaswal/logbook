@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.post("/trip-notes", response_model=TripNoteResponse, status_code=status.HTTP_201_CREATED)
-async def create_note(
+def create_note(
     note_in: TripNoteCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -25,7 +25,7 @@ async def create_note(
 
 
 @router.get("/trip-notes/{note_id}", response_model=TripNoteResponse)
-async def get_note(
+def get_note(
     note_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -38,7 +38,7 @@ async def get_note(
 
 
 @router.put("/trip-notes/{note_id}", response_model=TripNoteResponse)
-async def update_note(
+def update_note(
     note_id: int,
     note_in: TripNoteUpdate,
     db: Session = Depends(get_db),
@@ -52,7 +52,7 @@ async def update_note(
 
 
 @router.delete("/trip-notes/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_note(
+def delete_note(
     note_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -65,7 +65,7 @@ async def delete_note(
 
 
 @router.get("/trips/{trip_id}/notes", response_model=List[TripNoteResponse])
-async def get_trip_notes(
+def get_trip_notes(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -75,7 +75,7 @@ async def get_trip_notes(
 
 
 @router.post("/trip-notes/{note_id}/pin", response_model=TripNoteResponse)
-async def toggle_pin_note(
+def toggle_pin_note(
     note_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

@@ -8,16 +8,18 @@ from sqlalchemy.orm import Session
 from datetime import date
 
 from app.core.deps import get_db, get_current_active_user
+from app.core.permissions import check_trip_permission
 from app.features.users.models import User
 from app.features.timeline import crud
 from app.features.timeline.schemas import TimelineResponse
 from app.features.trips import crud as trips_crud
+from app.shared.enums import MemberRole
 
 router = APIRouter()
 
 
 @router.get("/trips/{trip_id}/timeline", response_model=TimelineResponse)
-async def get_trip_timeline(
+def get_trip_timeline(
     trip_id: int,
     start_date: Optional[date] = Query(None, description="Filter events from this date (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="Filter events until this date (YYYY-MM-DD)"),
@@ -52,14 +54,8 @@ async def get_trip_timeline(
             detail="Trip not found"
         )
 
-    # Check trip ownership or public access
-    if not trips_crud.check_trip_ownership(trip, current_user.id):
-        # For now, only owners can access timeline
-        # TODO: Add public access support later
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this trip's timeline"
-        )
+    # Any trip member (viewer or above) can view the timeline
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.VIEWER)
 
     # Fetch timeline
     timeline_items, total_count = crud.get_trip_timeline(

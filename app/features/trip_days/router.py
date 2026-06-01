@@ -55,7 +55,7 @@ def check_trip_access(
 
 
 @router.post("/", response_model=TripDayResponse, status_code=status.HTTP_201_CREATED)
-async def create_trip_day(
+def create_trip_day(
     trip_day_in: TripDayCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -88,7 +88,7 @@ async def create_trip_day(
 
 
 @router.get("/", response_model=List[TripDayListResponse])
-async def list_trip_days(
+def list_trip_days(
     trip_id: int = Query(..., description="Filter by trip ID"),
     day_type: Optional[str] = Query(None, description="Filter by day type"),
     start_date: Optional[date] = Query(None, description="Filter by start date"),
@@ -125,7 +125,7 @@ async def list_trip_days(
 
 
 @router.get("/{trip_day_id}", response_model=TripDayResponse)
-async def get_trip_day(
+def get_trip_day(
     trip_day_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -149,7 +149,7 @@ async def get_trip_day(
 
 
 @router.put("/{trip_day_id}", response_model=TripDayResponse)
-async def update_trip_day(
+def update_trip_day(
     trip_day_id: int,
     trip_day_update: TripDayUpdate,
     db: Session = Depends(get_db),
@@ -196,7 +196,7 @@ async def update_trip_day(
 
 
 @router.delete("/{trip_day_id}", response_model=dict)
-async def delete_trip_day(
+def delete_trip_day(
     trip_day_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -237,7 +237,7 @@ async def delete_trip_day(
 
 
 @router.get("/trip/{trip_id}/summary", response_model=dict)
-async def get_trip_summary(
+def get_trip_summary(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -291,7 +291,7 @@ async def get_trip_summary(
 
 
 @router.post("/trip/{trip_id}/update-destinations", response_model=dict)
-async def update_trip_destinations_endpoint(
+def update_trip_destinations_endpoint(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

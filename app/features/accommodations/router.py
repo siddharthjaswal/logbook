@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.permissions import check_trip_permission
 from app.core.deps import get_db, get_current_active_user
 from app.features.users.models import User
 from app.features.accommodations import crud
@@ -17,7 +18,7 @@ from app.features.accommodations.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
-from app.shared.enums import AccommodationType, ExpenseCategory
+from app.shared.enums import AccommodationType, ExpenseCategory, MemberRole
 from app.features.expenses.models import Expense
 from sqlalchemy.sql import func
 
@@ -25,7 +26,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=List[AccommodationResponse], status_code=status.HTTP_201_CREATED)
-async def create_accommodation(
+def create_accommodation(
     accommodation_in: AccommodationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -48,12 +49,7 @@ async def create_accommodation(
             detail="Trip not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to add accommodations to this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     try:
         accommodations = crud.create_accommodation(db, accommodation_in)
@@ -88,7 +84,7 @@ async def create_accommodation(
 
 
 @router.get("/trip/{trip_id}", response_model=List[AccommodationResponse])
-async def list_accommodations_by_trip(
+def list_accommodations_by_trip(
     trip_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(500, ge=1, le=500),
@@ -99,15 +95,14 @@ async def list_accommodations_by_trip(
     if not trip:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
 
-    if not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.VIEWER)
 
     accommodations = crud.get_accommodations_by_trip(db, trip_id, skip, limit)
     return accommodations
 
 
 @router.get("/trip-day/{trip_day_id}", response_model=List[AccommodationResponse])
-async def list_accommodations_by_trip_day(
+def list_accommodations_by_trip_day(
     trip_day_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -124,12 +119,7 @@ async def list_accommodations_by_trip_day(
             detail="Trip day not found"
         )
 
-    # Check trip ownership (or public access)
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view accommodations for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     # Apply filters if provided
     if accommodation_type:
@@ -141,7 +131,7 @@ async def list_accommodations_by_trip_day(
 
 
 @router.get("/confirmation/{confirmation_number}", response_model=AccommodationResponse)
-async def get_accommodation_by_confirmation(
+def get_accommodation_by_confirmation(
     confirmation_number: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -154,18 +144,13 @@ async def get_accommodation_by_confirmation(
             detail="Accommodation not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this accommodation"
-        )
+    check_trip_permission(db, accommodation.trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     return accommodation
 
 
 @router.get("/{accommodation_id}", response_model=AccommodationResponse)
-async def get_accommodation(
+def get_accommodation(
     accommodation_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -178,18 +163,13 @@ async def get_accommodation(
             detail="Accommodation not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this accommodation"
-        )
+    check_trip_permission(db, accommodation.trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     return accommodation
 
 
 @router.put("/{accommodation_id}", response_model=AccommodationResponse)
-async def update_accommodation(
+def update_accommodation(
     accommodation_id: int,
     accommodation_update: AccommodationUpdate,
     db: Session = Depends(get_db),
@@ -203,12 +183,7 @@ async def update_accommodation(
             detail="Accommodation not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this accommodation"
-        )
+    check_trip_permission(db, accommodation.trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     accommodation = crud.update_accommodation(db, accommodation, accommodation_update)
 
@@ -246,7 +221,7 @@ async def update_accommodation(
 
 
 @router.delete("/{accommodation_id}", response_model=dict)
-async def delete_accommodation(
+def delete_accommodation(
     accommodation_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -259,12 +234,7 @@ async def delete_accommodation(
             detail="Accommodation not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(accommodation.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this accommodation"
-        )
+    check_trip_permission(db, accommodation.trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     # Store info for response
     accommodation_name = accommodation.name
@@ -290,7 +260,7 @@ async def delete_accommodation(
 
 
 @router.post("/trip-day/{trip_day_id}/reorder", response_model=List[AccommodationResponse])
-async def reorder_accommodations(
+def reorder_accommodations(
     trip_day_id: int,
     accommodation_order: List[int],
     db: Session = Depends(get_db),
@@ -305,19 +275,14 @@ async def reorder_accommodations(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to reorder accommodations for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     accommodations = crud.reorder_accommodations(db, trip_day_id, accommodation_order)
     return accommodations
 
 
 @router.get("/trip-day/{trip_day_id}/cost", response_model=dict)
-async def get_trip_day_accommodations_cost(
+def get_trip_day_accommodations_cost(
     trip_day_id: int,
     currency: str = Query("USD", min_length=3, max_length=3),
     db: Session = Depends(get_db),
@@ -332,12 +297,7 @@ async def get_trip_day_accommodations_cost(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view cost for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     total_cost = crud.get_total_cost_by_trip_day(db, trip_day_id, currency)
 

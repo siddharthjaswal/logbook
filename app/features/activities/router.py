@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.permissions import check_trip_permission
 from app.core.deps import get_db, get_current_active_user
 from app.features.users.models import User
 from app.features.activities import crud
@@ -17,7 +18,7 @@ from app.features.activities.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
-from app.shared.enums import ActivityType, ActivityStatus, ExpenseCategory
+from app.shared.enums import ActivityType, ActivityStatus, ExpenseCategory, MemberRole
 from app.features.expenses.models import Expense
 from sqlalchemy.sql import func
 
@@ -25,7 +26,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=ActivityResponse, status_code=status.HTTP_201_CREATED)
-async def create_activity(
+def create_activity(
     activity_in: ActivityCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -39,12 +40,7 @@ async def create_activity(
             detail="Trip not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to add activities to this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     activity = crud.create_activity(db, activity_in)
 
@@ -70,7 +66,7 @@ async def create_activity(
 
 
 @router.get("/trip-day/{trip_day_id}", response_model=List[ActivityListResponse])
-async def list_activities_by_trip_day(
+def list_activities_by_trip_day(
     trip_day_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -88,12 +84,7 @@ async def list_activities_by_trip_day(
             detail="Trip day not found"
         )
 
-    # Check trip ownership (or public access)
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view activities for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     # Apply filters if provided
     if activity_type:
@@ -108,7 +99,7 @@ async def list_activities_by_trip_day(
 
 
 @router.get("/{activity_id}", response_model=ActivityResponse)
-async def get_activity(
+def get_activity(
     activity_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -121,18 +112,13 @@ async def get_activity(
             detail="Activity not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this activity"
-        )
+    check_trip_permission(db, activity.trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     return activity
 
 
 @router.put("/{activity_id}", response_model=ActivityResponse)
-async def update_activity(
+def update_activity(
     activity_id: int,
     activity_update: ActivityUpdate,
     db: Session = Depends(get_db),
@@ -146,12 +132,7 @@ async def update_activity(
             detail="Activity not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this activity"
-        )
+    check_trip_permission(db, activity.trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     activity = crud.update_activity(db, activity, activity_update)
 
@@ -188,7 +169,7 @@ async def update_activity(
 
 
 @router.delete("/{activity_id}", response_model=dict)
-async def delete_activity(
+def delete_activity(
     activity_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -201,12 +182,7 @@ async def delete_activity(
             detail="Activity not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this activity"
-        )
+    check_trip_permission(db, activity.trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     # Store info for response
     activity_name = activity.name
@@ -229,7 +205,7 @@ async def delete_activity(
 
 
 @router.post("/trip-day/{trip_day_id}/reorder", response_model=List[ActivityListResponse])
-async def reorder_activities(
+def reorder_activities(
     trip_day_id: int,
     activity_order: List[int],
     db: Session = Depends(get_db),
@@ -244,19 +220,14 @@ async def reorder_activities(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to reorder activities for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     activities = crud.reorder_activities(db, trip_day_id, activity_order)
     return activities
 
 
 @router.get("/trip-day/{trip_day_id}/cost", response_model=dict)
-async def get_trip_day_activities_cost(
+def get_trip_day_activities_cost(
     trip_day_id: int,
     currency: str = Query("USD", min_length=3, max_length=3),
     db: Session = Depends(get_db),
@@ -271,12 +242,7 @@ async def get_trip_day_activities_cost(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view cost for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     total_cost = crud.get_total_cost_by_trip_day(db, trip_day_id, currency)
 

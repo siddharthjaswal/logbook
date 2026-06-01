@@ -170,18 +170,17 @@ async def google_id_token_login(
         return response
 
     except ValueError as e:
-        # Invalid token
+        # Invalid token — log details server-side, return a generic message.
         logger.error(f"❌ ID token verification failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid ID token: {str(e)}"
+            detail="Invalid ID token"
         )
-    except Exception as e:
-        logger.error(f"❌ Unexpected error during authentication: {str(e)}")
-        logger.exception("Full traceback:")
+    except Exception:
+        logger.exception("❌ Unexpected error during authentication")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Authentication failed: {str(e)}"
+            detail="Authentication failed"
         )
 
 
@@ -228,11 +227,11 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         # Exchange authorization code for access token
         # Authlib retrieves the redirect_uri from session state automatically
         token = await oauth.google.authorize_access_token(request)
-    except Exception as e:
-        logger.error(f"Google OAuth callback failed: {str(e)}")
+    except Exception:
+        logger.exception("Google OAuth callback failed")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to authenticate with Google: {str(e)}"
+            detail="Failed to authenticate with Google"
         )
 
     # Get user info from Google
@@ -273,7 +272,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=TokenRefreshResponse)
-async def refresh_token(
+def refresh_token(
     refresh_request: TokenRefreshRequest,
     db: Session = Depends(get_db)
 ):
@@ -342,7 +341,7 @@ async def refresh_token(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(current_user = Depends(get_current_active_user)):
+def logout(current_user = Depends(get_current_active_user)):
     """
     Logout user.
 
@@ -364,7 +363,7 @@ async def logout(current_user = Depends(get_current_active_user)):
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_authenticated_user(current_user = Depends(get_current_active_user)):
+def get_authenticated_user(current_user = Depends(get_current_active_user)):
     """
     Get current authenticated user.
 

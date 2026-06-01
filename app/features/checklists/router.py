@@ -18,7 +18,7 @@ router = APIRouter()
 # CHECKLIST ENDPOINTS
 
 @router.post("/checklists", response_model=ChecklistResponse, status_code=status.HTTP_201_CREATED)
-async def create_checklist(
+def create_checklist(
     checklist_in: ChecklistCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -28,7 +28,7 @@ async def create_checklist(
 
 
 @router.get("/checklists/{checklist_id}", response_model=ChecklistResponse)
-async def get_checklist(
+def get_checklist(
     checklist_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -41,7 +41,7 @@ async def get_checklist(
 
 
 @router.get("/trips/{trip_id}/checklists", response_model=List[ChecklistResponse])
-async def get_trip_checklists(
+def get_trip_checklists(
     trip_id: int,
     checklist_type: Optional[ChecklistType] = None,
     db: Session = Depends(get_db),
@@ -52,7 +52,7 @@ async def get_trip_checklists(
 
 
 @router.delete("/checklists/{checklist_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_checklist(
+def delete_checklist(
     checklist_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -67,7 +67,7 @@ async def delete_checklist(
 # CHECKLIST ITEM ENDPOINTS
 
 @router.post("/checklists/{checklist_id}/items", response_model=ChecklistItemResponse)
-async def create_checklist_item(
+def create_checklist_item(
     checklist_id: int,
     item_in: ChecklistItemCreate,
     db: Session = Depends(get_db),
@@ -78,7 +78,7 @@ async def create_checklist_item(
 
 
 @router.put("/checklist-items/{item_id}", response_model=ChecklistItemResponse)
-async def update_checklist_item(
+def update_checklist_item(
     item_id: int,
     item_in: ChecklistItemUpdate,
     db: Session = Depends(get_db),
@@ -92,7 +92,7 @@ async def update_checklist_item(
 
 
 @router.post("/checklist-items/{item_id}/toggle-complete", response_model=ChecklistItemResponse)
-async def toggle_completed_status(
+def toggle_completed_status(
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -105,7 +105,7 @@ async def toggle_completed_status(
 
 
 @router.get("/checklists/{checklist_id}/summary")
-async def get_checklist_summary(
+def get_checklist_summary(
     checklist_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

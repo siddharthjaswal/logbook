@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.post("/trips/{trip_id}/comments", response_model=schemas.CommentResponse, status_code=status.HTTP_201_CREATED)
-async def create_comment(
+def create_comment(
     trip_id: int,
     comment_data: schemas.CommentCreate,
     db: Session = Depends(get_db),
@@ -43,7 +43,7 @@ async def create_comment(
 
 
 @router.get("/trips/{trip_id}/comments", response_model=List[schemas.CommentResponse])
-async def list_trip_comments(
+def list_trip_comments(
     trip_id: int,
     entity_type: Optional[str] = None,
     entity_id: Optional[int] = None,
@@ -58,7 +58,7 @@ async def list_trip_comments(
 
 
 @router.get("/comments/{comment_id}/replies", response_model=List[schemas.CommentResponse])
-async def get_comment_replies(
+def get_comment_replies(
     comment_id: int,
     skip: int = 0,
     limit: int = 100,
@@ -77,7 +77,7 @@ async def get_comment_replies(
 
 
 @router.put("/comments/{comment_id}", response_model=schemas.CommentResponse)
-async def update_comment(
+def update_comment(
     comment_id: int,
     update_data: schemas.CommentUpdate,
     db: Session = Depends(get_db),
@@ -99,7 +99,7 @@ async def update_comment(
 
 
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_comment(
+def delete_comment(
     comment_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

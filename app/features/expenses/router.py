@@ -19,7 +19,7 @@ router = APIRouter()
 # EXPENSE ENDPOINTS
 
 @router.post("/expenses", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
-async def create_expense(
+def create_expense(
     expense_in: ExpenseCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -29,7 +29,7 @@ async def create_expense(
 
 
 @router.get("/expenses/{expense_id}", response_model=ExpenseResponse)
-async def get_expense(
+def get_expense(
     expense_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -42,7 +42,7 @@ async def get_expense(
 
 
 @router.put("/expenses/{expense_id}", response_model=ExpenseResponse)
-async def update_expense(
+def update_expense(
     expense_id: int,
     expense_in: ExpenseUpdate,
     db: Session = Depends(get_db),
@@ -56,7 +56,7 @@ async def update_expense(
 
 
 @router.delete("/expenses/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_expense(
+def delete_expense(
     expense_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -69,7 +69,7 @@ async def delete_expense(
 
 
 @router.get("/trips/{trip_id}/expenses", response_model=List[ExpenseResponse])
-async def get_trip_expenses(
+def get_trip_expenses(
     trip_id: int,
     category: Optional[ExpenseCategory] = None,
     start_date: Optional[date] = None,
@@ -84,7 +84,7 @@ async def get_trip_expenses(
 
 
 @router.get("/trips/{trip_id}/expenses/summary")
-async def get_expense_summary(
+def get_expense_summary(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -96,7 +96,7 @@ async def get_expense_summary(
 # BUDGET ENDPOINTS
 
 @router.post("/trips/{trip_id}/budget-categories", response_model=BudgetCategoryResponse, status_code=status.HTTP_201_CREATED)
-async def create_budget_category(
+def create_budget_category(
     trip_id: int,
     budget_in: BudgetCategoryCreate,
     db: Session = Depends(get_db),
@@ -107,7 +107,7 @@ async def create_budget_category(
 
 
 @router.get("/trips/{trip_id}/budget-categories", response_model=List[BudgetCategoryResponse])
-async def get_budget_categories(
+def get_budget_categories(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -117,7 +117,7 @@ async def get_budget_categories(
 
 
 @router.get("/trips/{trip_id}/budget/vs-actual")
-async def get_budget_vs_actual(
+def get_budget_vs_actual(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -129,7 +129,7 @@ async def get_budget_vs_actual(
 # EXPENSE SPLIT ENDPOINTS
 
 @router.post("/expenses/{expense_id}/splits", response_model=ExpenseSplitResponse, status_code=status.HTTP_201_CREATED)
-async def create_expense_split(
+def create_expense_split(
     expense_id: int,
     split_in: ExpenseSplitCreate,
     db: Session = Depends(get_db),
@@ -140,7 +140,7 @@ async def create_expense_split(
 
 
 @router.get("/expenses/{expense_id}/splits", response_model=List[ExpenseSplitResponse])
-async def get_expense_splits(
+def get_expense_splits(
     expense_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

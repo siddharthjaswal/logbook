@@ -38,9 +38,12 @@ def get_trip_by_id(db: Session, trip_id: int, user_id: Optional[int] = None) -> 
     if not trip:
         return None
 
-    # If user_id provided, check if user is owner or trip is accessible
+    # If user_id provided, check if user is owner, a member, or trip is accessible
     if user_id is not None:
         if trip.created_by == user_id:
+            return trip
+        # Trip members (collaborators) can access regardless of visibility
+        if member_crud.get_member(db, trip_id, user_id) is not None:
             return trip
         if trip.visibility in [TripVisibility.PUBLIC, TripVisibility.UNLISTED]:
             return trip

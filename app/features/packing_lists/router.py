@@ -17,7 +17,7 @@ router = APIRouter()
 # PACKING LIST ENDPOINTS
 
 @router.post("/packing-lists", response_model=PackingListResponse, status_code=status.HTTP_201_CREATED)
-async def create_packing_list(
+def create_packing_list(
     list_in: PackingListCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -27,7 +27,7 @@ async def create_packing_list(
 
 
 @router.get("/packing-lists/{list_id}", response_model=PackingListResponse)
-async def get_packing_list(
+def get_packing_list(
     list_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -40,7 +40,7 @@ async def get_packing_list(
 
 
 @router.get("/trips/{trip_id}/packing-lists", response_model=List[PackingListResponse])
-async def get_trip_packing_lists(
+def get_trip_packing_lists(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -50,7 +50,7 @@ async def get_trip_packing_lists(
 
 
 @router.delete("/packing-lists/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_packing_list(
+def delete_packing_list(
     list_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -65,7 +65,7 @@ async def delete_packing_list(
 # PACKING ITEM ENDPOINTS
 
 @router.post("/packing-lists/{list_id}/items", response_model=PackingItemResponse)
-async def create_packing_item(
+def create_packing_item(
     list_id: int,
     item_in: PackingItemCreate,
     db: Session = Depends(get_db),
@@ -76,7 +76,7 @@ async def create_packing_item(
 
 
 @router.put("/packing-items/{item_id}", response_model=PackingItemResponse)
-async def update_packing_item(
+def update_packing_item(
     item_id: int,
     item_in: PackingItemUpdate,
     db: Session = Depends(get_db),
@@ -90,7 +90,7 @@ async def update_packing_item(
 
 
 @router.post("/packing-items/{item_id}/toggle-pack", response_model=PackingItemResponse)
-async def toggle_packed_status(
+def toggle_packed_status(
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -103,7 +103,7 @@ async def toggle_packed_status(
 
 
 @router.get("/packing-lists/{list_id}/summary")
-async def get_list_summary(
+def get_list_summary(
     list_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

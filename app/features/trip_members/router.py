@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/trips/{trip_id}/members", response_model=List[schemas.TripMemberResponse])
-async def list_trip_members(
+def list_trip_members(
     trip_id: int,
     skip: int = 0,
     limit: int = 100,
@@ -40,7 +40,7 @@ async def list_trip_members(
 
 
 @router.post("/trips/{trip_id}/members", response_model=schemas.TripMemberResponse, status_code=status.HTTP_201_CREATED)
-async def add_trip_member(
+def add_trip_member(
     trip_id: int,
     member_data: schemas.TripMemberCreate,
     db: Session = Depends(get_db),
@@ -61,7 +61,7 @@ async def add_trip_member(
 
 
 @router.put("/trips/{trip_id}/members/{user_id}", response_model=schemas.TripMemberResponse)
-async def update_member_role(
+def update_member_role(
     trip_id: int,
     user_id: int,
     update_data: schemas.TripMemberUpdate,
@@ -79,7 +79,7 @@ async def update_member_role(
 
 
 @router.delete("/trips/{trip_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_trip_member(
+def remove_trip_member(
     trip_id: int,
     user_id: int,
     db: Session = Depends(get_db),
@@ -105,7 +105,7 @@ async def remove_trip_member(
 
 
 @router.post("/trips/{trip_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
-async def leave_trip(
+def leave_trip(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)

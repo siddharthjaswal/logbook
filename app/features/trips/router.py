@@ -2,10 +2,12 @@
 API routes for Trip management.
 """
 
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.permissions import check_trip_permission
 from app.core.deps import get_db, get_current_active_user, get_current_active_user_optional
 from app.features.users.models import User
 from app.features.trips import crud
@@ -18,13 +20,15 @@ from app.features.trips.schemas import (
 )
 from app.features.trips.unsplash import get_random_travel_photo
 from app.features.destination_photos import crud as destination_photos_crud
-from app.shared.enums import TripStatus
+from app.shared.enums import TripStatus, MemberRole
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 @router.get("/", response_model=List[TripListResponse])
-async def list_my_trips(
+def list_my_trips(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     status_filter: Optional[TripStatus] = None,
@@ -69,19 +73,17 @@ async def create_trip(
                 print(f"Failed to auto-generate cover image: {e}")
 
         trip = crud.create_trip(db, trip_in, user_id=current_user.id)
-        # Force serialization to check for errors
         return TripResponse.from_orm(trip)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+    except Exception:
+        logger.exception("Failed to create trip for user %s", current_user.id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Serialization Error: {str(e)}"
+            detail="Failed to create trip. Please try again."
         )
 
 
 @router.get("/public", response_model=List[TripListResponse])
-async def browse_public_trips(
+def browse_public_trips(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     country: Optional[str] = None,
@@ -102,7 +104,7 @@ async def browse_public_trips(
 
 
 @router.get("/search", response_model=List[TripListResponse])
-async def search_trips(
+def search_trips(
     q: str = Query(..., min_length=1, description="Search query"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -126,7 +128,7 @@ async def search_trips(
 
 
 @router.get("/{trip_id}", response_model=TripResponse)
-async def get_trip(
+def get_trip(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_active_user_optional)
@@ -157,7 +159,7 @@ async def get_trip(
 
 
 @router.get("/{trip_id}/timeline", response_model=TripTimelineResponse)
-async def get_trip_timeline(
+def get_trip_timeline(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_active_user_optional)
@@ -182,7 +184,7 @@ async def get_trip_timeline(
 
 
 @router.put("/{trip_id}", response_model=TripResponse)
-async def update_trip(
+def update_trip(
     trip_id: int,
     trip_in: TripUpdate,
     db: Session = Depends(get_db),
@@ -197,18 +199,14 @@ async def update_trip(
             detail="Trip not found"
         )
 
-    if not crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to update this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.OWNER)
 
     trip = crud.update_trip(db, trip, trip_in)
     return trip
 
 
 @router.delete("/{trip_id}", response_model=dict)
-async def delete_trip(
+def delete_trip(
     trip_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -222,11 +220,7 @@ async def delete_trip(
             detail="Trip not found"
         )
 
-    if not crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to delete this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.OWNER)
 
     # Store info for response
     trip_name = trip.name
@@ -241,7 +235,7 @@ async def delete_trip(
 
 
 @router.get("/stats/me")
-async def get_my_trip_stats(
+def get_my_trip_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -272,11 +266,7 @@ async def regenerate_trip_cover(
             detail="Trip not found"
         )
         
-    if not crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to update this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
         
     # Use provided query or trip destination/title
     search_query = query or trip.primary_destination_city or trip.primary_destination_country or trip.name
@@ -308,11 +298,7 @@ async def regenerate_trip_banner(
             detail="Trip not found"
         )
 
-    if not crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to update this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     search_query = query or trip.primary_destination_city or trip.primary_destination_country or trip.name
     search_query = f"{search_query} scenic wide landscape"

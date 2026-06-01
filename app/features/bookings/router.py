@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.permissions import check_trip_permission
 from app.core.deps import get_db, get_current_active_user
 from app.features.users.models import User
 from app.features.bookings import crud
@@ -18,13 +19,13 @@ from app.features.bookings.schemas import (
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.activities.crud import get_activity_by_id
 from app.features.trips import crud as trips_crud
-from app.shared.enums import BookingType, BookingStatus
+from app.shared.enums import BookingType, BookingStatus, MemberRole
 
 router = APIRouter()
 
 
 @router.post("/", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)
-async def create_booking(
+def create_booking(
     booking_in: BookingCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -38,12 +39,7 @@ async def create_booking(
             detail="Trip not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to add bookings to this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     # If activity_id is provided, verify it exists
     if booking_in.activity_id:
@@ -59,7 +55,7 @@ async def create_booking(
 
 
 @router.get("/trip-day/{trip_day_id}", response_model=List[BookingListResponse])
-async def list_bookings_by_trip_day(
+def list_bookings_by_trip_day(
     trip_day_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -77,12 +73,7 @@ async def list_bookings_by_trip_day(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view bookings for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     # Apply filters if provided
     if booking_type:
@@ -96,7 +87,7 @@ async def list_bookings_by_trip_day(
 
 
 @router.get("/activity/{activity_id}", response_model=List[BookingListResponse])
-async def list_bookings_by_activity(
+def list_bookings_by_activity(
     activity_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -112,19 +103,14 @@ async def list_bookings_by_activity(
             detail="Activity not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(activity.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view bookings for this activity"
-        )
+    check_trip_permission(db, activity.trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     bookings = crud.get_bookings_by_activity(db, activity_id, skip, limit)
     return bookings
 
 
 @router.get("/{booking_id}", response_model=BookingResponse)
-async def get_booking(
+def get_booking(
     booking_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -144,17 +130,15 @@ async def get_booking(
     elif booking.activity:
         trip = booking.activity.trip_day.trip
 
-    if not trip or not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this booking"
-        )
+    if not trip:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.VIEWER)
 
     return booking
 
 
 @router.get("/confirmation/{confirmation_number}", response_model=BookingResponse)
-async def get_booking_by_confirmation(
+def get_booking_by_confirmation(
     confirmation_number: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -174,17 +158,15 @@ async def get_booking_by_confirmation(
     elif booking.activity:
         trip = booking.activity.trip_day.trip
 
-    if not trip or not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this booking"
-        )
+    if not trip:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.VIEWER)
 
     return booking
 
 
 @router.put("/{booking_id}", response_model=BookingResponse)
-async def update_booking(
+def update_booking(
     booking_id: int,
     booking_update: BookingUpdate,
     db: Session = Depends(get_db),
@@ -205,18 +187,16 @@ async def update_booking(
     elif booking.activity:
         trip = booking.activity.trip_day.trip
 
-    if not trip or not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this booking"
-        )
+    if not trip:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     booking = crud.update_booking(db, booking, booking_update)
     return booking
 
 
 @router.delete("/{booking_id}", response_model=dict)
-async def delete_booking(
+def delete_booking(
     booking_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -236,11 +216,9 @@ async def delete_booking(
     elif booking.activity:
         trip = booking.activity.trip_day.trip
 
-    if not trip or not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this booking"
-        )
+    if not trip:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     # Store info for response
     booking_name = booking.name
@@ -259,7 +237,7 @@ async def delete_booking(
 
 
 @router.get("/trip-day/{trip_day_id}/cost", response_model=dict)
-async def get_trip_day_bookings_cost(
+def get_trip_day_bookings_cost(
     trip_day_id: int,
     currency: str = Query("USD", min_length=3, max_length=3),
     db: Session = Depends(get_db),
@@ -274,12 +252,7 @@ async def get_trip_day_bookings_cost(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view cost for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     total_cost = crud.get_total_booking_cost_by_trip_day(db, trip_day_id, currency)
 

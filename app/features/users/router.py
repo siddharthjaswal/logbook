@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_my_profile(
+def get_my_profile(
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -29,7 +29,7 @@ async def get_my_profile(
 
 
 @router.put("/me", response_model=UserResponse)
-async def update_my_profile(
+def update_my_profile(
     user_update: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -61,7 +61,7 @@ async def update_my_profile(
 
 
 @router.patch("/me/username", response_model=UserResponse)
-async def update_my_username(
+def update_my_username(
     username_update: UsernameUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -92,7 +92,7 @@ async def update_my_username(
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_my_account(
+def delete_my_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):

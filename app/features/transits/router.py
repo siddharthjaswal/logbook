@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.permissions import check_trip_permission
 from app.core.deps import get_db, get_current_active_user
 from app.features.users.models import User
 from app.features.transits import crud
@@ -17,13 +18,13 @@ from app.features.transits.schemas import (
 )
 from app.features.trip_days.crud import get_trip_day_by_id
 from app.features.trips import crud as trips_crud
-from app.shared.enums import TransitMode
+from app.shared.enums import TransitMode, MemberRole
 
 router = APIRouter()
 
 
 @router.post("/", response_model=TransitResponse, status_code=status.HTTP_201_CREATED)
-async def create_transit(
+def create_transit(
     transit_in: TransitCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -37,19 +38,14 @@ async def create_transit(
             detail="Trip not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to add transits to this trip"
-        )
+    check_trip_permission(db, trip.id, current_user.id, MemberRole.EDITOR)
 
     transit = crud.create_transit(db, transit_in)
     return transit
 
 
 @router.get("/trip-day/{trip_day_id}", response_model=List[TransitResponse])
-async def list_transits_by_trip_day(
+def list_transits_by_trip_day(
     trip_day_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -66,12 +62,7 @@ async def list_transits_by_trip_day(
             detail="Trip day not found"
         )
 
-    # Check trip ownership (or public access)
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view transits for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     # Apply filters if provided
     if transit_mode:
@@ -83,7 +74,7 @@ async def list_transits_by_trip_day(
 
 
 @router.get("/confirmation/{confirmation_number}", response_model=TransitResponse)
-async def get_transit_by_confirmation(
+def get_transit_by_confirmation(
     confirmation_number: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -96,18 +87,13 @@ async def get_transit_by_confirmation(
             detail="Transit not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this transit"
-        )
+    check_trip_permission(db, transit.trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     return transit
 
 
 @router.get("/{transit_id}", response_model=TransitResponse)
-async def get_transit(
+def get_transit(
     transit_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -120,18 +106,13 @@ async def get_transit(
             detail="Transit not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this transit"
-        )
+    check_trip_permission(db, transit.trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     return transit
 
 
 @router.put("/{transit_id}", response_model=TransitResponse)
-async def update_transit(
+def update_transit(
     transit_id: int,
     transit_update: TransitUpdate,
     db: Session = Depends(get_db),
@@ -145,19 +126,14 @@ async def update_transit(
             detail="Transit not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this transit"
-        )
+    check_trip_permission(db, transit.trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     transit = crud.update_transit(db, transit, transit_update)
     return transit
 
 
 @router.delete("/{transit_id}", response_model=dict)
-async def delete_transit(
+def delete_transit(
     transit_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -170,12 +146,7 @@ async def delete_transit(
             detail="Transit not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(transit.trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this transit"
-        )
+    check_trip_permission(db, transit.trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     # Store info for response
     transit_mode = transit.transit_mode
@@ -196,7 +167,7 @@ async def delete_transit(
 
 
 @router.post("/trip-day/{trip_day_id}/reorder", response_model=List[TransitResponse])
-async def reorder_transits(
+def reorder_transits(
     trip_day_id: int,
     transit_order: List[int],
     db: Session = Depends(get_db),
@@ -211,19 +182,14 @@ async def reorder_transits(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to reorder transits for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.EDITOR)
 
     transits = crud.reorder_transits(db, trip_day_id, transit_order)
     return transits
 
 
 @router.get("/trip-day/{trip_day_id}/cost", response_model=dict)
-async def get_trip_day_transits_cost(
+def get_trip_day_transits_cost(
     trip_day_id: int,
     currency: str = Query("USD", min_length=3, max_length=3),
     db: Session = Depends(get_db),
@@ -238,12 +204,7 @@ async def get_trip_day_transits_cost(
             detail="Trip day not found"
         )
 
-    # Check trip ownership
-    if not trips_crud.check_trip_ownership(trip_day.trip, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view cost for this trip"
-        )
+    check_trip_permission(db, trip_day.trip.id, current_user.id, MemberRole.VIEWER)
 
     total_cost = crud.get_total_cost_by_trip_day(db, trip_day_id, currency)
 

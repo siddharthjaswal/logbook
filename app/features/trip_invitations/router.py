@@ -67,7 +67,7 @@ async def create_invitation(
 
 
 @router.get("/trips/{trip_id}/invitations", response_model=List[schemas.TripInvitationResponse])
-async def list_trip_invitations(
+def list_trip_invitations(
     trip_id: int,
     status: Optional[InvitationStatus] = None,
     skip: int = 0,
@@ -115,7 +115,7 @@ async def resend_invitation(
 
 
 @router.delete("/trips/{trip_id}/invitations/{invitation_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def cancel_invitation(
+def cancel_invitation(
     trip_id: int,
     invitation_id: int,
     db: Session = Depends(get_db),
@@ -135,7 +135,7 @@ async def cancel_invitation(
 
 
 @router.post("/invitations/{token}/accept", response_model=schemas.TripInvitationPublic)
-async def accept_invitation(
+def accept_invitation(
     token: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -160,7 +160,7 @@ async def accept_invitation(
 
 
 @router.post("/invitations/{token}/decline", response_model=schemas.TripInvitationPublic)
-async def decline_invitation(
+def decline_invitation(
     token: str,
     db: Session = Depends(get_db)
 ):
@@ -176,7 +176,7 @@ async def decline_invitation(
 
 
 @router.get("/users/me/invitations", response_model=List[schemas.TripInvitationPublic])
-async def my_invitations(
+def my_invitations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):

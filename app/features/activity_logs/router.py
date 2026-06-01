@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/trips/{trip_id}/activity", response_model=List[schemas.ActivityLogResponse])
-async def get_trip_activity(
+def get_trip_activity(
     trip_id: int,
     activity_type: Optional[ActivityLogType] = None,
     skip: int = 0,
