@@ -68,6 +68,11 @@ class ActivityCreate(BaseModel):
     location_address: Optional[str] = None
     latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
     longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    # Transport segment endpoints
+    start_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    start_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    end_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    end_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
     cost: Optional[Decimal] = Field(None, ge=0)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     booking_required: bool = False
@@ -90,6 +95,11 @@ class ActivityUpdate(BaseModel):
     location_address: Optional[str] = None
     latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
     longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    # Transport segment endpoints
+    start_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    start_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
+    end_latitude: Optional[Decimal] = Field(None, ge=-90, le=90)
+    end_longitude: Optional[Decimal] = Field(None, ge=-180, le=180)
     cost: Optional[Decimal] = Field(None, ge=0)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     booking_required: Optional[bool] = None

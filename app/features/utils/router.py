@@ -248,6 +248,55 @@ _GMODE_TO_APP = {"0": "car", "1": "other", "2": "car", "3": "train"}
 _GMODE_LABEL = {"0": "driving", "1": "bicycling", "2": "walking", "3": "transit"}
 
 
+@router.get("/utils/route", status_code=status.HTTP_200_OK)
+async def route(
+    from_: str = Query(..., alias="from", description="origin 'lat,lng'"),
+    to: str = Query(..., description="destination 'lat,lng'"),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Road route geometry + distance + duration between two points.
+
+    Uses the free public OSRM demo server (no API key, car profile). Falls
+    back to a straight line if routing fails. Returns geometry as [[lat,lng]].
+    """
+    try:
+        flat, flng = (float(x) for x in from_.split(","))
+        tlat, tlng = (float(x) for x in to.split(","))
+    except Exception:
+        raise HTTPException(status_code=400, detail="from/to must be 'lat,lng'")
+
+    osrm = (
+        f"https://router.project-osrm.org/route/v1/driving/"
+        f"{flng},{flat};{tlng},{tlat}?overview=full&geometries=geojson"
+    )
+    try:
+        async with httpx.AsyncClient(timeout=10.0, headers={"User-Agent": USER_AGENT}) as client:
+            resp = await client.get(osrm)
+            if resp.status_code == 200:
+                routes = resp.json().get("routes") or []
+                if routes:
+                    rt = routes[0]
+                    coords = (rt.get("geometry") or {}).get("coordinates") or []
+                    geometry = [[lat, lng] for lng, lat in coords]
+                    if geometry:
+                        return {
+                            "geometry": geometry,
+                            "distance_m": rt.get("distance"),
+                            "duration_s": rt.get("duration"),
+                            "source": "osrm",
+                        }
+    except Exception:
+        pass
+
+    # Fallback: straight line, no metrics.
+    return {
+        "geometry": [[flat, flng], [tlat, tlng]],
+        "distance_m": None,
+        "duration_s": None,
+        "source": "straight",
+    }
+
+
 @router.get("/utils/resolve-directions-link", status_code=status.HTTP_200_OK)
 async def resolve_directions_link(
     url: str = Query(..., description="Google Maps directions (/dir/) link"),
