@@ -476,3 +476,9 @@ Every push to `main` branch automatically:
 5. Verifies health check
 
 See [docs/DEPLOYMENT_PLAN.md](./docs/DEPLOYMENT_PLAN.md) for complete deployment guide.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](./LICENSE). You may use, modify, and distribute this software (including commercially) under the terms of that license. See [NOTICE](./NOTICE) for attribution.
+
+Travlogue is open source. The hosted commercial version (with additional features such as real-time collaboration and AI assistance) is maintained separately.
