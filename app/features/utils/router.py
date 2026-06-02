@@ -241,3 +241,77 @@ async def _google_places_enrich(name, lat, lng, place_id) -> dict | None:
             except Exception:
                 pass
     return None
+
+
+# Google `!3e` travel mode → app transport mode
+_GMODE_TO_APP = {"0": "car", "1": "other", "2": "car", "3": "train"}
+_GMODE_LABEL = {"0": "driving", "1": "bicycling", "2": "walking", "3": "transit"}
+
+
+@router.get("/utils/resolve-directions-link", status_code=status.HTTP_200_OK)
+async def resolve_directions_link(
+    url: str = Query(..., description="Google Maps directions (/dir/) link"),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Parse a shared Google Maps *directions* link into endpoints + mode.
+
+    Free, no API key. Returns origin / destination / waypoints (name + lat/lng)
+    and the travel mode. The link does NOT contain the route geometry — drawing
+    the actual path is a separate routing step.
+    """
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        expanded = url
+        if host in {"maps.app.goo.gl", "goo.gl"}:
+            try:
+                async with httpx.AsyncClient(follow_redirects=True, timeout=10.0, headers={"User-Agent": USER_AGENT}) as client:
+                    expanded = str((await client.get(url)).url)
+            except Exception:
+                expanded = url
+
+        u = urlparse(expanded)
+        path = unquote_plus(u.path)
+        if "/dir/" not in path:
+            return {"error": "Not a directions link", "expanded_url": expanded}
+
+        # Stop names: the path segments between /dir/ and /@ or /data.
+        names: list[str] = []
+        m = re.search(r"/dir/(.+?)(?:/@|/data|$)", path)
+        if m:
+            names = [s.strip() for s in m.group(1).split("/") if s.strip() and not s.startswith("@")]
+
+        # Per-stop coordinates live in the data param as !1d<lng>!2d<lat> pairs.
+        raw = u.path + ("?" + u.query if u.query else "")
+        pairs = re.findall(r"!1d(-?\d+\.\d+)!2d(-?\d+\.\d+)", raw)
+        coords = [(float(lat), float(lng)) for lng, lat in pairs]
+        if not coords:
+            alt = re.findall(r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", raw)
+            coords = [(float(lat), float(lng)) for lat, lng in alt]
+
+        mode_match = re.search(r"!3e(\d)", raw)
+        gcode = mode_match.group(1) if mode_match else None
+        app_mode = _GMODE_TO_APP.get(gcode or "", None)
+        google_mode = _GMODE_LABEL.get(gcode or "", None)
+
+        n = max(len(names), len(coords))
+        if n < 2:
+            return {"error": "Could not parse two endpoints", "expanded_url": expanded}
+
+        def stop(i: int) -> dict:
+            name = names[i] if i < len(names) else None
+            lat = lng = None
+            if i < len(coords):
+                lat, lng = coords[i]
+            return {"name": name, "lat": lat, "lng": lng}
+
+        return {
+            "origin": stop(0),
+            "destination": stop(n - 1),
+            "waypoints": [stop(i) for i in range(1, n - 1)],
+            "mode": app_mode,
+            "google_mode": google_mode,
+            "expanded_url": expanded,
+        }
+    except Exception:
+        return {"error": "Failed to resolve directions link", "expanded_url": url}
